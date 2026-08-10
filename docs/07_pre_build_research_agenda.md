@@ -28,6 +28,14 @@ Recruit **10–20 named, committed alpha users before the core loop is built**. 
 
 ### Sandbox provider bake-off
 Test E2B, Modal, Daytona, and Fly Machines against a decision matrix:
+- **io_uring support — pass/fail, check this first.** Agave 3.x's validator
+  asserts `io_uring_supported()` and panics without it, with no fallback flag,
+  so a provider that blocks io_uring cannot run a Brik workspace at all.
+  Firecracker-based providers run a real guest kernel and should qualify;
+  gVisor does not implement io_uring, which rules out a gVisor-backed provider.
+  Docker's default seccomp profile also blocks it, so the local baseline runs
+  with seccomp disabled, which is a dev-only concession and not a model for
+  production. Verify per provider rather than assuming from the isolation type.
 - Cold-start latency (target: workspace interactive in seconds)
 - **Anchor build performance** — RAM/CPU available per sandbox, actual `anchor build` wall time
 - Persistent volume support and cost
@@ -44,6 +52,35 @@ The single biggest technical threat to "P95 under 5 minutes" is Rust compilation
 - Prebuilt program binaries for the guided first-run path (user's first tx should not wait on a cold compile)
 
 **Output:** measured cold/warm build times per mitigation; a stated build-time budget for the magic-moment path.
+
+**First measurements** (local Docker baseline, `brik/solana-toolchain:dev`, Agave 3.1.9 +
+Anchor 0.31.1, hello-world Anchor program from `anchor init`):
+
+| Path | Time |
+| --- | --- |
+| Workspace cold start | 0.36s |
+| Exec round trip | 0.13s |
+| Validator ready, no network | 1–3s |
+| `anchor build`, fresh project, image cargo cache | **62.8s** |
+| `anchor build`, fresh project, cargo cache wiped | **59.5s** |
+| Rebuild in a copy of the prewarmed project, source edited | **39.9s** |
+| Rebuild in a copy of the prewarmed project, no source change | **7.0s** |
+
+Two conclusions, both uncomfortable:
+
+1. **The image's pre-warm layer does not buy what it was built to buy.** Warm 62.8s versus
+   cold 59.5s is noise: the layer caches the *cargo registry*, so it saves downloading, not
+   compiling, and every fresh `anchor init` gets an empty `target/` and recompiles ~200 crates
+   anyway. Registry caching alone is not a build-time mitigation.
+2. **The lever is the target directory, not the registry.** Building inside a copy of the
+   already-compiled project drops a no-op build to 7s and an edited rebuild to 40s. So
+   templates should ship with a populated `target/` (237MB for hello-world, which is a real
+   image-size and clone-cost decision), or share one via `CARGO_TARGET_DIR`.
+
+A trivial program costs roughly a minute of a five-minute budget before the agent has done
+anything. Prebuilt binaries for the guided first-run path move from "nice mitigation" to
+required, and the sandbox provider's disk and clone performance matter more than expected
+because the mitigation is a large directory rather than a small cache.
 
 ### RPC and faucet strategy — **decided: the dev loop runs on a local validator**
 This question is closed for the first-run path. The magic moment does not touch devnet at all.

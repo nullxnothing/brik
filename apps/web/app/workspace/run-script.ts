@@ -45,9 +45,11 @@ export function notConnectedNote(hasSuggestion: boolean): string {
     : NOT_CONNECTED;
 }
 
-/** Wallet balance in the workspace, before and after program rent. */
+/** Wallet balance in the workspace, before and after program rent.
+ *  Rent is the figure measured deploying an Anchor program in the toolchain
+ *  image, not an estimate. */
 export const START_BALANCE = 1000;
-const DEPLOY_RENT = 3.57;
+const DEPLOY_RENT = 1.27;
 
 interface Commands {
   build: string;

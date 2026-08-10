@@ -13,42 +13,36 @@ pre-warm layer compiles a scratch Anchor project so user builds start from
 warm cargo caches — this layer is what makes the "P95 under 5 minutes"
 activation target survivable and is measured by `tools/bakeoff`.
 
-## Known blocker: the pre-warm layer does not build yet
+## The workspace requires io_uring
 
-**The pre-warm `anchor build` fails on the pinned versions and needs a decision
-before this image can be built.** Three earlier blockers in this file have been
-fixed (unpinned `avm` from git HEAD, `anchor init` invoked with a path instead
-of a workspace name, and `anchor init` shelling out to yarn). This one is not a
-bug in the Dockerfile.
-
-`cargo-build-sbf` runs the Cargo bundled with the SBF platform-tools, which for
-Agave 2.1.21 is **Cargo 1.79**. Current crates.io releases have broadly adopted
-`edition2024`, which 1.79 cannot parse, so a freshly resolved dependency tree
-fails:
+**Agave 3.x's validator hard-requires io_uring** and panics without it:
 
 ```
-error: failed to parse manifest at .../cmov-0.5.4/Cargo.toml
-  feature `edition2024` is required ... not stabilized in this version of Cargo (1.79.0)
+thread 'main' panicked at fs/src/dirs.rs:27:9: assertion failed: io_uring_supported()
 ```
 
-Pinning the offending crate does not fix it: pinning `cmov` to 0.5.3 moved the
-same failure to `toml_edit 0.25.13`. Every new release drags the tree forward,
-so per-crate pins are unwinnable.
+There is no flag to fall back to mmap or regular file I/O. Docker's default
+seccomp profile blocks the io_uring syscalls, so locally the image needs:
 
-Two real options, both of which are deliberate releases under the version
-policy below:
+```sh
+docker run --security-opt seccomp=unconfined ...
+```
 
-1. **Bump `SOLANA_VERSION`** to a release whose platform-tools bundles a modern
-   Cargo, and re-pin Anchor to a compatible version. Highest leverage, and it is
-   the version pair the ecosystem is actually testing against.
-2. **Ship a `Cargo.lock` with every template** and build from it, so resolution
-   is frozen to a known-good tree and never picks up a new edition2024 crate.
-   This is worth doing regardless, because it is also what makes user builds
-   reproducible and keeps the agent's generated code on versions it knows.
+`DockerProvider` in `packages/sandbox` passes this for the local baseline. It is
+acceptable there because that provider is explicitly a development path, and it
+is **not** acceptable for workspaces running untrusted user code. A production
+sandbox must permit io_uring without disabling seccomp wholesale.
 
-The recommendation is to do both: 1 unblocks the image, 2 stops the problem
-recurring. Note the local validator work below is unaffected and verified
-independently, since it does not depend on the pre-warm layer.
+This makes io_uring support a hard requirement in the provider bake-off, not a
+preference. Firecracker-based providers run a real guest kernel and should have
+it; gVisor does not implement io_uring, so a gVisor-backed provider cannot run
+this image's validator. Verify per provider before choosing (docs/07 §2).
+
+Staying on Agave 2.1.x to dodge this does not work: its platform-tools bundle
+Cargo 1.79, which cannot parse the `edition2024` manifests crates.io has moved
+to, so `anchor build` fails on a freshly resolved tree. Pinning the offending
+crate just relocates the failure (`cmov` → `toml_edit`), and `cargo-build-sbf`
+from 2.1.21 cannot fetch newer platform-tools. Both were tested.
 
 ## The local validator
 
@@ -77,7 +71,7 @@ Devnet stays the target for the shareable deploy, which is a later and deliberat
 | Component | Version | Bump policy |
 | --- | --- | --- |
 | Rust | 1.85.0 | With Anchor compatibility testing |
-| Solana CLI (Agave) | 2.1.21 | With template + agent-eval re-run |
+| Solana CLI (Agave) | 3.1.9 | With template + agent-eval re-run |
 | Anchor | 0.31.1 | Deliberate release: templates, agent context, and evals all pin to this |
 | Node | 22.x | LTS track |
 

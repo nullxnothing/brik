@@ -9,7 +9,11 @@
 FROM ubuntu:24.04
 
 ARG RUST_VERSION=1.85.0
-ARG SOLANA_VERSION=2.1.21
+# 3.1.9, not 2.1.x: the SBF platform-tools bundled with 2.1.x carry Cargo 1.79,
+# which cannot parse the edition2024 manifests that crates.io has moved to, so
+# anchor build fails on a freshly resolved tree. 3.1.9 ships platform-tools with
+# a modern Cargo. The cost is that its validator requires io_uring; see README.
+ARG SOLANA_VERSION=3.1.9
 ARG ANCHOR_VERSION=0.31.1
 ARG NODE_VERSION=22
 

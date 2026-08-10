@@ -63,8 +63,10 @@ async function measure(provider: SandboxProvider): Promise<Result> {
     result.execRoundTripMs = echo.durationMs;
 
     // Warm path: pre-warmed caches from the image's /opt scratch build.
+    // anchor init takes a workspace NAME under the cwd, and shells out to yarn
+    // unless --no-install is passed; neither matters for a build-time measurement.
     const init = await ws.exec(
-      "anchor init /workspace/bakeoff --no-git && cd /workspace/bakeoff && anchor build",
+      "cd /workspace && anchor init bakeoff --no-git --no-install && cd /workspace/bakeoff && anchor build",
       { timeoutMs: 15 * 60_000 },
     );
     if (init.exitCode === 0) {

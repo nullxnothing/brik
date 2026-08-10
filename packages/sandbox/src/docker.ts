@@ -129,6 +129,12 @@ export class DockerProvider implements SandboxProvider {
       String(spec.cpu),
       "--memory",
       `${spec.memoryMib}m`,
+      // Agave 3.x's validator hard-requires io_uring and Docker's default
+      // seccomp profile blocks those syscalls. Disabling seccomp is tolerable
+      // only because this provider is a development baseline; a production
+      // sandbox must permit io_uring without dropping seccomp entirely.
+      "--security-opt",
+      "seccomp=unconfined",
       "-P",
     ];
     if (spec.egress === "locked") {
