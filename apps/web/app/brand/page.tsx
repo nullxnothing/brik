@@ -1,109 +1,141 @@
 import Link from "next/link";
-import { BrikMark, BrikWordmark } from "../../components/logo";
+import { BrikBlock, BrikLoader, BrikMark, BrikWordmark } from "../../components/logo";
+import { Meter, StatusBadge, WorkflowMarks, type Status } from "../../components/ui";
 
 export const metadata = {
-  title: "Brik — Brand",
+  title: "Brand",
+  robots: { index: false, follow: false },
 };
 
-// Internal brand reference page: the notched-block mark and "Brik"
-// wordmark evaluated at the sizes and on the surfaces that matter
-// (docs/06). Not linked from public navigation.
+// Internal reference: mark, wordmark, and the system components at the sizes
+// and on the surfaces that matter. Not linked from public navigation.
 
-const row: React.CSSProperties = {
-  display: "flex",
-  alignItems: "center",
-  gap: 40,
-  flexWrap: "wrap",
-};
+const STATUSES: Status[] = [
+  "ready",
+  "building",
+  "testing",
+  "failed",
+  "deployed",
+  "sleeping",
+];
 
-function Panel({
-  dark,
-  children,
-}: {
-  dark?: boolean;
-  children: React.ReactNode;
-}) {
+function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div
-      style={{
-        border: "1px solid var(--border)",
-        borderRadius: 12,
-        background: dark ? "#0c0c0c" : "#f5efe0",
-        color: dark ? "#f5efe0" : "#0c0c0c",
-        padding: 48,
-        display: "flex",
-        flexDirection: "column",
-        gap: 44,
-      }}
-    >
+    <section className="border-t border-hairline pt-8">
+      <h2 className="meta-label mb-6 text-fg-3">{title}</h2>
       {children}
-    </div>
-  );
-}
-
-function Label({ children }: { children: React.ReactNode }) {
-  return (
-    <span
-      className="mono"
-      style={{ fontSize: 11, opacity: 0.55, letterSpacing: "0.1em" }}
-    >
-      {children}
-    </span>
+    </section>
   );
 }
 
 export default function Brand() {
   return (
-    <main className="container" style={{ padding: "48px 24px 96px" }}>
-      <div className="section-label" style={{ marginBottom: 24 }}>
-        <Link href="/">← Brik</Link> / BRAND
+    <main className="shell space-y-14 py-14">
+      <div className="meta-label text-fg-3">
+        <Link href="/" className="hover:text-fg">
+          <span className="glyph">←</span> Brik
+        </Link>{" "}
+        / Brand
       </div>
 
-      <div style={{ display: "grid", gap: 16 }}>
-        <Panel dark>
+      <div className="grid gap-4">
+        <div className="flex flex-col gap-11 rounded-card border border-line bg-ink p-12 text-cream">
           <BrikWordmark size={120} />
-          <div style={row}>
+          <div className="flex flex-wrap items-center gap-10">
             <BrikWordmark size={56} />
             <BrikWordmark size={32} />
             <BrikWordmark size={20} />
           </div>
-          <div style={row}>
+          <div className="flex flex-wrap items-center gap-10">
             <BrikMark size={96} />
             <BrikMark size={64} />
             <BrikMark size={32} />
             <BrikMark size={16} />
-            <Label>96 / 64 / 32 / 16 PX</Label>
+            <span className="meta-label opacity-55">96 / 64 / 32 / 16 px</span>
           </div>
-        </Panel>
+        </div>
 
-        <Panel>
+        <div
+          className="flex flex-col gap-11 rounded-card border border-line p-12"
+          style={{ background: "var(--brik-cream)", color: "var(--brik-black)" }}
+        >
           <BrikWordmark size={120} />
-          <div style={row}>
+          <div className="flex flex-wrap items-center gap-10">
             <BrikMark size={64} />
             <BrikMark size={32} />
             <BrikMark size={16} />
-            <Label>INVERTED — NEAR-BLACK ON CREAM</Label>
+            <span className="meta-label opacity-55">
+              Inverted, near-black on cream
+            </span>
           </div>
-        </Panel>
+        </div>
       </div>
 
-      <div
-        className="mono"
-        style={{
-          marginTop: 32,
-          fontSize: 12,
-          lineHeight: 2,
-          color: "var(--fg-secondary)",
-          maxWidth: 680,
-        }}
-      >
-        <div>MARK — rounded square, stepped notch cut from the top-right corner.</div>
-        <div>RADII — soft outer corners ~15% of size; rounded concave inner corner.</div>
-        <div>WORDMARK — “Brik” in the rounded display face; the mark is the dot of the i.</div>
-        <div>COLOR — cream #F5EFE0 on near-black #0C0C0C primary; inverts cleanly.</div>
-        <div>MINIMUM — mark 16px. Never letterspace or all-caps the wordmark.</div>
-        <div>AVOID — thin strokes, sharp corners, gradients, glow, brick texture.</div>
-      </div>
+      <Section title="Status">
+        <div className="flex flex-wrap gap-3">
+          {STATUSES.map((status) => (
+            <StatusBadge key={status} status={status} />
+          ))}
+        </div>
+      </Section>
+
+      <Section title="Buttons">
+        <div className="flex flex-wrap items-center gap-3">
+          <button type="button" className="btn btn-primary">
+            Deploy to devnet
+          </button>
+          <button type="button" className="btn btn-secondary">
+            Import from GitHub
+          </button>
+          <button type="button" className="btn btn-ghost">
+            Cancel
+          </button>
+          <button type="button" className="btn btn-primary" disabled>
+            Deploy
+          </button>
+          <button type="button" className="btn btn-primary">
+            <BrikLoader size={13} />
+            Building
+          </button>
+        </div>
+      </Section>
+
+      <Section title="Input">
+        <div className="max-w-sm">
+          <label htmlFor="rpc" className="meta-label block text-fg-2">
+            RPC endpoint
+          </label>
+          <input
+            id="rpc"
+            className="field field-mono mt-2.5"
+            defaultValue="https://api.devnet.solana.com"
+          />
+        </div>
+      </Section>
+
+      <Section title="Progress and meters">
+        <div className="space-y-8">
+          <WorkflowMarks complete={3} />
+          <div className="max-w-xs">
+            <Meter filled={4} label="Workspace hours" value="2.0 / 5" />
+          </div>
+          <div className="flex items-center gap-4 text-fg">
+            <BrikLoader size={20} />
+            <BrikBlock size={20} className="text-fg-3" />
+          </div>
+        </div>
+      </Section>
+
+      <Section title="Rules">
+        <div className="max-w-[70ch] space-y-2 font-mono text-code-sm leading-[1.9] text-fg-2">
+          <p>Mark: rounded square, stepped notch cut from the top-right corner.</p>
+          <p>Radii: outer 15% of size, concave fillet 10%. Small cut below 32px.</p>
+          <p>Wordmark: live Fredoka 600. The mark covers the tittle of the i.</p>
+          <p>Color: cream #F5EFE0 on near-black #0C0C0C. Inverts cleanly.</p>
+          <p>Minimum: mark 16px. Never letterspace or all-caps the wordmark.</p>
+          <p>Never: gradients, glow, shadows, brick texture, rotation, recoloring.</p>
+        </div>
+      </Section>
     </main>
   );
 }

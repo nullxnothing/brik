@@ -10,3 +10,5 @@ target/
 test-ledger/
 .anchor/
 bakeoff-results/
+
+.playwright-mcp/
