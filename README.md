@@ -19,6 +19,35 @@ The working source of truth lives in [`docs/`](docs/):
 | [`docs/06_frontend_brand_direction.md`](docs/06_frontend_brand_direction.md) | Frontend design language and brand system |
 | [`docs/07_pre_build_research_agenda.md`](docs/07_pre_build_research_agenda.md) | Pre-build research, technical spikes, and the pre-build gate |
 
+## Repository structure
+
+```
+apps/web              Next.js app — landing page + workspace UI shell
+packages/sandbox      Sandbox provider abstraction (Docker baseline; managed adapters after bake-off)
+packages/agent        Agent harness skeleton (vendor-neutral: tools, routing, budgets, task state)
+infra/toolchain-image Pinned Solana toolchain image (Rust, Agave, Anchor, Node) with pre-warmed caches
+tools/bakeoff         Provider bake-off harness — measures cold start and anchor build times
+docs/                 Business, product, brand, and operations documentation
+```
+
+## Development
+
+Requires Node 22+ and pnpm.
+
+```sh
+pnpm install
+pnpm dev        # web app at localhost:3000
+pnpm build      # build all packages
+pnpm typecheck  # typecheck all packages
+```
+
+To run the sandbox bake-off baseline (requires Docker):
+
+```sh
+docker build -t brick/solana-toolchain:dev infra/toolchain-image
+pnpm bakeoff
+```
+
 ## Strategic rule
 
 BRICK is **not another AI editor**. The editor is the creation surface; the business is the cloud development environment and production workflow around it. Success means retained builders reaching real execution and deployment milestones at attractive contribution margin — not signups or prompts.

@@ -1,0 +1,12 @@
+node_modules/
+.next/
+dist/
+out/
+*.tsbuildinfo
+.env
+.env.local
+.DS_Store
+target/
+test-ledger/
+.anchor/
+bakeoff-results/
