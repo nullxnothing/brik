@@ -46,12 +46,12 @@ Devnet can be one-click after successful build. Mainnet requires network, wallet
 Technical, approachable, modern, minimal, fast, confident. Developer-first without crypto clichés.
 
 ## Visual direction
-Use construction abstractly: modular blocks, grids, snapping, layers, assembly. Avoid LEGO imitation/cartoon briks.
+Soft block geometry: sturdy shapes with generously rounded corners, warm cream (`#F5EFE0`) on near-black (`#0C0C0C`) as the primary brand expression. Construction stays abstract — modularity through the notched block, snapping, assembly. Avoid LEGO imitation/cartoon bricks and sharp-edged pixel styling.
 
 Use neutral surfaces, one restrained accent, strong contrast, compact developer density without clutter, and generous spacing on marketing pages.
 
 ## Logo
-Geometric BRIK wordmark plus compact B/stacked-block mark. Must work at favicon size.
+The mark is the **notched block**: a rounded square with a stepped cut from the top-right corner. The wordmark is **"Brik"** in a rounded geometric display face, with the notched block as the dot of the i. Cream on near-black primary; must work at favicon size. Full construction rules in `06_frontend_brand_direction.md`.
 
 ## Core components
 Buttons, inputs, command bar, tabs, panels, editor chrome, terminal, status badge, usage meter, deploy dialog, diff view, toast, modal, template card, project card.

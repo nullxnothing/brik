@@ -18,8 +18,8 @@
   --font-mono: "Berkeley Mono", "JetBrains Mono", "SF Mono", ui-monospace,
     "Cascadia Code", monospace;
 
-  --radius-panel: 2px;
-  --radius-control: 4px;
+  --radius-panel: 6px;
+  --radius-control: 10px;
 
   --maxw: 1120px;
 }
@@ -128,23 +128,6 @@ a {
   color: var(--bg);
 }
 
-/* ---------- logo mark: rectangles assembling ---------- */
-
-.mark {
-  display: inline-grid;
-  grid-template-columns: repeat(2, 7px);
-  grid-template-rows: repeat(2, 7px);
-  gap: 2px;
-}
-
-.mark span {
-  background: var(--fg);
-}
-
-.mark span:nth-child(4) {
-  background: var(--fg-meta);
-}
-
 /* ---------- hero ---------- */
 
 .hero {
@@ -153,10 +136,11 @@ a {
 }
 
 .hero h1 {
+  font-family: var(--font-display), var(--font-sans);
   font-size: clamp(40px, 6vw, 64px);
-  line-height: 1.05;
-  letter-spacing: -0.02em;
-  font-weight: 700;
+  line-height: 1.08;
+  letter-spacing: -0.005em;
+  font-weight: 600;
   max-width: 720px;
 }
 
@@ -412,9 +396,10 @@ a {
 }
 
 .final-cta h2 {
+  font-family: var(--font-display), var(--font-sans);
   font-size: clamp(32px, 4.5vw, 48px);
-  letter-spacing: -0.02em;
-  font-weight: 700;
+  letter-spacing: -0.005em;
+  font-weight: 600;
 }
 
 .final-cta .hero-ctas {

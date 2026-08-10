@@ -1,88 +1,67 @@
 /**
- * BRIK logo — wordmark and mark, per docs/06_frontend_brand_direction.md.
+ * BRIK logo — the notched block mark and the "Brik" wordmark, per
+ * docs/06_frontend_brand_direction.md.
  *
- * Letterforms are constructed from rectangular primitives on a 10-unit
- * grid (stroke = 2u): squared geometry, no curves, counters are perfect
- * rectangles. The mark is four blocks; one sits at reduced opacity —
- * the last piece snapping into place. Both render in currentColor so
- * they inherit theme and remain legible at 16px.
+ * The mark is a rounded square with a stepped cut removed from the
+ * top-right corner — a brick with one course missing. The wordmark is
+ * "Brik" in the rounded display face (Fredoka), with the mark replacing
+ * the dot of the i. Both render in currentColor.
  */
 
-type Rect = [x: number, y: number, w: number, h: number];
-
-const LETTERS: { ox: number; rects: Rect[] }[] = [
-  // B
-  {
-    ox: 0,
-    rects: [
-      [0, 0, 2, 10],
-      [0, 0, 7, 2],
-      [0, 4, 7, 2],
-      [0, 8, 7, 2],
-      [5, 0, 2, 10],
-    ],
-  },
-  // R — stepped leg keeps the construction rectangular
-  {
-    ox: 9.5,
-    rects: [
-      [0, 0, 2, 10],
-      [0, 0, 7, 2],
-      [0, 4, 7, 2],
-      [5, 0, 2, 6],
-      [3.5, 6, 2, 2],
-      [5, 8, 2, 2],
-    ],
-  },
-  // I
-  { ox: 19, rects: [[0, 0, 2, 10]] },
-  // K — stepped diagonal arms, same construction as the R leg
-  {
-    ox: 23.5,
-    rects: [
-      [0, 0, 2, 10],
-      [2, 4, 2, 2],
-      [3.5, 2, 2, 2.5],
-      [5, 0, 2, 2.8],
-      [3.5, 5.5, 2, 2.5],
-      [5, 7.2, 2, 2.8],
-    ],
-  },
-];
-
-export function BrikWordmark({ height = 20 }: { height?: number }) {
-  return (
-    <svg
-      viewBox="0 0 30.5 10"
-      height={height}
-      width={height * 3.05}
-      fill="currentColor"
-      role="img"
-      aria-label="BRIK"
-    >
-      {LETTERS.flatMap((l, i) =>
-        l.rects.map(([x, y, w, h], j) => (
-          <rect key={`${i}-${j}`} x={l.ox + x} y={y} width={w} height={h} />
-        )),
-      )}
-    </svg>
-  );
-}
+export const BLOCK_PATH =
+  "M 0 20 Q 0 0 20 0 L 46 0 Q 56 0 56 10 L 56 24 Q 56 34 66 34 L 84 34 " +
+  "Q 100 34 100 50 L 100 80 Q 100 100 80 100 L 20 100 Q 0 100 0 80 Z";
 
 export function BrikMark({ size = 16 }: { size?: number }) {
   return (
     <svg
-      viewBox="0 0 10 10"
+      viewBox="0 0 100 100"
       width={size}
       height={size}
       fill="currentColor"
       role="img"
-      aria-label="BRIK mark"
+      aria-label="Brik mark"
     >
-      <rect x="0" y="0" width="4.4" height="4.4" />
-      <rect x="5.6" y="0" width="4.4" height="4.4" />
-      <rect x="0" y="5.6" width="4.4" height="4.4" />
-      <rect x="5.6" y="5.6" width="4.4" height="4.4" opacity="0.45" />
+      <path d={BLOCK_PATH} />
     </svg>
+  );
+}
+
+export function BrikWordmark({ size = 24 }: { size?: number }) {
+  // Ratios tuned at display scale: dot ≈ 0.26em wide, floating
+  // ≈ 0.07em below the line-box top, centered on the dotless ı.
+  const dot = size * 0.26;
+  return (
+    <span
+      style={{
+        fontFamily: "var(--font-display)",
+        fontWeight: 600,
+        fontSize: size,
+        lineHeight: 1,
+        letterSpacing: "0.01em",
+        display: "inline-block",
+      }}
+      aria-label="Brik"
+    >
+      Br
+      <span style={{ position: "relative", display: "inline-block" }} aria-hidden>
+        ı
+        <svg
+          viewBox="0 0 100 100"
+          style={{
+            position: "absolute",
+            left: "50%",
+            transform: "translateX(-50%)",
+            top: size * 0.07,
+            width: dot,
+            height: dot,
+          }}
+          fill="currentColor"
+        >
+          <path d={BLOCK_PATH} />
+        </svg>
+      </span>
+      k
+    </span>
   );
 }

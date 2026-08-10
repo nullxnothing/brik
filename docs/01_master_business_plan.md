@@ -129,7 +129,8 @@ Tagline: Build on Solana. From your browser.
 - Technical but approachable; modern, minimal, fast, confident.
 - Developer-first without crypto clichés.
 - Construction metaphor stays abstract; avoid toy-block or LEGO imitation.
-- Strong geometric wordmark and compact B/block mark.
+- Mark: the notched block — a rounded square with a stepped cut from the top-right corner; cream on near-black.
+- Wordmark: "Brik" in a rounded geometric display face, with the notched block as the dot of the i.
 - Neutral interface with one restrained accent and subtle grid/block motifs.
 - Product screenshots and real workflows dominate marketing.
 - Avoid generic purple gradients, coins, chains, rockets, and flame imagery.

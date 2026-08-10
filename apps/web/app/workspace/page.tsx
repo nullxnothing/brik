@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { BrikMark, BrikWordmark } from "../../components/logo";
+import { BrikWordmark } from "../../components/logo";
 
 // Static workspace shell — the panel layout from docs/03_ui_ux_brand_spec.md.
 // Editor, terminal, and agent panels are placeholders until the control
@@ -14,9 +14,8 @@ export default function Workspace() {
     <div className="ws">
       <div className="ws-top">
         <div className="ws-top-left">
-          <Link href="/" className="nav-brand" aria-label="BRIK">
-            <BrikMark size={14} />
-            <BrikWordmark height={11} />
+          <Link href="/" className="nav-brand" aria-label="Brik">
+            <BrikWordmark size={19} />
           </Link>
           <span>tip-jar</span>
           <span>main</span>

@@ -7,11 +7,14 @@ BRIK is infrastructure for builders. Software is built from blocks; BRIK is one 
 Reduce everything to essential components. Panels connect to panels, commands create outputs, modules snap together, and information has obvious hierarchy. Structured, not sterile.
 
 ## Aesthetic
-Swiss graphic design × developer terminal × modern infrastructure platform. Warm off-white, near-black, neutral grays, restrained state colors. Avoid crypto gradients, neon Solana styling, glassmorphism, floating coins, generic AI sparkles, and cyberpunk HUDs.
+Soft geometry × developer terminal × modern infrastructure platform. Warm cream, near-black, neutral grays, restrained state colors. Shapes are sturdy blocks with generously rounded corners — friendly without being cartoonish, precise without being sharp. Avoid crypto gradients, neon Solana styling, glassmorphism, floating coins, generic AI sparkles, and cyberpunk HUDs.
 
 ## Color system
-- Background: `#F4F3EF` or `#F7F6F2`
-- Primary: `#111111` or `#0D0D0D`
+The brand is dark-first: cream on near-black is the primary expression (logo, banners, social, marketing hero surfaces).
+- Brand cream: `#F5EFE0`
+- Brand black: `#0C0C0C`
+- Light product background: `#F4F3EF` or `#F7F6F2`
+- Primary text (light): `#111111`
 - Secondary text: `#6F6F6B`
 - Metadata: `#A7A7A1`
 - Borders: `#D9D8D2`
@@ -19,16 +22,18 @@ Swiss graphic design × developer terminal × modern infrastructure platform. Wa
 - Green/red/amber only for system states.
 
 ## Typography
-Modern grotesk/sans-serif for interface and marketing; high-quality monospace for addresses, code, terminal output, transaction IDs, commands, shortcuts, and technical metadata. Typography should carry much of the brand identity.
+Brand/display type is a **rounded geometric sans** (Fredoka SemiBold or equivalent) — chunky, soft-cornered letterforms that match the mark's geometry. Interface text uses a modern grotesk; high-quality monospace for addresses, code, terminal output, transaction IDs, commands, shortcuts, and technical metadata. Display type is for the wordmark, hero headlines, and marketing — never for body copy or dense UI.
 
 ## Grid and shape language
-Use strict alignment, thin dividers, rectangular modules, and repeating columns. Prefer 0–6px radii, generally 0–4px for panels and ~4px for controls. Use 1px neutral borders instead of floating cards and shadows.
+Use strict alignment, thin dividers, and repeating columns — but soft corners everywhere: 8–16px radii on brand/marketing surfaces, 6–10px on product panels and controls. No sharp 90° corners on brand surfaces, no pills. Use 1px neutral borders instead of floating cards and shadows.
 
 ## Logo
-An unmistakable modular glyph made from a small number of rectangular primitives. Communicate assembly, infrastructure, and modularity without literal masonry. No brik texture, wall, construction tools, crypto coins, blockchain nodes, or Solana gradients. Must remain recognizable at 16×16.
+**The mark is the notched block**: a rounded square with a stepped cut removed from the top-right corner — a brick with one course missing, modularity expressed through subtraction. Soft outer radii (~15% of size), a rounded concave inner corner, no other detail. Cream on near-black is the primary lockup; near-black on cream inverts cleanly. No brick texture, wall, construction tools, crypto coins, blockchain nodes, or Solana gradients. Must remain recognizable at 16×16.
+
+**The wordmark is "Brik"** — title case, set in the rounded display face, with the notched block replacing the dot of the i. The block-as-tittle is the signature; never letterspace the wordmark or set it in all caps.
 
 ## Motion
-Motion communicates state. The logo can assemble in ~300–500ms. UI transitions should be fast (~100–150ms). No bouncing, decorative particles, constant glow, or ambient blobs.
+Motion communicates state. The mark's signature animation is the notch: the missing piece slides in to complete the block (~300–500ms) — building, block by block. UI transitions should be fast (~100–150ms). No bouncing, decorative particles, constant glow, or ambient blobs.
 
 ## Navigation
 Restrained desktop structure such as: `BRIK  BUILD  DOCS  EXAMPLES  GITHUB  LAUNCH →`. Thin bottom border, generous breathing room, no floating pill nav.
@@ -53,10 +58,10 @@ Large functional workspace frame: project/files on left, editor/workspace center
 Use a grid rather than generic SaaS cards. Core modules: BUILD, TEST, DEPLOY, INSPECT. Each gets a small monospace index, concise title, one sentence, and functional visualization.
 
 ## BRIK motif
-Repeat modular rectangles subtly in loaders, progress, section labels, architecture diagrams, empty states, and active indicators. This creates recognition without overusing the logo.
+Repeat the notched block subtly: loaders where the notch fills in, progress indicators built from soft blocks, section labels, architecture diagrams, empty states, and active indicators. This creates recognition without overusing the logo.
 
 ## Buttons
-Primary: black/off-white, small radius. Secondary: transparent with 1px border. Avoid pills, gradients, glow, and oversized controls.
+Primary: near-black on cream (or cream on near-black in dark contexts), 8–10px radius. Secondary: transparent with 1px border, same radius. Avoid pills, gradients, glow, and oversized controls.
 
 ## Voice and microcopy
 Short, precise, technical, calm, confident, developer-native. Avoid hype such as “revolutionizing Web3.” Prefer literal language: “Deployment confirmed.” “Build failed.” “Deploy to devnet.” Respect the user's intelligence.
@@ -110,7 +115,7 @@ BRIK should look like a fundamental piece of software infrastructure that happen
 **BRIK is the quiet, precise, modular workspace developers use to turn Solana ideas into working software.**
 
 ## Visual personality
-**Black geometry, warm white space, strict grids, excellent typography, and small pieces assembling into powerful systems.**
+**Soft block geometry, warm cream on near-black, strict grids, rounded display type, and small pieces snapping into powerful systems.**
 
 ## Design test
 Before adding anything, ask:

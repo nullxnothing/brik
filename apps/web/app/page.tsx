@@ -9,9 +9,8 @@ function Nav() {
   return (
     <nav className="nav">
       <div className="container nav-inner">
-        <Link href="/" className="nav-brand" aria-label="BRIK">
-          <BrikMark size={16} />
-          <BrikWordmark height={13} />
+        <Link href="/" className="nav-brand" aria-label="Brik">
+          <BrikWordmark size={24} />
         </Link>
         <div className="nav-links">
           <a href="#build">BUILD</a>
@@ -43,7 +42,7 @@ function Hero() {
           In one tab.
         </h1>
         <p>
-          Describe it or pick a template — BRIK builds, tests, and deploys it
+          Describe it or pick a template — Brik builds, tests, and deploys it
           to devnet while you watch. No Rust, Anchor or Solana setup required.
         </p>
         <div className="hero-ctas">
