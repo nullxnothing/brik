@@ -1,9 +1,8 @@
-import Link from "next/link";
 import { DemoFrame } from "../components/demo-frame";
 import { BrikMark } from "../components/logo";
 import { SiteFooter } from "../components/site-footer";
 import { SiteNav } from "../components/site-nav";
-import { ButtonLink } from "../components/ui";
+import { ButtonLink, ComingSoon } from "../components/ui";
 import { TEMPLATES } from "../lib/templates";
 
 function Hero() {
@@ -19,11 +18,13 @@ function Hero() {
           while you watch. No Rust, Anchor, or Solana setup required.
         </p>
         <div className="mt-9 flex flex-wrap gap-3">
-          <ButtonLink href="/new" variant="primary">
-            Start building <span className="glyph">→</span>
-          </ButtonLink>
-          <ButtonLink href="/new?source=github" variant="secondary">
-            Import from GitHub
+          <ComingSoon />
+          <ButtonLink
+            href="https://github.com/nullxnothing/Brick"
+            variant="secondary"
+            external
+          >
+            Follow on GitHub <span className="glyph">↗</span>
           </ButtonLink>
         </div>
         <p className="meta-label mt-5 text-fg-3">
@@ -163,34 +164,19 @@ function Templates() {
   return (
     <section id="templates" className="border-b border-hairline">
       <div className="shell py-20 md:py-28">
-        <div className="flex flex-wrap items-end justify-between gap-6">
-          <h2 className="font-display max-w-[18ch] text-display-md font-semibold text-balance">
-            Open one and it is already building.
-          </h2>
-          <Link
-            href="/new"
-            className="meta-label text-fg-2 transition-colors duration-150 hover:text-fg"
-          >
-            All templates <span className="glyph">→</span>
-          </Link>
-        </div>
+        <h2 className="font-display max-w-[20ch] text-display-md font-semibold text-balance">
+          Every template starts already building.
+        </h2>
 
         <div className="seam mt-12 rounded-card border border-line sm:grid-cols-2 lg:grid-cols-4">
           {TEMPLATES.map((template) => (
-            <Link
-              key={template.slug}
-              href={`/workspace?template=${template.slug}`}
-              className="group flex flex-col gap-4 p-6 transition-colors duration-150 hover:bg-selected"
-            >
+            <article key={template.slug} className="flex flex-col gap-4 p-6">
               <h3 className="text-heading font-medium">{template.name}</h3>
               <p className="text-body text-fg-2">{template.tagline}</p>
-              <div className="meta-label mt-auto flex items-center justify-between gap-3 border-t border-hairline pt-4 text-fg-3">
-                <span>{template.stack}</span>
-                <span className="glyph text-fg-2 transition-transform duration-150 group-hover:translate-x-0.5">
-                  →
-                </span>
+              <div className="meta-label mt-auto border-t border-hairline pt-4 text-fg-3">
+                {template.stack}
               </div>
-            </Link>
+            </article>
           ))}
         </div>
       </div>
@@ -213,16 +199,14 @@ function FinalCta() {
       <div className="shell relative py-28 text-center md:py-36">
         <BrikMark size={40} className="mx-auto text-cream" />
         <h2 className="font-display mt-8 text-display-md font-semibold">
-          Start building.
+          Almost open.
         </h2>
         <p className="mx-auto mt-4 max-w-[42ch] text-body-lg text-fg-2">
-          No signup, no local setup. Your first devnet transaction is about five
-          minutes away.
+          No signup, no local setup, and a working app about five minutes after
+          you start.
         </p>
         <div className="mt-9 flex justify-center">
-          <ButtonLink href="/new" variant="primary">
-            Start building <span className="glyph">→</span>
-          </ButtonLink>
+          <ComingSoon />
         </div>
       </div>
     </section>

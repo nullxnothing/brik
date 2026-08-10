@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { BrikWordmark } from "./logo";
-import { ButtonLink } from "./ui";
+import { ComingSoon } from "./ui";
 
 const LINKS = [
   { label: "Build", href: "/#build" },
@@ -32,9 +32,7 @@ export function SiteNav() {
           >
             GitHub <span className="glyph">↗</span>
           </a>
-          <ButtonLink href="/new" variant="primary" compact>
-            Launch <span className="glyph">→</span>
-          </ButtonLink>
+          <ComingSoon compact />
         </div>
       </div>
     </nav>

@@ -35,6 +35,19 @@ export function ButtonLink({
   );
 }
 
+/** The app is not open yet. Disabled rather than hidden, per components.md. */
+export function ComingSoon({ compact = false }: { compact?: boolean }) {
+  return (
+    <button
+      type="button"
+      disabled
+      className={`btn btn-primary ${compact ? "btn-compact" : ""}`}
+    >
+      Coming soon
+    </button>
+  );
+}
+
 export type Status =
   | "ready"
   | "building"
