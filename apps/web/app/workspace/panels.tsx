@@ -210,7 +210,7 @@ export function SolanaPanel({
         <dl className="space-y-3 font-mono text-code-sm">
           <div className="flex justify-between gap-4">
             <dt className="text-fg-3">Cluster</dt>
-            <dd className="text-fg">devnet</dd>
+            <dd className="text-fg">localnet</dd>
           </div>
           <div className="flex justify-between gap-4">
             <dt className="text-fg-3">Wallet</dt>

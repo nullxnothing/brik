@@ -92,7 +92,7 @@ const APPS: Record<string, React.ReactNode> = {
       <div className="mt-6 rounded-button bg-ink py-2.5 text-center text-body font-medium text-cream">
         Pay 49.00 USDC
       </div>
-      <p className="meta-label mt-4 text-center text-fg-3">Devnet</p>
+      <p className="meta-label mt-4 text-center text-fg-3">Solana</p>
     </div>
   ),
 };

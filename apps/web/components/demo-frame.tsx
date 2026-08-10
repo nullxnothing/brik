@@ -10,13 +10,13 @@ const AGENT_STEPS = [
   { at: 1, label: "Write the send_tip instruction" },
   { at: 4, label: "anchor build · finished in 14.2s" },
   { at: 5, label: "Tests passing 3/3" },
-  { at: 7, label: "Deployed to devnet" },
+  { at: 7, label: "Deployed to the local validator" },
 ];
 
 const TERMINAL_LINES = [
   { at: 3, text: "$ anchor build", ok: false },
   { at: 4, text: "Finished release [optimized] in 14.2s", ok: true },
-  { at: 6, text: "$ anchor deploy --provider.cluster devnet", ok: false },
+  { at: 6, text: "$ anchor deploy", ok: false },
   { at: 7, text: "Deploy success · 7xKX…gAsU", ok: true },
 ];
 
@@ -74,7 +74,7 @@ export function DemoFrame() {
       className="overflow-hidden rounded-card border border-line bg-surface-alt"
     >
       <div className="meta-label flex items-center justify-between gap-4 border-b border-line px-4 py-2.5 text-fg-2">
-        <span className="truncate">tip-jar · devnet</span>
+        <span className="truncate">tip-jar · localnet</span>
         <StatusBadge status={statusAt(tick)} />
       </div>
 
@@ -145,8 +145,8 @@ export function DemoFrame() {
       </div>
 
       <div className="meta-label flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-line px-4 py-2.5 text-fg-3">
-        <span>Devnet</span>
-        <span>Wallet 2.41 SOL</span>
+        <span>Localnet</span>
+        <span>Wallet 1000 SOL</span>
         <span className={`text-ok ${reveal(FINAL_TICK)}`}>Program live</span>
       </div>
     </div>

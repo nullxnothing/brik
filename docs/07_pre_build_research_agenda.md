@@ -45,11 +45,36 @@ The single biggest technical threat to "P95 under 5 minutes" is Rust compilation
 
 **Output:** measured cold/warm build times per mitigation; a stated build-time budget for the magic-moment path.
 
-### RPC and faucet strategy
-The magic moment depends on devnet infrastructure BRIK doesn't control:
-- Public devnet airdrop faucets are rate-limited and unreliable — likely need a BRIK-funded devnet faucet wallet with per-user limits
-- RPC provider selection (Helius, Triton, QuickNode vs public endpoints): rate limits, devnet support, cost per active user
-- What happens to the demo when devnet is degraded (it happens) — fallback plan
+### RPC and faucet strategy — **decided: the dev loop runs on a local validator**
+This question is closed for the first-run path. The magic moment does not touch devnet at all.
+
+Each workspace runs its own `solana-test-validator`. SOL is unlimited and instant, there is no
+faucet to rate-limit, and the whole loop works with egress switched off, which is what the
+anonymous tier already requires. Measured in the toolchain image (Agave 2.1.21):
+
+| Measurement | Result |
+| --- | --- |
+| Validator ready, `--network none` | 2–3 seconds |
+| Airdrop 1000 SOL, offline | Instant |
+| Programs in genesis | System, SPL Token, Token-2022, associated token account, Memo v3 |
+| Programs that must be baked in | Metaplex Token Metadata only |
+
+Public faucets were rejected as a funnel step, not just as a rate-limit risk.
+`faucet.solana.com` allows 2 requests per 8 hours, needs a GitHub sign-in with account
+validation for a higher limit, and tells automated clients not to use it. Sending an anonymous
+visitor there replaces our signup gate with GitHub's at the exact moment of first success, and
+still hands out less than the 2–4 SOL an upgradeable Anchor program needs for deploy rent.
+It stays in the docs as a top-up link for people funding their own wallet.
+
+Still open, and now much smaller:
+- **Devnet treasury sizing.** Real devnet remains the shareable, forkable deploy target. Because
+  ephemeral workspaces are destroyed within minutes and `solana program close` reclaims deploy
+  rent, the treasury is a revolving float sized to *concurrent* deploys, not cumulative users.
+  Measure the real number during alpha; seed it with `devnet-pow` and a Foundation ask.
+- **RPC provider selection** (Helius, Triton, QuickNode) for the devnet deploy and inspection
+  path only. The dev loop no longer depends on it.
+- **Devnet degradation** is no longer a demo-killer: a degraded devnet delays sharing, it does
+  not block anyone's first success.
 
 ### Agent harness and Solana AI quality
 - Decide harness: Claude Agent SDK vs custom loop; document model routing tiers and measured cost per task type

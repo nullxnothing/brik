@@ -31,14 +31,14 @@ export function WorkspaceHeader({
       </div>
 
       <div className="flex shrink-0 items-center gap-3">
-        <span className="meta-label hidden text-fg-3 lg:block">Devnet</span>
+        <span className="meta-label hidden text-fg-3 lg:block">Localnet</span>
         <StatusBadge status={status} />
         <button
           type="button"
           onClick={onDeploy}
           className="btn btn-primary btn-compact"
           disabled={isRunning}
-          aria-label={isDeployed ? "Redeploy to devnet" : "Deploy to devnet"}
+          aria-label={isDeployed ? "Redeploy the program" : "Deploy the program"}
         >
           {isRunning ? (
             <>

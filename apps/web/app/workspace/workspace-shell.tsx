@@ -11,6 +11,7 @@ import {
   buildFollowUpFrames,
   buildFrames,
   notConnectedNote,
+  START_BALANCE,
   type Entry,
   type Frame,
   type TerminalLine,
@@ -60,12 +61,12 @@ function makeInitial(template: Template, task: string): RunState {
     source: template.source,
     added: [],
     changed: [],
-    balance: 2.41,
+    balance: START_BALANCE,
   };
 }
 
 const STATUS_LINE: Record<Status, string> = {
-  sleeping: "Starting the workspace.",
+  sleeping: "Starting the validator.",
   ready: "Reading the project.",
   building: "Compiling your program.",
   testing: "Running the tests.",
@@ -326,7 +327,7 @@ export function WorkspaceShell({
           Terminal <span className="glyph">{isTerminalOpen ? "▾" : "▴"}</span>
         </button>
         <div className="flex items-center gap-5">
-          <span className="meta-label text-fg-3">Devnet</span>
+          <span className="meta-label text-fg-3">Localnet</span>
           <span className="meta-label text-fg-3">{run.balance.toFixed(2)} SOL</span>
         </div>
       </footer>

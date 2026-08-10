@@ -41,6 +41,17 @@ Authentication, organizations, projects, workspace lifecycle, entitlements, secr
 ### Workspace
 Isolated Linux environment with Git, Node/pnpm/npm, Rust, Solana CLI, Anchor, and build utilities.
 
+**Every workspace runs its own local validator.** `solana-test-validator` starts with the
+workspace (`brik-localnet` in the toolchain image), which makes SOL unlimited and instant, removes
+any faucet dependency, and lets the entire build/test/deploy loop run with egress switched off.
+Measured: ready in 2–3 seconds with no network, 1000 SOL airdropped instantly. Genesis already
+carries System, SPL Token, Token-2022, the associated token account program, and Memo; Metaplex
+Token Metadata is baked into the image so the NFT template works offline too.
+
+Devnet is the *sharing* target, not the dev loop: a real devnet deploy is what produces a public,
+forkable preview URL, and it comes after signup. See `07_pre_build_research_agenda.md` for the
+decision and the remaining treasury question.
+
 Required: filesystem/process isolation, CPU/RAM/disk quotas, network policy, hibernation/resume, persistent volumes for eligible plans, cached base images/dependencies.
 
 **Buy, don't build (v1 decision):** orchestration comes from a managed sandbox provider (E2B, Modal, Daytona, Fly Machines, or equivalent). Brik builds the Solana toolchain image, agent harness, Solana panel, and deploy workflow on top. Keep the provider integration behind an internal interface so it can be swapped or in-sourced at scale.
@@ -106,7 +117,7 @@ Workspace foundation on the chosen managed sandbox provider: provider integratio
 Agent loop: tool API, routing, file/search/shell, build/test, diff review, cost limits, eval-set pass rate as the quality bar.
 
 ### Days 10-16 (parallel)
-Solana experience and growth surfaces: devnet wallet + funded faucet, Solana panel, logs/transactions, one-click devnet deployment, shareable preview URLs + share cards + fork flow, anonymous ephemeral sandboxes **with abuse controls in the same release**.
+Solana experience and growth surfaces: local validator per workspace, Solana panel, logs/transactions, one-click devnet deployment for sharing, shareable preview URLs + share cards + fork flow, anonymous ephemeral sandboxes **with abuse controls in the same release**.
 
 ### Days 15-18
 Hardening: reliability of the golden path, analytics events end-to-end, human security review of the sandbox boundary, load/abuse testing of the anonymous tier.

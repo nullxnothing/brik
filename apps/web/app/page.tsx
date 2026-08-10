@@ -15,8 +15,8 @@ function Hero() {
           <span className="block text-fg-2">In one tab.</span>
         </h1>
         <p className="mt-7 max-w-[52ch] text-body-lg text-fg-2">
-          Describe it or pick a template. Brik builds, tests, and deploys it to
-          devnet while you watch. No Rust, Anchor, or Solana setup required.
+          Describe it or pick a template. Brik builds, tests, and deploys it
+          while you watch. No Rust, Anchor, or Solana setup required.
         </p>
         <div className="mt-9 flex flex-wrap gap-3">
           <ButtonLink href="/new" variant="primary">
@@ -27,7 +27,7 @@ function Hero() {
           </ButtonLink>
         </div>
         <p className="meta-label mt-5 text-fg-3">
-          No signup · No local setup · Devnet free
+          No signup · No local setup · Unlimited test SOL
         </p>
       </div>
       <div className="shell pb-20 md:pb-24">
@@ -71,8 +71,8 @@ const CAPABILITIES = [
     ),
   },
   {
-    title: "Deploy and share in one action",
-    body: "A funded devnet wallet, a one-click deploy, and a public URL anyone can open and fork. The preview is the proof.",
+    title: "A chain of your own, then devnet",
+    body: "Every workspace runs its own Solana validator, so SOL is unlimited and deploys are instant. Push to devnet when you want a URL to share.",
     visual: (
       <div className="font-mono text-code-sm leading-[1.9] text-fg-3">
         <div className="text-fg-2">brik.dev/p/tip-jar</div>
@@ -128,7 +128,7 @@ const LOOP = [
   { step: "Write", body: "It reads the project first, then edits the files the change actually touches." },
   { step: "Test", body: "Tests run on every change. A red suite stops the loop, it does not get explained away." },
   { step: "Build", body: "anchor build runs for real. The compiler output is the evidence." },
-  { step: "Deploy", body: "Devnet deploy with a funded wallet, then a URL you can hand to someone." },
+  { step: "Deploy", body: "Instant deploy to the workspace validator, then devnet when you want to share it." },
 ];
 
 function Workflow() {

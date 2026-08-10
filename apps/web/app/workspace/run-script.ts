@@ -45,6 +45,10 @@ export function notConnectedNote(hasSuggestion: boolean): string {
     : NOT_CONNECTED;
 }
 
+/** Wallet balance in the workspace, before and after program rent. */
+export const START_BALANCE = 1000;
+const DEPLOY_RENT = 3.57;
+
 interface Commands {
   build: string;
   test: string;
@@ -57,9 +61,8 @@ function commandsFor(template: Template): Commands {
   return {
     build: anchor ? "anchor build" : "pnpm build",
     test: anchor ? "anchor test" : "pnpm test",
-    deploy: anchor
-      ? "anchor deploy --provider.cluster devnet"
-      : `brik deploy --cluster devnet`,
+    // No cluster flag: the workspace's own validator is the default provider.
+    deploy: anchor ? "anchor deploy" : "brik deploy",
     buildOk: anchor
       ? "Finished release [optimized] in 14.2s"
       : "Compiled successfully in 8.4s",
@@ -77,14 +80,30 @@ function deployFrame(template: Template): Frame {
           { text: "Deploy success", tone: "ok" },
         ]
       : [
-          { text: `Preview: https://${template.project}.brik.app`, tone: "muted" },
+          { text: `Serving on http://127.0.0.1:3000`, tone: "muted" },
           { text: "Deploy success", tone: "ok" },
         ],
     program: anchor ? PROGRAM_ID : undefined,
     tx: TX_SIGNATURE,
-    balance: anchor ? 1.83 : 2.41,
+    balance: anchor ? START_BALANCE - DEPLOY_RENT : START_BALANCE,
   };
 }
+
+/** The validator boots with the workspace, before the agent does anything. */
+const BOOT_FRAMES: Frame[] = [
+  {
+    delay: 300,
+    status: "ready",
+    term: [{ text: "$ brik-localnet start", tone: "cmd" }],
+  },
+  {
+    delay: 900,
+    term: [
+      { text: "Validator ready on http://127.0.0.1:8899 after 2s", tone: "ok" },
+      { text: `Wallet Bq4v…7Yhz funded with ${START_BALANCE} SOL`, tone: "muted" },
+    ],
+  },
+];
 
 /** The first run: write the project, fail once, fix, test, deploy. */
 export function buildFrames(template: Template): Frame[] {
@@ -92,7 +111,8 @@ export function buildFrames(template: Template): Frame[] {
   const cmd = commandsFor(template);
 
   return [
-    { delay: 300, agent: "Read the project and plan the change", status: "ready" },
+    ...BOOT_FRAMES,
+    { delay: 500, agent: "Read the project and plan the change", status: "ready" },
     {
       delay: 1100,
       agent: `Write the ${template.unit}`,
@@ -110,14 +130,25 @@ export function buildFrames(template: Template): Frame[] {
     {
       delay: 1400,
       status: "failed",
-      term: [
-        { text: "error: type mismatch", tone: "err" },
-        {
-          text: `  --> ${template.entryFile}:${Math.min(source.length, 14)}`,
-          tone: "muted",
-        },
-        { text: "  expected u64, found u32", tone: "muted" },
-      ],
+      term: isAnchorProject(template)
+        ? [
+            { text: "error[E0308]: mismatched types", tone: "err" },
+            {
+              text: `  --> ${template.entryFile}:${Math.min(source.length, 14)}`,
+              tone: "muted",
+            },
+            { text: "  expected `u64`, found `u32`", tone: "muted" },
+          ]
+        : [
+            {
+              text: `${template.entryFile}:${Math.min(source.length, 14)} - error TS2345:`,
+              tone: "err",
+            },
+            {
+              text: "  Argument of type 'number' is not assignable to parameter of type 'bigint'.",
+              tone: "muted",
+            },
+          ],
     },
     {
       delay: 1100,
@@ -145,7 +176,7 @@ export function buildFrames(template: Template): Frame[] {
     },
     {
       delay: 700,
-      agent: "Deploy to devnet",
+      agent: "Deploy to the local validator",
       term: [{ text: `$ ${cmd.deploy}`, tone: "cmd" }],
     },
     deployFrame(template),
