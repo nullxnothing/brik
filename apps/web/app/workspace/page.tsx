@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { BrickMark, BrickWordmark } from "../../components/logo";
 
 // Static workspace shell — the panel layout from docs/03_ui_ux_brand_spec.md.
 // Editor, terminal, and agent panels are placeholders until the control
@@ -13,14 +14,9 @@ export default function Workspace() {
     <div className="ws">
       <div className="ws-top">
         <div className="ws-top-left">
-          <Link href="/" className="nav-brand">
-            <span className="mark" aria-hidden>
-              <span />
-              <span />
-              <span />
-              <span />
-            </span>
-            BRICK
+          <Link href="/" className="nav-brand" aria-label="BRICK">
+            <BrickMark size={14} />
+            <BrickWordmark height={11} />
           </Link>
           <span>tip-jar</span>
           <span>main</span>

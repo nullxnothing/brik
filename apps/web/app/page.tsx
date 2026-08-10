@@ -1,23 +1,17 @@
 import Link from "next/link";
+import { BrickMark, BrickWordmark } from "../components/logo";
 
 function Mark() {
-  return (
-    <span className="mark" aria-hidden>
-      <span />
-      <span />
-      <span />
-      <span />
-    </span>
-  );
+  return <BrickMark size={14} />;
 }
 
 function Nav() {
   return (
     <nav className="nav">
       <div className="container nav-inner">
-        <Link href="/" className="nav-brand">
-          <Mark />
-          BRICK
+        <Link href="/" className="nav-brand" aria-label="BRICK">
+          <BrickMark size={16} />
+          <BrickWordmark height={13} />
         </Link>
         <div className="nav-links">
           <a href="#build">BUILD</a>
