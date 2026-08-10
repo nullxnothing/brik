@@ -66,21 +66,44 @@ Anchor 0.31.1, hello-world Anchor program from `anchor init`):
 | Rebuild in a copy of the prewarmed project, source edited | **39.9s** |
 | Rebuild in a copy of the prewarmed project, no source change | **7.0s** |
 
-Two conclusions, both uncomfortable:
+**The mitigation, measured.** The registry cache is not the lever and the fix is decided:
 
-1. **The image's pre-warm layer does not buy what it was built to buy.** Warm 62.8s versus
-   cold 59.5s is noise: the layer caches the *cargo registry*, so it saves downloading, not
-   compiling, and every fresh `anchor init` gets an empty `target/` and recompiles ~200 crates
-   anyway. Registry caching alone is not a build-time mitigation.
-2. **The lever is the target directory, not the registry.** Building inside a copy of the
-   already-compiled project drops a no-op build to 7s and an edited rebuild to 40s. So
-   templates should ship with a populated `target/` (237MB for hello-world, which is a real
-   image-size and clone-cost decision), or share one via `CARGO_TARGET_DIR`.
+| Approach | Build time |
+| --- | --- |
+| Cold baseline, fresh `anchor init` | 41.7s |
+| Image caches the cargo *registry* only | 40.3s |
+| Target directory **copied** from elsewhere | 40.3s |
+| Shared `CARGO_TARGET_DIR`, second project | 1.6s, but `anchor deploy` cannot find the `.so` |
+| Symlinked `target` without the env var | 41.0s, deploy works |
+| **Pre-built in place, template source overlaid** | **1.2s, deploy works** |
 
-A trivial program costs roughly a minute of a five-minute budget before the agent has done
-anything. Prebuilt binaries for the guided first-run path move from "nice mitigation" to
-required, and the sandbox provider's disk and clone performance matter more than expected
-because the mitigation is a large directory rather than a small cache.
+The deciding fact is that **cargo fingerprints embed absolute paths**, so a compiled target
+directory only helps a build that runs exactly where it was built. That kills the obvious
+approaches. Copying a warm target into a new project buys nothing. `CARGO_TARGET_DIR` is fast
+but relocates the artifacts, and `anchor deploy` looks for `<project>/target/deploy/<name>.so`
+and fails. Symlinking keeps deploy working but loses the speedup.
+
+What works is pre-building a scratch Anchor project **at the canonical workspace path** and
+overlaying a template's source onto it. Dependency artifacts are reused even when the program
+crate is renamed, so one pre-built base serves every template: measured 1.2s with a different
+program name, artifact present, `anchor deploy` succeeding. This is implemented in the
+toolchain image at `/workspace/project`.
+
+Two consequences to carry forward:
+
+1. **The workspace volume must not shadow the pre-built path.** If a provider mounts an empty
+   volume over `/workspace`, the pre-built directory disappears and the first build is a cold
+   40s compile again. Either the volume carries the pre-built tree, or the provider supports
+   snapshot/clone of a booted workspace. That makes snapshotting a bake-off criterion, not an
+   optimisation.
+2. **The pre-built target is about 1GB.** It is a real image-size and clone-cost decision, and
+   it is the reason provider disk throughput matters more than expected.
+
+**Offline caveat, measured separately:** a fresh `anchor init` cannot build with egress off at
+all, because it resolves and downloads its dependency tree. Only a project whose dependencies
+are already compiled into the image builds offline. Templates therefore have to ship a
+`Cargo.lock` matching the pre-built tree, which is the same discipline that keeps generated
+code on versions the agent knows.
 
 ### RPC and faucet strategy — **decided: the dev loop runs on a local validator**
 This question is closed for the first-run path. The magic moment does not touch devnet at all.

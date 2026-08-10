@@ -46,25 +46,33 @@ RUN cargo install --git https://github.com/coral-xyz/anchor \
     && avm install "${ANCHOR_VERSION}" \
     && avm use "${ANCHOR_VERSION}"
 
-# Pre-warm: a scratch Anchor project compiled once so dependency crates are
-# cached in the image layer. This is the core of the build-time budget
-# (docs/07 §2) — first user builds hit warm caches, not cold compiles.
-# anchor init takes a workspace NAME and creates it under the current directory,
-# so it must be run from /opt rather than handed a path. --no-install because it
-# shells out to yarn by default and the prewarm only needs the cargo caches.
-RUN cd /opt \
-    && anchor init prewarm --no-git --no-install \
-    && cd /opt/prewarm \
-    && anchor build \
-    && rm -rf /opt/prewarm/target/debug
+# Pre-build a scratch Anchor project AT THE PATH A WORKSPACE ACTUALLY USES.
+#
+# This is the core of the build-time budget (docs/07 §2), and the path is the
+# whole trick. Cargo fingerprints embed absolute paths, so a compiled target
+# directory only accelerates a build that runs where it was built. Measured:
+# copying this target into a project elsewhere is worth almost nothing (40.3s
+# against a 41.7s cold baseline), while overlaying a template's source onto
+# this directory in place builds in ~1.2s.
+#
+# anchor init takes a workspace NAME under the cwd, not a path. --no-install
+# because it shells out to yarn and only the cargo artifacts matter here. The
+# target directory is deliberately kept: it is the product of this layer.
+RUN mkdir -p /workspace \
+    && cd /workspace \
+    && anchor init project --no-git --no-install \
+    && cd /workspace/project \
+    && anchor build
 
-# The prewarm build is also what populates the SBF platform-tools cache. Without
-# it, cargo-build-sbf downloads a tarball from GitHub on first build, which is a
-# hard failure in a workspace running with egress off. Fail the image build now
-# rather than the user's first build later. The cache lives under $HOME, so a
-# workspace must run as the same user that built this layer (root).
+# The pre-build is also what populates the SBF platform-tools cache. Without it,
+# cargo-build-sbf downloads a tarball from GitHub on first build, which is a hard
+# failure in a workspace running with egress off. Fail the image build now rather
+# than the user's first build later. The cache lives under $HOME, so a workspace
+# must run as the same user that built this layer (root).
 RUN ls -d /root/.cache/solana/*/platform-tools >/dev/null 2>&1 \
-    || { echo "platform-tools cache missing: offline anchor build would fail"; exit 1; }
+    || { echo "platform-tools cache missing: offline anchor build would fail"; exit 1; } \
+    && test -f /workspace/project/target/deploy/project.so \
+    || { echo "pre-built target missing: first user build would be a cold compile"; exit 1; }
 
 # Programs the test validator's genesis does not carry, dumped now so a
 # workspace can run its validator with egress switched off. Genesis already
