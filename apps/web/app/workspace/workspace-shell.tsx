@@ -1,39 +1,46 @@
 "use client";
 
-import Link from "next/link";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { BrikLoader, BrikWordmark } from "../../components/logo";
-import type { Template } from "../../lib/templates";
-import { StatusBadge, type Status } from "../../components/ui";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { AppPreview } from "../../components/app-preview";
+import { isAnchorProject, type Template } from "../../lib/templates";
+import type { Status } from "../../components/ui";
+import { Composer } from "./composer";
+import { WorkspaceHeader } from "./header";
 import { AgentPanel, Editor, Files, SolanaPanel, Terminal } from "./panels";
-import { buildFrames, type Frame, type TerminalLine } from "./run-script";
+import {
+  buildFollowUpFrames,
+  buildFrames,
+  notConnectedNote,
+  type Entry,
+  type Frame,
+  type TerminalLine,
+} from "./run-script";
 
 interface RunState {
   status: Status;
-  steps: string[];
+  entries: Entry[];
   terminal: TerminalLine[];
   code: number;
+  source: string[];
+  added: number[];
   changed: string[];
   program?: string;
   tx?: string;
   balance: number;
 }
 
-const INITIAL: RunState = {
-  status: "sleeping",
-  steps: [],
-  terminal: [],
-  code: 0,
-  changed: [],
-  balance: 2.41,
-};
-
 function applyFrame(state: RunState, frame: Frame): RunState {
   return {
     status: frame.status ?? state.status,
-    steps: frame.agent ? [...state.steps, frame.agent] : state.steps,
-    terminal: frame.term ? [...state.terminal, ...frame.term] : state.terminal,
+    entries: frame.agent
+      ? [...state.entries, { kind: "step", text: frame.agent }]
+      : state.entries,
+    terminal: frame.term
+      ? [...(frame.clearTerm ? [] : state.terminal), ...frame.term]
+      : state.terminal,
     code: frame.code ?? state.code,
+    source: frame.source ?? state.source,
+    added: frame.added ?? state.added,
     changed:
       frame.file && !state.changed.includes(frame.file)
         ? [...state.changed, frame.file]
@@ -44,7 +51,39 @@ function applyFrame(state: RunState, frame: Frame): RunState {
   };
 }
 
-type MobileView = "files" | "editor" | "agent";
+function makeInitial(template: Template, task: string): RunState {
+  return {
+    status: "sleeping",
+    entries: [{ kind: "task", text: task }],
+    terminal: [],
+    code: 0,
+    source: template.source,
+    added: [],
+    changed: [],
+    balance: 2.41,
+  };
+}
+
+const STATUS_LINE: Record<Status, string> = {
+  sleeping: "Starting the workspace.",
+  ready: "Reading the project.",
+  building: "Compiling your program.",
+  testing: "Running the tests.",
+  failed: "Fixing a build error.",
+  deployed: "Deployed.",
+};
+
+type CenterTab = "preview" | "code";
+type RightTab = "agent" | "solana";
+/** Which pane fills the screen below md. "right" defers to the active RightTab. */
+type MobileView = "files" | "editor" | "right";
+
+const MOBILE_TABS: { label: string; view: MobileView; right?: RightTab }[] = [
+  { label: "Files", view: "files" },
+  { label: "App", view: "editor" },
+  { label: "Agent", view: "right", right: "agent" },
+  { label: "Solana", view: "right", right: "solana" },
+];
 
 export function WorkspaceShell({
   task,
@@ -53,104 +92,119 @@ export function WorkspaceShell({
   task: string;
   template: Template;
 }) {
-  const [run, setRun] = useState<RunState>(INITIAL);
+  const [run, setRun] = useState<RunState>(() => makeInitial(template, task));
   const [isRunning, setIsRunning] = useState(true);
-  const [rightTab, setRightTab] = useState<"agent" | "solana">("agent");
+  const [hasUsedSuggestion, setHasUsedSuggestion] = useState(false);
+  const [centerTab, setCenterTab] = useState<CenterTab>("code");
+  const isTabPinned = useRef(false);
+  const [rightTab, setRightTab] = useState<RightTab>("agent");
   const [isTerminalOpen, setIsTerminalOpen] = useState(true);
   const [mobileView, setMobileView] = useState<MobileView>("editor");
   const timers = useRef<number[]>([]);
-  const frames = useMemo(() => buildFrames(template), [template]);
 
   const clearTimers = useCallback(() => {
     timers.current.forEach(window.clearTimeout);
     timers.current = [];
   }, []);
 
+  const runFrames = useCallback(
+    (frames: Frame[], from: RunState) => {
+      clearTimers();
+      setIsRunning(true);
+      if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+        setRun(frames.reduce(applyFrame, from));
+        setIsRunning(false);
+        return;
+      }
+      setRun(from);
+      let elapsed = 0;
+      frames.forEach((frame, index) => {
+        elapsed += frame.delay;
+        const id = window.setTimeout(() => {
+          setRun((prev) => applyFrame(prev, frame));
+          if (index === frames.length - 1) setIsRunning(false);
+        }, elapsed);
+        timers.current.push(id);
+      });
+    },
+    [clearTimers],
+  );
+
   const play = useCallback(() => {
-    clearTimers();
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-      setRun(frames.reduce(applyFrame, INITIAL));
-      setIsRunning(false);
-      return;
-    }
-    setRun(INITIAL);
-    setIsRunning(true);
-    let elapsed = 0;
-    frames.forEach((frame, index) => {
-      elapsed += frame.delay;
-      const id = window.setTimeout(() => {
-        setRun((prev) => applyFrame(prev, frame));
-        if (index === frames.length - 1) setIsRunning(false);
-      }, elapsed);
-      timers.current.push(id);
-    });
-  }, [clearTimers, frames]);
+    setHasUsedSuggestion(false);
+    if (!isTabPinned.current) setCenterTab("code");
+    runFrames(buildFrames(template), makeInitial(template, task));
+  }, [runFrames, template, task]);
 
   useEffect(() => {
     play();
     return clearTimers;
   }, [play, clearTimers]);
 
+  // Land on the preview once there is something to look at.
+  useEffect(() => {
+    if (run.status === "deployed" && !isTabPinned.current) setCenterTab("preview");
+  }, [run.status]);
+
+  const selectTab = (tab: CenterTab) => {
+    setCenterTab(tab);
+    isTabPinned.current = true;
+  };
+
+  const runSuggestion = () => {
+    setHasUsedSuggestion(true);
+    if (!isTabPinned.current) setCenterTab("code");
+    runFrames(buildFollowUpFrames(template), {
+      ...run,
+      status: "ready",
+      entries: [...run.entries, { kind: "task", text: template.followUp.chip }],
+    });
+  };
+
+  const sendMessage = (text: string) => {
+    const note = notConnectedNote(isDeployed && !hasUsedSuggestion);
+    setRun((prev) => ({
+      ...prev,
+      entries: [...prev.entries, { kind: "task", text }, { kind: "note", text: note }],
+    }));
+    setRightTab("agent");
+  };
+
   const isDeployed = run.status === "deployed";
 
   return (
     <div className="flex h-dvh flex-col overflow-hidden">
-      <header className="flex h-12 shrink-0 items-center justify-between gap-4 border-b border-line px-4">
-        <div className="flex min-w-0 items-center gap-4">
-          <Link href="/" aria-label="Brik home" className="shrink-0 text-fg">
-            <BrikWordmark size={18} />
-          </Link>
-          <span className="hidden h-4 w-px bg-line sm:block" />
-          <span className="hidden truncate font-mono text-code-sm text-fg sm:block">
-            {template.project}
-          </span>
-          <span className="hidden font-mono text-code-sm text-fg-3 md:block">main</span>
-        </div>
-
-        <div className="flex shrink-0 items-center gap-3">
-          <span className="meta-label hidden text-fg-3 lg:block">Devnet</span>
-          <StatusBadge status={run.status} />
-          <button
-            type="button"
-            onClick={play}
-            className="btn btn-primary btn-compact"
-            disabled={isRunning}
-            aria-label={isDeployed ? "Redeploy to devnet" : "Deploy to devnet"}
-          >
-            {isRunning ? (
-              <>
-                <BrikLoader size={13} />
-                <span className="hidden sm:inline">
-                  {run.status === "testing" ? "Testing" : "Building"}
-                </span>
-              </>
-            ) : isDeployed ? (
-              "Redeploy"
-            ) : (
-              "Deploy"
-            )}
-          </button>
-        </div>
-      </header>
+      <WorkspaceHeader
+        project={template.project}
+        status={run.status}
+        isRunning={isRunning}
+        isDeployed={isDeployed}
+        onDeploy={play}
+      />
 
       <div className="flex shrink-0 border-b border-line md:hidden">
-        {(["files", "editor", "agent"] as MobileView[]).map((view) => (
-          <button
-            key={view}
-            type="button"
-            onClick={() => setMobileView(view)}
-            className={`meta-label -mb-px min-h-11 flex-1 border-b px-4 py-3 ${
-              mobileView === view
-                ? "border-cream text-fg"
-                : "border-transparent text-fg-3"
-            }`}
-          >
-            {view}
-          </button>
-        ))}
+        {MOBILE_TABS.map((tab) => {
+          const isActive =
+            mobileView === tab.view && (!tab.right || rightTab === tab.right);
+          return (
+            <button
+              key={tab.label}
+              type="button"
+              onClick={() => {
+                setMobileView(tab.view);
+                if (tab.right) setRightTab(tab.right);
+              }}
+              className={`meta-label -mb-px min-h-11 flex-1 border-b px-2 py-3 ${
+                isActive ? "border-cream text-fg" : "border-transparent text-fg-3"
+              }`}
+            >
+              {tab.label}
+            </button>
+          );
+        })}
       </div>
 
-      <main className="grid min-h-0 flex-1 md:grid-cols-[200px_1fr_300px]">
+      <main className="grid min-h-0 flex-1 md:grid-cols-[188px_1fr_320px]">
         <aside
           className={`min-h-0 border-line md:block md:border-r ${
             mobileView === "files" ? "block" : "hidden"
@@ -164,24 +218,56 @@ export function WorkspaceShell({
         </aside>
 
         <section
-          className={`min-h-0 md:block ${mobileView === "editor" ? "block" : "hidden"}`}
+          className={`flex min-h-0 flex-col md:flex ${
+            mobileView === "editor" ? "flex" : "hidden"
+          }`}
         >
-          <Editor
-            revealed={run.code}
-            source={template.source}
-            entryFile={template.entryFile}
-            secondFile={template.files[2]}
-          />
+          <div className="flex shrink-0 items-center justify-between gap-4 border-b border-line pr-4">
+            <div className="flex">
+              {(["preview", "code"] as CenterTab[]).map((tab) => (
+                <button
+                  key={tab}
+                  type="button"
+                  onClick={() => selectTab(tab)}
+                  className={`-mb-px min-h-11 border-b px-4 py-3 text-body capitalize ${
+                    centerTab === tab
+                      ? "border-cream text-fg"
+                      : "border-transparent text-fg-3"
+                  }`}
+                >
+                  {tab}
+                </button>
+              ))}
+            </div>
+            {centerTab === "code" && (
+              <span className="hidden truncate font-mono text-code-sm text-fg-3 lg:block">
+                {template.entryFile}
+              </span>
+            )}
+          </div>
+
+          {centerTab === "code" ? (
+            <Editor revealed={run.code} source={run.source} added={run.added} />
+          ) : (
+            <div className="min-h-0 flex-1">
+              <AppPreview
+                slug={template.slug}
+                url={`https://${template.project}.brik.app`}
+                isDeployed={isDeployed}
+                statusLine={STATUS_LINE[run.status]}
+              />
+            </div>
+          )}
         </section>
 
         <aside
           className={`min-h-0 border-line md:block md:border-l ${
-            mobileView === "agent" ? "block" : "hidden"
+            mobileView === "right" ? "block" : "hidden"
           }`}
         >
           <div className="flex h-full min-h-0 flex-col">
-            <div className="flex shrink-0 border-b border-line">
-              {(["agent", "solana"] as const).map((tab) => (
+            <div className="hidden shrink-0 border-b border-line md:flex">
+              {(["agent", "solana"] as RightTab[]).map((tab) => (
                 <button
                   key={tab}
                   type="button"
@@ -196,25 +282,36 @@ export function WorkspaceShell({
                 </button>
               ))}
             </div>
-            <div className="min-h-0 flex-1">
-              {rightTab === "agent" ? (
-                <AgentPanel steps={run.steps} isRunning={isRunning} task={task} />
-              ) : (
-                <SolanaPanel
-                  program={run.program}
-                  tx={run.tx}
-                  balance={run.balance}
-                  hasProgram={template.entryFile.startsWith("programs/")}
+
+            {rightTab === "agent" ? (
+              <>
+                <AgentPanel entries={run.entries} isRunning={isRunning} />
+                <Composer
+                  suggestion={
+                    isDeployed && !hasUsedSuggestion
+                      ? template.followUp.chip
+                      : undefined
+                  }
+                  disabled={isRunning}
+                  onSuggestion={runSuggestion}
+                  onMessage={sendMessage}
                 />
-              )}
-            </div>
+              </>
+            ) : (
+              <SolanaPanel
+                program={run.program}
+                tx={run.tx}
+                balance={run.balance}
+                hasProgram={isAnchorProject(template)}
+              />
+            )}
           </div>
         </aside>
       </main>
 
       <section
         className="shrink-0 border-t border-line"
-        style={{ height: isTerminalOpen ? 168 : 0 }}
+        style={{ height: isTerminalOpen ? 152 : 0 }}
       >
         {isTerminalOpen && <Terminal lines={run.terminal} />}
       </section>

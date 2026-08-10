@@ -3,7 +3,7 @@
 import { useEffect, useRef } from "react";
 import { BrikLoader } from "../../components/logo";
 import { Meter } from "../../components/ui";
-import type { TerminalLine } from "./run-script";
+import type { Entry, TerminalLine } from "./run-script";
 
 const KEYWORDS = new Set([
   "use", "pub", "fn", "mod", "let", "mut", "super", "impl", "struct",
@@ -59,46 +59,51 @@ function fileName(path: string) {
 export function Editor({
   revealed,
   source,
-  entryFile,
-  secondFile,
+  added,
 }: {
   revealed: number;
   source: string[];
-  entryFile: string;
-  secondFile: string;
+  added: number[];
 }) {
+  const addedSet = new Set(added);
   return (
-    <div className="flex min-h-0 flex-col bg-canvas">
-      <div className="flex shrink-0 border-b border-line">
-        <span className="-mb-px border-b border-cream px-4 py-3 font-mono text-code-sm text-fg">
-          {fileName(entryFile)}
-        </span>
-        <span className="px-4 py-3 font-mono text-code-sm text-fg-3">
-          {fileName(secondFile)}
-        </span>
-      </div>
-      <div className="min-h-0 flex-1 overflow-auto p-4 font-mono text-code leading-[1.7]">
-        <pre className="min-w-max">
-          {source.slice(0, revealed).map((line, i) => (
-            <div key={i} className="flex">
+    <div className="min-h-0 flex-1 overflow-auto bg-canvas p-4 font-mono text-code leading-[1.7]">
+      <pre className="min-w-max">
+        {source.slice(0, revealed).map((line, i) => {
+          const isAdded = addedSet.has(i);
+          return (
+            <div
+              key={i}
+              className="flex"
+              style={isAdded ? { background: "var(--brik-ok-tint)" } : undefined}
+            >
               <span className="w-9 shrink-0 select-none text-right text-fg-3">
                 {i + 1}
               </span>
-              <span className="pl-4">
+              <span
+                className={`w-5 shrink-0 select-none text-center ${
+                  isAdded ? "text-ok" : "text-transparent"
+                }`}
+                aria-hidden
+              >
+                +
+              </span>
+              <span>
                 <CodeLine line={line} />
               </span>
             </div>
-          ))}
-          {revealed > 0 && revealed < source.length && (
-            <div className="flex">
-              <span className="w-9 shrink-0 select-none text-right text-fg-3">
-                {revealed + 1}
-              </span>
-              <span className="ml-4 inline-block h-[1.2em] w-[7px] translate-y-[3px] bg-cream" />
-            </div>
-          )}
-        </pre>
-      </div>
+          );
+        })}
+        {revealed > 0 && revealed < source.length && (
+          <div className="flex">
+            <span className="w-9 shrink-0 select-none text-right text-fg-3">
+              {revealed + 1}
+            </span>
+            <span className="w-5 shrink-0" aria-hidden />
+            <span className="inline-block h-[1.2em] w-[7px] translate-y-[3px] bg-cream" />
+          </div>
+        )}
+      </pre>
     </div>
   );
 }
@@ -134,42 +139,56 @@ export function Files({
 }
 
 export function AgentPanel({
-  steps,
+  entries,
   isRunning,
-  task,
 }: {
-  steps: string[];
+  entries: Entry[];
   isRunning: boolean;
-  task: string;
 }) {
+  const endRef = useRef<HTMLDivElement>(null);
+  const lastStep = entries.map((e) => e.kind).lastIndexOf("step");
+
+  useEffect(() => {
+    endRef.current?.scrollIntoView({ block: "end", behavior: "smooth" });
+  }, [entries.length]);
+
   return (
-    <div className="flex min-h-0 flex-col">
-      <div className="min-h-0 flex-1 overflow-auto p-4">
-        <p className="text-body text-fg">{task}</p>
-        <div className="mt-5 space-y-3">
-          {steps.map((step, i) => {
-            const isLast = i === steps.length - 1;
-            const isActive = isLast && isRunning;
-            return (
-              <div key={step} className="flex gap-3 text-body">
-                <span className="mt-0.5 shrink-0 text-fg-3">
-                  {isActive ? (
-                    <BrikLoader size={14} />
-                  ) : (
-                    <span className="text-ok" aria-hidden>
-                      ✓
-                    </span>
-                  )}
+    <div className="min-h-0 flex-1 space-y-3 overflow-auto p-4">
+      {entries.map((entry, i) => {
+        if (entry.kind === "task") {
+          return (
+            <p
+              key={i}
+              className="border-l border-cream pl-3 text-body font-medium text-fg first:mt-0 [&:not(:first-child)]:mt-6"
+            >
+              {entry.text}
+            </p>
+          );
+        }
+        if (entry.kind === "note") {
+          return (
+            <p key={i} className="text-body text-fg-3">
+              {entry.text}
+            </p>
+          );
+        }
+        const isActive = i === lastStep && isRunning;
+        return (
+          <div key={i} className="flex gap-3 text-body">
+            <span className="mt-0.5 shrink-0 text-fg-3">
+              {isActive ? (
+                <BrikLoader size={14} />
+              ) : (
+                <span className="text-ok" aria-hidden>
+                  ✓
                 </span>
-                <span className={isActive ? "text-fg" : "text-fg-2"}>{step}</span>
-              </div>
-            );
-          })}
-        </div>
-        {steps.length === 0 && (
-          <p className="mt-5 text-body text-fg-3">Waiting for the sandbox.</p>
-        )}
-      </div>
+              )}
+            </span>
+            <span className={isActive ? "text-fg" : "text-fg-2"}>{entry.text}</span>
+          </div>
+        );
+      })}
+      <div ref={endRef} />
     </div>
   );
 }

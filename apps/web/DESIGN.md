@@ -50,9 +50,17 @@ blocks. Progress is four small marks (WRITE → TEST → BUILD → DEPLOY). Pane
   building-blocks grid with functional visualizations, workflow strip, template cards, tech proof,
   ascii-field final CTA, minimal footer.
 - `/new` — Operate. "What do you want to build?" Describe (primary) · templates · import · blank.
-- `/workspace` — Operate. Scripted client-side demo of the real loop: agent steps, editor reveal,
-  terminal stream, devnet deploy. One authored motion sequence; replay control; reduced-motion
-  renders the finished state.
+- `/workspace` — Operate. Scripted client-side demo of the real loop. Center pane carries
+  `Preview | Code`: Code while the agent writes, auto-switching to Preview on first successful
+  deploy unless the visitor has picked a tab themselves. Preview renders the visitor's app in the
+  light token map inside browser chrome, because it is their artifact rather than Brik's chrome.
+  Right rail is Agent or Solana with a composer pinned below it. Reduced motion renders the
+  finished state instead of animating.
+
+  The agent stream stays a task runner, never chat bubbles: an objective with a cream left rule,
+  then checked steps. The composer's suggested change runs a real edit, shown as a diff, then a
+  rebuild, an added passing test, and a redeploy. Free text is answered honestly, because the
+  sandbox is not connected yet, and never with fabricated work.
 
 ## Touch-ups applied to the handoff (documented deltas)
 
