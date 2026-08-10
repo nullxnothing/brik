@@ -13,6 +13,7 @@ This folder is the working source of truth for building, pricing, launching, and
 - `04_subscription_unit_economics.md` — pricing, metering, COGS controls, and profitability model.
 - `05_launch_operations.md` — analytics, launch checklist, operating cadence, and risks.
 - `06_frontend_brand_direction.md` — frontend design language, brand system, and landing/docs direction.
+- `07_pre_build_research_agenda.md` — research, spikes, and decisions required before the build sprint, plus the pre-build gate.
 
 ## Strategic rule
 BRICK is **not another AI editor**. The editor is the creation surface. The business is the cloud development environment and production workflow around it.

@@ -17,6 +17,7 @@ The working source of truth lives in [`docs/`](docs/):
 | [`docs/04_subscription_unit_economics.md`](docs/04_subscription_unit_economics.md) | Pricing, metering, COGS controls, profitability |
 | [`docs/05_launch_operations.md`](docs/05_launch_operations.md) | Launch checklist, analytics, operating cadence, risks |
 | [`docs/06_frontend_brand_direction.md`](docs/06_frontend_brand_direction.md) | Frontend design language and brand system |
+| [`docs/07_pre_build_research_agenda.md`](docs/07_pre_build_research_agenda.md) | Pre-build research, technical spikes, and the pre-build gate |
 
 ## Strategic rule
 

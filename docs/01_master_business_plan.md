@@ -133,7 +133,8 @@ Tagline: Build on Solana. From your browser.
 - Neutral interface with one restrained accent and subtle grid/block motifs.
 - Product screenshots and real workflows dominate marketing.
 - Avoid generic purple gradients, coins, chains, rockets, and flame imagery.
-# 12. 90-Day Plan
+# 12. Build & Validation Plan
+Development is done by AI coding agents (Claude Code / Codex) with the founder directing, reviewing, and validating. This compresses **build** phases roughly 3–5x and allows parallel workstreams — but it compresses **learning** phases not at all: interviews, alpha observation, retention windows, and partnerships run on calendar time. W1 retention takes a week to exist; W4 takes four. The plan below builds in days and learns in weeks; the bottleneck shifts from engineering to founder decisions, human review of the security boundary, and user recruitment. The full phase detail lives in `02_product_build_spec.md`; the pre-build gate lives in `07_pre_build_research_agenda.md`.
 
 # 13. Standard Pre-Build Documents
 ## Product Requirements Document
@@ -243,12 +244,12 @@ The core discipline: Brick is successful only if people repeatedly build and shi
 
 | Phase | Objective | Deliverables |
 | --- | --- | --- |
-| Days 1–14 | Repackage existing technology around Brick. | Reuse audit, product spec, provisioning path, analytics events, remove obsolete positioning. |
-| Days 15–35 | Make the core loop excellent. | Git import, instant workspace, agent loop, devnet wallet, one template, preview. |
-| Days 36–50 | Private alpha. | 20–40 target builders; observe activation; fix blockers; measure session cost. |
-| Days 51–65 | Monetization beta. | Builder plan, persistence, quotas, billing, metering, mainnet workflow. |
-| Days 66–80 | Distribution. | Open in Brick, 3–5 templates, tutorials, ecosystem outreach, sharing. |
-| Days 81–90 | Decision gate. | Review retention, deployment, conversion, COGS; double down, reposition, or stop. |
+| Days 1–5 | Foundations & pre-build gate. | Reuse audit, sandbox provider bake-off + decision, build-time budget spike, threat model + abuse playbook, hero template choice, analytics wiring; interviews and alpha recruitment started (calendar-bound, begun day 1). |
+| Days 6–18 | Core loop excellent. | Workspace on managed provider, editor, agent loop, devnet wallet, hero template, shareable preview + fork, anonymous sandbox with abuse controls, Git import. |
+| Days 19–45 | Private alpha (calendar-bound). | 20–40 target builders; observe activation; fix blockers daily; measure session cost. Billing, persistence, quotas, and metering built in parallel (~days 25–35). |
+| Days 30–50 | Distribution build (parallel with alpha). | Open in Brick placements, 3–5 templates, interactive tutorials, hackathon mode + credits, MCP/CLI beta, launch content. |
+| Days 46–60 | Monetization beta. | Builder plan live to alpha cohort; first paid conversions; W1 retention readable. |
+| Days 60–75 | Decision gate. | Review W1 retention, deployments, conversion, COGS: double down, reposition, or stop. W4 paid retention confirms the call by ~day 90 — calendar time, regardless of build speed. |
 
 
 | Block | Decision |

@@ -90,29 +90,38 @@ Expose Brick's Solana environment — build, test, devnet deploy, transaction in
 ## Non-goals v1
 Multi-chain; proprietary foundation model; full AWS/Vercel replacement; marketplace/token; heavy enterprise IAM; dozens of integrations; mainnet deploys (until economics/custody are designed).
 
-## 90-day roadmap
-### Days 1-7
-Daemon reuse audit: editor, terminal, agent harness, Git, execution, Solana, auth, billing, deployment. Mark reuse/refactor/replace/remove.
+## Roadmap (AI-agent velocity)
+Development is done by AI coding agents with founder direction and review. Build phases run 3–5x faster than a human-team plan and workstreams run in parallel; **learning phases don't compress** — alpha observation, retention windows, interviews, and partnership outreach are calendar-bound. Rules that survive the speedup: reliability and time-to-success outrank feature count; the sandbox security boundary, secrets handling, and egress policy get **human review**, not agent-only merges; and the pre-build gate in `07_pre_build_research_agenda.md` clears before the core-loop sprint starts.
 
-### Days 8-20
-Workspace foundation on a managed sandbox provider: provider integration, Solana toolchain image, startup speed, terminal, GitHub import, editor, hibernation, usage events. No in-house orchestration.
+### Days 1-2
+Daemon reuse audit: editor, terminal, agent harness, Git, execution, Solana, auth, billing, deployment. Mark reuse/refactor/replace/remove — reused because it's good, not because it exists.
 
-### Days 21-35
-Agent loop: tool API, routing, file/search/shell, build/test, diff review, cost limits.
+### Days 1-5 (parallel)
+Technical spikes from the pre-build agenda: sandbox provider bake-off and decision, Anchor build-time budget (pre-warmed workspaces, dependency caches, prebuilt first-run binaries), RPC/faucet strategy, agent eval set drafted. Discovery interviews and design-partner recruitment start day 1 (calendar-bound).
 
-### Days 25-40
-Solana experience: toolchain image, devnet wallet, Solana panel, logs/transactions, one-click devnet deployment.
+### Days 3-10
+Workspace foundation on the chosen managed sandbox provider: provider integration behind an internal interface, Solana toolchain image, startup speed, terminal, GitHub import, editor, hibernation, usage events. No in-house orchestration.
 
-### Days 36-50
-Private alpha with 20-40 target builders. Measure activation, reliability, and cost/session.
+### Days 6-14 (parallel)
+Agent loop: tool API, routing, file/search/shell, build/test, diff review, cost limits, eval-set pass rate as the quality bar.
 
-### Days 51-65
-Billing, plan limits, persistence, overages, mainnet workflow.
+### Days 10-16 (parallel)
+Solana experience and growth surfaces: devnet wallet + funded faucet, Solana panel, logs/transactions, one-click devnet deployment, shareable preview URLs + share cards + fork flow, anonymous ephemeral sandboxes **with abuse controls in the same release**.
 
-### Days 66-80
-Distribution: shareable previews + fork loop hardened, Open in Brick placements (official docs, Anchor tutorials, ecosystem repos), 3-5 templates, interactive tutorials, hackathon mode + credits, MCP/CLI beta, founder-led launch content on X.
+### Days 15-18
+Hardening: reliability of the golden path, analytics events end-to-end, human security review of the sandbox boundary, load/abuse testing of the anonymous tier.
 
-### Days 81-90
-Decision gate: W1/W4 retention, deployments, paid conversion, COGS, customer pain.
+### Days 19-45 — Private alpha (calendar-bound)
+20–40 committed design partners. Observe activation live, fix blockers daily, measure cost/session and P95 landing-to-first-devnet-transaction. This window cannot shrink: W1 retention needs weeks to exist.
 
-**Reliability and time-to-success outrank feature count.**
+### Days 25-35 (parallel with alpha)
+Billing, plan limits, persistence, metering, overages. Mainnet workflow only if the economics/custody design (open questions above) is resolved.
+
+### Days 30-50 (parallel with alpha)
+Distribution build: Open in Brick placements (official docs, Anchor tutorials, ecosystem repos), 3–5 templates, interactive tutorials, hackathon mode + credits, MCP/CLI beta, founder-led launch content on X.
+
+### Days 46-60
+Monetization beta: Builder plan live to the alpha cohort; first paid conversions; W1 retention readable.
+
+### Days 60-75
+Decision gate: W1 retention, deployments, paid conversion, COGS, customer pain — double down, reposition, or stop. W4 paid retention confirms the call by ~day 90; that confirmation is calendar time no build speed can buy.
