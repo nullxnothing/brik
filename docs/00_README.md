@@ -1,10 +1,10 @@
-# BRICK Master Documentation Pack
+# BRIK Master Documentation Pack
 
-**Brand:** BRICK  
-**Domain:** brick.builders  
+**Brand:** BRIK  
+**Domain:** TBD — brick.builders predates the BRIK rename; redo domain/trademark diligence  
 **Tagline:** **Build on Solana. From your browser.**
 
-This folder is the working source of truth for building, pricing, launching, and operating BRICK.
+This folder is the working source of truth for building, pricing, launching, and operating BRIK.
 
 ## Files
 - `01_master_business_plan.md` — full business plan converted to Markdown.
@@ -16,7 +16,7 @@ This folder is the working source of truth for building, pricing, launching, and
 - `07_pre_build_research_agenda.md` — research, spikes, and decisions required before the build sprint, plus the pre-build gate.
 
 ## Strategic rule
-BRICK is **not another AI editor**. The editor is the creation surface. The business is the cloud development environment and production workflow around it.
+BRIK is **not another AI editor**. The editor is the creation surface. The business is the cloud development environment and production workflow around it.
 
 Success means **retained builders reaching real execution/deployment milestones at attractive contribution margin**, not signups or prompts.
 
@@ -24,6 +24,6 @@ Success means **retained builders reaching real execution/deployment milestones 
 - Market a **shippable outcome**, not an environment. Hero message: “From idea to a live Solana app in one tab.”
 - The primary growth loop is **shareable output**: live devnet preview URLs, share cards, fork buttons, public gallery.
 - The magic moment happens **before signup**; signup gates saving, never the first success. Activation target: P95 under 5 minutes from landing to first devnet transaction.
-- Distribution spine: **hackathons + official docs placement** (“Open in Brick” on pages we don't own), then tutorials/SEO, founder-led launch on X, and an MCP/CLI for developers who keep their own editor.
-- **Buy the workspace layer** from a managed sandbox provider for v1; Brick's edge is the Solana experience, agent harness, and deploy workflow.
+- Distribution spine: **hackathons + official docs placement** (“Open in Brik” on pages we don't own), then tutorials/SEO, founder-led launch on X, and an MCP/CLI for developers who keep their own editor.
+- **Buy the workspace layer** from a managed sandbox provider for v1; Brik's edge is the Solana experience, agent harness, and deploy workflow.
 - Growth design and abuse design ship **together** — every increase in free exposure carries its cost and abuse controls.

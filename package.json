@@ -1,13 +1,13 @@
 {
-  "name": "brick",
+  "name": "brik",
   "private": true,
   "version": "0.1.0",
-  "description": "BRICK — browser-native development platform for Solana",
+  "description": "BRIK — browser-native development platform for Solana",
   "scripts": {
-    "dev": "pnpm --filter @brick/web dev",
+    "dev": "pnpm --filter @brik/web dev",
     "build": "pnpm -r build",
     "typecheck": "pnpm -r typecheck",
-    "bakeoff": "pnpm --filter @brick/bakeoff start"
+    "bakeoff": "pnpm --filter @brik/bakeoff start"
   },
   "packageManager": "pnpm@10.33.0",
   "engines": {

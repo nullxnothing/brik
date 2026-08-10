@@ -1,4 +1,4 @@
-# BRICK Solana toolchain image
+# BRIK Solana toolchain image
 #
 # The workspace base image: Rust, Solana CLI (Agave), Anchor, Node, pnpm.
 # Every workspace — local Docker or managed provider — runs this image so

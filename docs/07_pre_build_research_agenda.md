@@ -1,4 +1,4 @@
-# BRICK Pre-Build Research & Decision Agenda
+# BRIK Pre-Build Research & Decision Agenda
 
 What to research, document, and decide **before (or in parallel with) the first build sprint**. With AI agents doing the building, engineering is no longer the bottleneck — decisions, validation, and recruitment are. Every item here exists to prevent an expensive wrong turn that agents would only execute faster.
 
@@ -16,7 +16,7 @@ Personally complete the same task — "build and deploy a working Solana app wit
 - Replit with manual Solana setup
 - Bolt/Lovable (not for Solana — for studying share-loop and onboarding mechanics)
 
-**Output:** a teardown doc with measured time-to-first-devnet-transaction per alternative, failure points, and the specific moments BRICK must beat. This becomes the demo script.
+**Output:** a teardown doc with measured time-to-first-devnet-transaction per alternative, failure points, and the specific moments BRIK must beat. This becomes the demo script.
 
 ### Market sizing refresh
 Pull current numbers before committing spend: Electric Capital developer report (monthly active Solana devs), Colosseum participation and growth, Solana Foundation grant activity. Sanity-check the validation cohort (260 paying accounts) against real population sizes and write down the honest penetration percentage it implies.
@@ -46,8 +46,8 @@ The single biggest technical threat to "P95 under 5 minutes" is Rust compilation
 **Output:** measured cold/warm build times per mitigation; a stated build-time budget for the magic-moment path.
 
 ### RPC and faucet strategy
-The magic moment depends on devnet infrastructure BRICK doesn't control:
-- Public devnet airdrop faucets are rate-limited and unreliable — likely need a BRICK-funded devnet faucet wallet with per-user limits
+The magic moment depends on devnet infrastructure BRIK doesn't control:
+- Public devnet airdrop faucets are rate-limited and unreliable — likely need a BRIK-funded devnet faucet wallet with per-user limits
 - RPC provider selection (Helius, Triton, QuickNode vs public endpoints): rate limits, devnet support, cost per active user
 - What happens to the demo when devnet is degraded (it happens) — fallback plan
 
@@ -57,22 +57,22 @@ The magic moment depends on devnet infrastructure BRICK doesn't control:
 - LLM knowledge of Anchor is frequently stale (breaking version churn). Spike: curated up-to-date Anchor/Solana docs as retrieval context, pinned toolchain versions in templates, and measure eval improvement
 
 ### Shareable preview hosting design
-Previews are user-generated content on BRICK's domain:
+Previews are user-generated content on BRIK's domain:
 - Subdomain-per-project isolation, CSP, no cookies shared with the app domain
-- **Phishing/drainer risk is existential**: a hosted wallet-drainer on brick.builders kills trust and gets domains blocklisted. Design scanning, reporting, takedown, and rate limits before the share loop ships
+- **Phishing/drainer risk is existential**: a hosted wallet-drainer on BRIK's domain kills trust and gets domains blocklisted. Design scanning, reporting, takedown, and rate limits before the share loop ships
 
 ## 3. Security & trust (documents before code)
 
 - **Workspace threat model** — written and reviewed before the first sandbox ships. Sandbox security is the one area that cannot be vibe-coded; human review required on the isolation boundary, secrets handling, and egress policy.
-- **Key custody design doc** — devnet keys may be BRICK-managed (throwaway); state the invariant now that **BRICK never holds user mainnet keys or funds**, and design mainnet flows (user wallet signs, BRICK never custodies) to preserve it.
+- **Key custody design doc** — devnet keys may be BRIK-managed (throwaway); state the invariant now that **BRIK never holds user mainnet keys or funds**, and design mainnet flows (user wallet signs, BRIK never custodies) to preserve it.
 - **Abuse playbook** — miners, drainer builders, bot farms: detection signals, rate limits, gating ladder (anonymous → account-age/credit-card → paid), takedown process, and who is on call.
 
 ## 4. Legal & compliance
 
 - Entity formation and jurisdiction (before revenue, ideally before alpha data collection).
 - ToS, Privacy Policy, AUP — with crypto-specific clauses: prohibited use (drainers, scams), hosted-content liability, sanctions/OFAC screening posture.
-- **Money-transmission review**: if BRICK ever funds mainnet deploy rent or touches user SOL, get a legal opinion first. The current design (devnet-only, user wallet signs mainnet) should be structured to stay clearly outside money-transmission scope.
-- Trademark and naming diligence for BRICK (crowded term) and brick.builders — before public launch, per existing checklist.
+- **Money-transmission review**: if BRIK ever funds mainnet deploy rent or touches user SOL, get a legal opinion first. The current design (devnet-only, user wallet signs mainnet) should be structured to stay clearly outside money-transmission scope.
+- Trademark and naming diligence for BRIK and the chosen domain — before public launch, per existing checklist.
 
 ## 5. Business & finance
 

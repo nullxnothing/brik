@@ -35,7 +35,7 @@ importers:
 
   packages/agent:
     dependencies:
-      '@brick/sandbox':
+      '@brik/sandbox':
         specifier: workspace:*
         version: link:../sandbox
     devDependencies:
@@ -57,7 +57,7 @@ importers:
 
   tools/bakeoff:
     dependencies:
-      '@brick/sandbox':
+      '@brik/sandbox':
         specifier: workspace:*
         version: link:../../packages/sandbox
     devDependencies:

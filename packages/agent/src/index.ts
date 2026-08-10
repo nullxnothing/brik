@@ -1,5 +1,5 @@
 /**
- * BRICK agent harness — vendor-neutral skeleton.
+ * BRIK agent harness — vendor-neutral skeleton.
  *
  * The harness owns tools, context selection, routing, budgets, and task
  * state (docs/02_product_build_spec.md). Models are swappable; the harness
@@ -7,7 +7,7 @@
  * tool evidence — every task step carries the ExecResult that proves it.
  */
 
-import type { ExecResult, Workspace } from "@brick/sandbox";
+import type { ExecResult, Workspace } from "@brik/sandbox";
 
 /** Routing tiers per the AI cost strategy (docs/01 §4). */
 export type ModelTier = "cheap" | "default" | "frontier";

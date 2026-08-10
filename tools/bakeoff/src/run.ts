@@ -1,5 +1,5 @@
 import { mkdirSync, writeFileSync } from "node:fs";
-import { DockerProvider, type SandboxProvider } from "@brick/sandbox";
+import { DockerProvider, type SandboxProvider } from "@brik/sandbox";
 
 /**
  * Sandbox provider bake-off harness (docs/07_pre_build_research_agenda.md §2).
@@ -11,7 +11,7 @@ import { DockerProvider, type SandboxProvider } from "@brick/sandbox";
  *   4. exec round-trip latency
  *
  * Run the Docker baseline:
- *   docker build -t brick/solana-toolchain:dev infra/toolchain-image
+ *   docker build -t brik/solana-toolchain:dev infra/toolchain-image
  *   pnpm bakeoff
  *
  * Managed providers (E2B, Modal, Daytona, Fly Machines) get adapters in
@@ -19,7 +19,7 @@ import { DockerProvider, type SandboxProvider } from "@brick/sandbox";
  * its API key in the environment. Results land in bakeoff-results/.
  */
 
-const IMAGE = process.env.BAKEOFF_IMAGE ?? "brick/solana-toolchain:dev";
+const IMAGE = process.env.BAKEOFF_IMAGE ?? "brik/solana-toolchain:dev";
 
 const PROVIDERS: SandboxProvider[] = [
   new DockerProvider(),

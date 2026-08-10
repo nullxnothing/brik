@@ -1,17 +1,17 @@
 import Link from "next/link";
-import { BrickMark, BrickWordmark } from "../components/logo";
+import { BrikMark, BrikWordmark } from "../components/logo";
 
 function Mark() {
-  return <BrickMark size={14} />;
+  return <BrikMark size={14} />;
 }
 
 function Nav() {
   return (
     <nav className="nav">
       <div className="container nav-inner">
-        <Link href="/" className="nav-brand" aria-label="BRICK">
-          <BrickMark size={16} />
-          <BrickWordmark height={13} />
+        <Link href="/" className="nav-brand" aria-label="BRIK">
+          <BrikMark size={16} />
+          <BrikWordmark height={13} />
         </Link>
         <div className="nav-links">
           <a href="#build">BUILD</a>
@@ -43,7 +43,7 @@ function Hero() {
           In one tab.
         </h1>
         <p>
-          Describe it or pick a template — BRICK builds, tests, and deploys it
+          Describe it or pick a template — BRIK builds, tests, and deploys it
           to devnet while you watch. No Rust, Anchor or Solana setup required.
         </p>
         <div className="hero-ctas">
@@ -208,8 +208,8 @@ function Footer() {
   return (
     <footer className="footer">
       <div className="container footer-inner">
-        <span>BRICK — BUILD ON SOLANA. FROM YOUR BROWSER.</span>
-        <span>© 2026 BRICK</span>
+        <span>BRIK — BUILD ON SOLANA. FROM YOUR BROWSER.</span>
+        <span>© 2026 BRIK</span>
       </div>
     </footer>
   );

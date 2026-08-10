@@ -1,11 +1,11 @@
-# BRICK Solana toolchain image
+# BRIK Solana toolchain image
 
-The deterministic base image for every BRICK workspace.
+The deterministic base image for every BRIK workspace.
 
 ## Build
 
 ```sh
-docker build -t brick/solana-toolchain:dev .
+docker build -t brik/solana-toolchain:dev .
 ```
 
 Expect a long first build (Rust toolchain + Anchor compile + pre-warm). The

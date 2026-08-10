@@ -1,4 +1,4 @@
-# BRICK Subscription, Metering & Profitability
+# BRIK Subscription, Metering & Profitability
 
 ## Anonymous trial — $0, no account
 Purpose: the magic moment before signup.

@@ -119,7 +119,7 @@ export class DockerProvider implements SandboxProvider {
   private workspaces = new Map<string, DockerWorkspace>();
 
   async createWorkspace(spec: WorkspaceSpec): Promise<Workspace> {
-    const id = `brick-${randomUUID().slice(0, 8)}`;
+    const id = `brik-${randomUUID().slice(0, 8)}`;
     const args = [
       "run",
       "-d",

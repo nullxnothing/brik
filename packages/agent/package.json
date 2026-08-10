@@ -1,5 +1,5 @@
 {
-  "name": "@brick/agent",
+  "name": "@brik/agent",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -10,7 +10,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@brick/sandbox": "workspace:*"
+    "@brik/sandbox": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^22.15.0",

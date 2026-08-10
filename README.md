@@ -1,8 +1,8 @@
-# BRICK
+# BRIK
 
 **Build on Solana. From your browser.**
 
-BRICK is a browser-native development platform for Solana: a preconfigured cloud workspace with an AI coding agent, editor, terminal, Solana tooling, previews, and deployment — from idea to a live Solana app in one tab.
+BRIK is a browser-native development platform for Solana: a preconfigured cloud workspace with an AI coding agent, editor, terminal, Solana tooling, previews, and deployment — from idea to a live Solana app in one tab.
 
 ## Documentation
 
@@ -44,10 +44,10 @@ pnpm typecheck  # typecheck all packages
 To run the sandbox bake-off baseline (requires Docker):
 
 ```sh
-docker build -t brick/solana-toolchain:dev infra/toolchain-image
+docker build -t brik/solana-toolchain:dev infra/toolchain-image
 pnpm bakeoff
 ```
 
 ## Strategic rule
 
-BRICK is **not another AI editor**. The editor is the creation surface; the business is the cloud development environment and production workflow around it. Success means retained builders reaching real execution and deployment milestones at attractive contribution margin — not signups or prompts.
+BRIK is **not another AI editor**. The editor is the creation surface; the business is the cloud development environment and production workflow around it. Success means retained builders reaching real execution and deployment milestones at attractive contribution margin — not signups or prompts.

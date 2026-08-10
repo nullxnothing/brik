@@ -1,12 +1,12 @@
 import Link from "next/link";
-import { BrickMark, BrickWordmark } from "../../components/logo";
+import { BrikMark, BrikWordmark } from "../../components/logo";
 
 // Static workspace shell — the panel layout from docs/03_ui_ux_brand_spec.md.
 // Editor, terminal, and agent panels are placeholders until the control
 // plane and sandbox integration land.
 
 export const metadata = {
-  title: "BRICK — Workspace",
+  title: "BRIK — Workspace",
 };
 
 export default function Workspace() {
@@ -14,9 +14,9 @@ export default function Workspace() {
     <div className="ws">
       <div className="ws-top">
         <div className="ws-top-left">
-          <Link href="/" className="nav-brand" aria-label="BRICK">
-            <BrickMark size={14} />
-            <BrickWordmark height={11} />
+          <Link href="/" className="nav-brand" aria-label="BRIK">
+            <BrikMark size={14} />
+            <BrikWordmark height={11} />
           </Link>
           <span>tip-jar</span>
           <span>main</span>

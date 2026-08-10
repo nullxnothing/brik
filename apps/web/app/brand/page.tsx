@@ -1,8 +1,8 @@
 import Link from "next/link";
-import { BrickMark, BrickWordmark } from "../../components/logo";
+import { BrikMark, BrikWordmark } from "../../components/logo";
 
 export const metadata = {
-  title: "BRICK — Brand",
+  title: "BRIK — Brand",
 };
 
 // Internal brand reference page: the wordmark and mark evaluated at the
@@ -44,21 +44,21 @@ export default function Brand() {
   return (
     <main className="container" style={{ padding: "48px 24px 96px" }}>
       <div className="section-label" style={{ marginBottom: 24 }}>
-        <Link href="/">← BRICK</Link> / BRAND
+        <Link href="/">← BRIK</Link> / BRAND
       </div>
 
       <div style={{ display: "grid", gap: 1 }}>
         <Panel>
-          <BrickWordmark height={72} />
+          <BrikWordmark height={72} />
           <div style={row}>
-            <BrickWordmark height={32} />
-            <BrickWordmark height={20} />
-            <BrickWordmark height={12} />
+            <BrikWordmark height={32} />
+            <BrikWordmark height={20} />
+            <BrikWordmark height={12} />
           </div>
           <div style={row}>
-            <BrickMark size={64} />
-            <BrickMark size={32} />
-            <BrickMark size={16} />
+            <BrikMark size={64} />
+            <BrikMark size={32} />
+            <BrikMark size={16} />
             <span
               className="mono"
               style={{ fontSize: 11, color: "var(--fg-meta)", letterSpacing: "0.1em" }}
@@ -68,8 +68,8 @@ export default function Brand() {
           </div>
           <div style={row}>
             <span style={{ display: "inline-flex", alignItems: "center", gap: 10 }}>
-              <BrickMark size={16} />
-              <BrickWordmark height={13} />
+              <BrikMark size={16} />
+              <BrikWordmark height={13} />
             </span>
             <span
               className="mono"
@@ -81,11 +81,11 @@ export default function Brand() {
         </Panel>
 
         <Panel dark>
-          <BrickWordmark height={72} />
+          <BrikWordmark height={72} />
           <div style={row}>
-            <BrickMark size={64} />
-            <BrickMark size={32} />
-            <BrickMark size={16} />
+            <BrikMark size={64} />
+            <BrikMark size={32} />
+            <BrikMark size={16} />
           </div>
         </Panel>
       </div>

@@ -1,7 +1,7 @@
-# BRICK — Frontend Design & Brand Direction
+# BRIK — Frontend Design & Brand Direction
 
 ## Brand concept
-BRICK is infrastructure for builders. Software is built from blocks; BRICK is one of the fundamental blocks. It should feel modular, precise, fast, technical, dependable, composable, minimal, and developer-first.
+BRIK is infrastructure for builders. Software is built from blocks; BRIK is one of the fundamental blocks. It should feel modular, precise, fast, technical, dependable, composable, minimal, and developer-first.
 
 ## Visual philosophy
 Reduce everything to essential components. Panels connect to panels, commands create outputs, modules snap together, and information has obvious hierarchy. Structured, not sterile.
@@ -25,26 +25,26 @@ Modern grotesk/sans-serif for interface and marketing; high-quality monospace fo
 Use strict alignment, thin dividers, rectangular modules, and repeating columns. Prefer 0–6px radii, generally 0–4px for panels and ~4px for controls. Use 1px neutral borders instead of floating cards and shadows.
 
 ## Logo
-An unmistakable modular glyph made from a small number of rectangular primitives. Communicate assembly, infrastructure, and modularity without literal masonry. No brick texture, wall, construction tools, crypto coins, blockchain nodes, or Solana gradients. Must remain recognizable at 16×16.
+An unmistakable modular glyph made from a small number of rectangular primitives. Communicate assembly, infrastructure, and modularity without literal masonry. No brik texture, wall, construction tools, crypto coins, blockchain nodes, or Solana gradients. Must remain recognizable at 16×16.
 
 ## Motion
 Motion communicates state. The logo can assemble in ~300–500ms. UI transitions should be fast (~100–150ms). No bouncing, decorative particles, constant glow, or ambient blobs.
 
 ## Navigation
-Restrained desktop structure such as: `BRICK  BUILD  DOCS  EXAMPLES  GITHUB  LAUNCH →`. Thin bottom border, generous breathing room, no floating pill nav.
+Restrained desktop structure such as: `BRIK  BUILD  DOCS  EXAMPLES  GITHUB  LAUNCH →`. Thin bottom border, generous breathing room, no floating pill nav.
 
 ## Homepage hero
-Lead immediately with the outcome BRICK produces, not the environment. Example:
+Lead immediately with the outcome BRIK produces, not the environment. Example:
 
 **From idea to a live Solana app.  
 In one tab.**
 
-Describe it or pick a template — BRICK builds, tests, and deploys it to devnet while you watch.
+Describe it or pick a template — BRIK builds, tests, and deploys it to devnet while you watch.
 
 Primary CTA: `START BUILDING →` (opens a running workspace directly — no signup)  
 Secondary CTA: `VIEW DOCUMENTATION`
 
-Show the product immediately rather than hiding it below marketing sections. "Build on Solana. Brick by brick." remains available as a secondary brand line.
+Show the product immediately rather than hiding it below marketing sections. "Build on Solana. Brik by brik." remains available as a secondary brand line.
 
 ## Product demo
 Large functional workspace frame: project/files on left, editor/workspace center, agent/Solana context right, terminal/build/test below. Demonstrate real states such as BUILDING → COMPILED → DEPLOYING → CONFIRMED.
@@ -52,7 +52,7 @@ Large functional workspace frame: project/files on left, editor/workspace center
 ## Modular features
 Use a grid rather than generic SaaS cards. Core modules: BUILD, TEST, DEPLOY, INSPECT. Each gets a small monospace index, concise title, one sentence, and functional visualization.
 
-## BRICK motif
+## BRIK motif
 Repeat modular rectangles subtly in loaders, progress, section labels, architecture diagrams, empty states, and active indicators. This creates recognition without overusing the logo.
 
 ## Buttons
@@ -65,7 +65,7 @@ Short, precise, technical, calm, confident, developer-native. Avoid hype such as
 Errors should state what failed and why, with actionable technical detail. No “Whoops!” or playful copy. Success should be restrained: BUILD COMPLETE, DEPLOYED, TRANSACTION CONFIRMED, PROGRAM LIVE. No confetti.
 
 ## Share card
-Shared preview URLs are a primary growth surface and get first-class design: project name, live screenshot, BRICK modular motif, subtle "Built with BRICK" attribution, and a prominent `FORK THIS →` action on the preview page. The share card must look excellent when unfurled on X, Discord, and Slack — it is the ad.
+Shared preview URLs are a primary growth surface and get first-class design: project name, live screenshot, BRIK modular motif, subtle "Built with BRIK" attribution, and a prominent `FORK THIS →` action on the preview page. The share card must look excellent when unfurled on X, Discord, and Slack — it is the ad.
 
 ## Landing page structure
 1. Navigation
@@ -79,7 +79,7 @@ Shared preview URLs are a primary growth surface and get first-class design: pro
 9. Minimal footer
 
 ## Documentation
-Docs must feel like BRICK. Left navigation, central documentation, right page contents. Prominent simple code blocks, monospace, copy control, restrained syntax colors.
+Docs must feel like BRIK. Left navigation, central documentation, right page contents. Prominent simple code blocks, monospace, copy control, restrained syntax colors.
 
 ## Application UI
 Marketing aesthetics largely disappear inside the product. Use a connected workspace rather than a dashboard of floating widgets. Resizable panels where useful; shared borders; editor, project navigation, inspector/agent, terminal.
@@ -99,15 +99,15 @@ Desktop is expansive and grid-based. Mobile stacks modules naturally instead of 
 Consistent geometric icons, 1.5–2px stroke, minimal and technical. Prefer simple symbols such as `→`, `+`, `×`, `⌘`, and `↗` when possible. Avoid emoji.
 
 ## Imagery
-BRICK generally does not need photography. Prefer UI demonstrations, architecture diagrams, code, terminal output, modular diagrams, and screenshots.
+BRIK generally does not need photography. Prefer UI demonstrations, architecture diagrams, code, terminal output, modular diagrams, and screenshots.
 
-## What BRICK must not become
+## What BRIK must not become
 Not a memecoin platform, crypto casino, generic Web3 dashboard, construction startup, generic AI SaaS page, purple-gradient developer tool, or cyberpunk terminal.
 
-BRICK should look like a fundamental piece of software infrastructure that happens to be built for Solana.
+BRIK should look like a fundamental piece of software infrastructure that happens to be built for Solana.
 
 ## Brand personality
-**BRICK is the quiet, precise, modular workspace developers use to turn Solana ideas into working software.**
+**BRIK is the quiet, precise, modular workspace developers use to turn Solana ideas into working software.**
 
 ## Visual personality
 **Black geometry, warm white space, strict grids, excellent typography, and small pieces assembling into powerful systems.**

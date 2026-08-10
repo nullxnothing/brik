@@ -1,4 +1,4 @@
-# BRICK Product & Build Specification
+# BRIK Product & Build Specification
 
 ## MVP goal
 A user can start or import a Solana project, use an AI agent to modify it, successfully build/test it, preview it, and deploy to devnet without local setup — with **no signup required before the first success**.
@@ -43,12 +43,12 @@ Isolated Linux environment with Git, Node/pnpm/npm, Rust, Solana CLI, Anchor, an
 
 Required: filesystem/process isolation, CPU/RAM/disk quotas, network policy, hibernation/resume, persistent volumes for eligible plans, cached base images/dependencies.
 
-**Buy, don't build (v1 decision):** orchestration comes from a managed sandbox provider (E2B, Modal, Daytona, Fly Machines, or equivalent). Brick builds the Solana toolchain image, agent harness, Solana panel, and deploy workflow on top. Keep the provider integration behind an internal interface so it can be swapped or in-sourced at scale.
+**Buy, don't build (v1 decision):** orchestration comes from a managed sandbox provider (E2B, Modal, Daytona, Fly Machines, or equivalent). Brik builds the Solana toolchain image, agent harness, Solana panel, and deploy workflow on top. Keep the provider integration behind an internal interface so it can be swapped or in-sourced at scale.
 
 **Anonymous ephemeral sandboxes:** minutes-long TTL, aggressive teardown, locked-down egress, no secrets, rate-limited per IP/fingerprint. Signup converts an ephemeral sandbox into a saved project. Abuse controls ship in the same release as the anonymous flow, not after.
 
 ### Shareable previews
-Every project exposes a live public devnet preview URL with a share card, subtle Built with Brick attribution, and a Fork button that clones the project into the visitor's own workspace. This is the primary growth loop and is MVP scope, not polish.
+Every project exposes a live public devnet preview URL with a share card, subtle Built with Brik attribution, and a Fork button that clones the project into the visitor's own workspace. This is the primary growth loop and is MVP scope, not polish.
 
 ## AI agent
 ### Ask mode
@@ -82,10 +82,10 @@ Never claim build/test/deploy success without tool evidence.
 Treat every workspace as untrusted. Use strong isolation, quotas, egress controls, encrypted secrets, separate dev/production credentials, approval gates for external/mainnet actions, simulation where possible, and audit records.
 
 ## Open design questions (resolve before mainnet tooling ships)
-- **Mainnet deploy economics:** program deploys cost real SOL (often several SOL in rent depending on binary size). Decide who funds deploy rent, how it flows through billing, and where the custody boundary sits so Brick never holds user funds. Devnet-only until this is designed.
+- **Mainnet deploy economics:** program deploys cost real SOL (often several SOL in rent depending on binary size). Decide who funds deploy rent, how it flows through billing, and where the custody boundary sits so Brik never holds user funds. Devnet-only until this is designed.
 
-## Brick MCP server / CLI (post-alpha)
-Expose Brick's Solana environment — build, test, devnet deploy, transaction inspection — as an MCP server and CLI usable from Cursor, Claude Code, and other agent editors. Experienced developers keep their editor; Brick owns Solana execution and the deploy path. Scope after the browser core loop is reliable, targeted for the distribution phase.
+## Brik MCP server / CLI (post-alpha)
+Expose Brik's Solana environment — build, test, devnet deploy, transaction inspection — as an MCP server and CLI usable from Cursor, Claude Code, and other agent editors. Experienced developers keep their editor; Brik owns Solana execution and the deploy path. Scope after the browser core loop is reliable, targeted for the distribution phase.
 
 ## Non-goals v1
 Multi-chain; proprietary foundation model; full AWS/Vercel replacement; marketplace/token; heavy enterprise IAM; dozens of integrations; mainnet deploys (until economics/custody are designed).
@@ -118,7 +118,7 @@ Hardening: reliability of the golden path, analytics events end-to-end, human se
 Billing, plan limits, persistence, metering, overages. Mainnet workflow only if the economics/custody design (open questions above) is resolved.
 
 ### Days 30-50 (parallel with alpha)
-Distribution build: Open in Brick placements (official docs, Anchor tutorials, ecosystem repos), 3–5 templates, interactive tutorials, hackathon mode + credits, MCP/CLI beta, founder-led launch content on X.
+Distribution build: Open in Brik placements (official docs, Anchor tutorials, ecosystem repos), 3–5 templates, interactive tutorials, hackathon mode + credits, MCP/CLI beta, founder-led launch content on X.
 
 ### Days 46-60
 Monetization beta: Builder plan live to the alpha cohort; first paid conversions; W1 retention readable.

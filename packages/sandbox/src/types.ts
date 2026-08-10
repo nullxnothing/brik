@@ -1,7 +1,7 @@
 /**
  * Sandbox provider abstraction.
  *
- * BRICK buys workspace orchestration from a managed sandbox provider
+ * BRIK buys workspace orchestration from a managed sandbox provider
  * (docs/02_product_build_spec.md — "buy, don't build"). Everything in the
  * product talks to this interface; the concrete provider (E2B, Modal,
  * Daytona, Fly Machines, or local Docker for development) is an adapter

@@ -1,5 +1,5 @@
 {
-  "name": "@brick/bakeoff",
+  "name": "@brik/bakeoff",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -9,7 +9,7 @@
     "build": "tsc --noEmit"
   },
   "dependencies": {
-    "@brick/sandbox": "workspace:*"
+    "@brik/sandbox": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^22.15.0",
