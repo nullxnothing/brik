@@ -19,12 +19,8 @@ function Hero() {
         </p>
         <div className="mt-9 flex flex-wrap gap-3">
           <ComingSoon />
-          <ButtonLink
-            href="https://github.com/nullxnothing/Brick"
-            variant="secondary"
-            external
-          >
-            Follow on GitHub <span className="glyph">↗</span>
+          <ButtonLink href="https://x.com/brikbuilders" variant="secondary" external>
+            Follow on X <span className="glyph">↗</span>
           </ButtonLink>
         </div>
         <p className="meta-label mt-5 text-fg-3">

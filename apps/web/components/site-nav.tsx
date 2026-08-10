@@ -25,6 +25,14 @@ export function SiteNav() {
             </Link>
           ))}
           <a
+            href="https://x.com/brikbuilders"
+            target="_blank"
+            rel="noreferrer"
+            className="meta-label hidden text-fg-2 transition-colors duration-150 hover:text-fg sm:block"
+          >
+            X <span className="glyph">↗</span>
+          </a>
+          <a
             href="https://github.com/nullxnothing/Brick"
             target="_blank"
             rel="noreferrer"
