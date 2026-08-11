@@ -41,12 +41,12 @@ function KeyField({
 
   if (hasKey) {
     return (
-      <div className="flex items-center justify-between gap-3 border-t border-hairline px-3 py-2.5">
-        <span className="meta-label text-fg-3">Using your own key</span>
+      <div className="mt-3 flex items-center justify-between gap-3 border-t border-[#191919] pt-3">
+        <span className="brik-etch text-[10px]">USING YOUR OWN KEY</span>
         <button
           type="button"
           onClick={() => onKey("")}
-          className="btn btn-ghost px-0"
+          className="text-[13px] text-fg-2 transition-colors duration-150 hover:text-fg"
         >
           Remove
         </button>
@@ -66,9 +66,9 @@ function KeyField({
   };
 
   return (
-    <div className="border-t border-hairline px-3 py-2.5">
-      <label htmlFor="model-key" className="meta-label block text-fg-3">
-        Your Anthropic API key
+    <div className="mt-3 border-t border-[#191919] pt-3">
+      <label htmlFor="model-key" className="brik-etch block text-[10px]">
+        YOUR ANTHROPIC API KEY
       </label>
       <div className="mt-2 flex gap-2">
         <input
@@ -90,13 +90,13 @@ function KeyField({
           spellCheck={false}
           aria-invalid={error ? true : undefined}
           aria-describedby={error ? "model-key-error" : "model-key-note"}
-          className="field field-mono min-w-0 flex-1"
+          className="min-w-0 flex-1 rounded-[5px] bg-[#040404] px-3 py-2 font-mono text-[12px] text-fg shadow-[inset_0_2px_5px_rgba(0,0,0,.9)] placeholder:text-[var(--brik-etch-dim)] focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-cream"
         />
         <button
           type="button"
           onClick={submit}
           disabled={!value.trim()}
-          className="btn btn-secondary btn-compact"
+          className="brik-key px-3 text-[13px]"
         >
           Use
         </button>
@@ -106,7 +106,7 @@ function KeyField({
           {error}
         </p>
       ) : (
-        <p id="model-key-note" className="mt-2 text-body text-fg-3">
+        <p id="model-key-note" className="mt-2 text-[13px] leading-[1.6] text-[#6f6f6b]">
           Sent with your requests and kept in this tab only. It is never stored
           on the server.
         </p>
@@ -115,6 +115,11 @@ function KeyField({
   );
 }
 
+/**
+ * The composer: a well cut into the chassis with one key sitting above it.
+ * The key travels 1px on press, which is what the whole shell means by
+ * "pressable".
+ */
 export function Composer({
   disabled,
   offerKey,
@@ -139,8 +144,8 @@ export function Composer({
   };
 
   return (
-    <div className="shrink-0 border-t border-line p-3">
-      <div className="rounded-panel border border-line bg-sunken focus-within:border-cream">
+    <div className="shrink-0 px-5 pb-5">
+      <div className="brik-well px-[15px] py-[13px] focus-within:outline-2 focus-within:outline-offset-1 focus-within:outline-cream">
         <label htmlFor="composer" className="sr-only">
           Ask the agent for a change
         </label>
@@ -156,20 +161,21 @@ export function Composer({
           }}
           rows={2}
           placeholder="Ask for a change"
-          className="w-full resize-none bg-transparent px-3 pt-2.5 text-body text-fg placeholder:text-fg-3 focus-visible:outline-none"
+          className="w-full resize-none bg-transparent text-[13.5px] leading-[1.5] text-fg placeholder:text-[var(--brik-etch)] focus-visible:outline-none"
         />
-        <div className="flex items-center justify-between px-3 pb-2.5">
-          <span className="meta-label text-fg-3">
-            <span className="glyph">⏎</span> to send
+        <div className="mt-2 flex items-center justify-between gap-3">
+          <span className="brik-etch text-[10.5px] tracking-[0.14em] text-[var(--brik-etch-dim)]">
+            ⏎ TO SEND
           </span>
           <button
             type="button"
             onClick={submit}
             disabled={disabled || !value.trim()}
-            className="btn btn-primary btn-compact"
+            className="brik-key grid h-[27px] w-8 place-items-center text-[13px]"
+            style={{ borderRadius: 6 }}
             aria-label="Send to the agent"
           >
-            <span className="glyph">→</span>
+            <span aria-hidden>→</span>
           </button>
         </div>
         {(offerKey || hasKey) && <KeyField hasKey={hasKey} onKey={onKey} />}

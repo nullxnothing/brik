@@ -62,6 +62,14 @@
   that leaving the page releases the sandbox. What that took, and what it does
   not yet include, is in STATE.md.
 
+- **The workspace shell is machined** — built to the workspace-depth handoff:
+  three planes with one light source, a material on the chassis, lamps instead of
+  status text, knurled seams that drag, and a boot sequence that assembles the
+  case once on arrival. The animation is the case only; every readout stays
+  driven by the run's own events, and the six values the reference prototype
+  invented were replaced with measured ones rather than shipped. Verified against
+  a real sandbox at desktop and 390px (STATE.md).
+
 ## Next, in dependency order
 
 1. **A lease store.** Reconnecting to an E2B sandbox by id covers the agent turn

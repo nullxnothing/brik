@@ -1,0 +1,490 @@
+/* Brik — machined depth layer (workspace shell only).
+   Amends one rule in the base system: inside the shell a flat 1px #2A2A2A
+   border becomes a two-tone edge, a light top line and a black bottom line.
+   Marketing and docs keep the flat border.
+
+   One light source for the whole product: above, slightly left. Every value
+   below follows from it. No second light, no gloss, no bevel wider than 1px. */
+
+:root {
+  /* Chassis — the case. Holds things, sits proud, carries the grain. */
+  --brik-chassis-top: #1a1a1a;
+  --brik-chassis-bot: #0d0d0d;
+  --brik-chassis-edge: #212121;
+
+  /* Well — cut into the chassis. Holds content. Never textured. */
+  --brik-well: #070707;
+  --brik-well-screen: #050505;
+  --brik-well-edge: #171717;
+
+  /* Key — sits above the chassis. The only thing that moves. */
+  --brik-key-top: #1e1e1e;
+  --brik-key-bot: #171717;
+  --brik-key-edge: #272727;
+  --brik-key-fg: #a9a9a4;
+  --brik-key-cream-top: #fcf8ee;
+  --brik-key-cream-bot: #ede4d0;
+  --brik-key-cream-edge: #c9bfa6;
+
+  /* Light — the only four values allowed to be white */
+  --brik-lit: rgba(255, 255, 255, 0.06);
+  --brik-lit-key: rgba(255, 255, 255, 0.07);
+  --brik-lit-lip: rgba(255, 255, 255, 0.045);
+  --brik-lit-cream: rgba(255, 255, 255, 0.95);
+
+  /* Shadow — tight and black. No clouds. */
+  --brik-contact: 0 1px 0 rgba(0, 0, 0, 0.8);
+  --brik-raise: 0 1px 0 rgba(0, 0, 0, 0.85), 0 4px 10px -3px rgba(0, 0, 0, 0.6);
+  --brik-sink: inset 0 2px 8px rgba(0, 0, 0, 0.9);
+  --brik-sink-deep: inset 0 3px 12px rgba(0, 0, 0, 0.95);
+
+  /* Etch — chassis markings, silkscreened not printed */
+  --brik-etch: #5c5c57;
+  --brik-etch-dim: #454542;
+  --brik-etch-faint: #4e4e4a;
+  --brik-etch-shadow: 0 1px 0 rgba(0, 0, 0, 0.9);
+
+  /* Lamps — emitters, brighter than the base state colours */
+  --brik-lamp-fail: #e2564a;
+  --brik-lamp-busy: #c79a4a;
+  --brik-lamp-live: #6fa97a;
+  --brik-lamp-fail-fg: #e8998f;
+  --brik-lamp-busy-fg: #d9ba84;
+  --brik-lamp-live-fg: #9bc7a3;
+
+  /* Radii — concentric. inner = outer − wall. Never 10 inside 10. */
+  --brik-radius-shell: 14px;
+  --brik-radius-wall: 5px;
+  --brik-radius-well: 9px;
+  --brik-radius-key: 7px;
+
+  /* Seams */
+  --brik-seam-w: 3px;
+  --brik-grip: #3a3a38;
+
+  /* Motion — asymmetric on purpose */
+  --brik-travel: 60ms linear;
+  --brik-latch-on: 0ms;
+  --brik-latch-off: 220ms;
+  --brik-cut: 320ms cubic-bezier(0.16, 1, 0.3, 1);
+  --brik-stamp: 150ms linear;
+
+  /* 140x140 non-repeating monochrome noise at 5.5%. Inlined so the chassis
+     never waits on a request to acquire its material. */
+  --brik-grain: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNDAiIGhlaWdodD0iMTQwIj48ZmlsdGVyIGlkPSJuIiB4PSIwIiB5PSIwIiB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIj48ZmVUdXJidWxlbmNlIHR5cGU9ImZyYWN0YWxOb2lzZSIgYmFzZUZyZXF1ZW5jeT0iMC44NSIgbnVtT2N0YXZlcz0iNCIgc3RpdGNoVGlsZXM9InN0aXRjaCIvPjxmZUNvbG9yTWF0cml4IHR5cGU9InNhdHVyYXRlIiB2YWx1ZXM9IjAiLz48L2ZpbHRlcj48cmVjdCB3aWR0aD0iMTQwIiBoZWlnaHQ9IjE0MCIgZmlsdGVyPSJ1cmwoI24pIiBvcGFjaXR5PSIwLjA1NSIvPjwvc3ZnPg==");
+}
+
+/* ---- Chassis ---------------------------------------------------------- */
+
+/* The grain and the sheen live on the shell root only, so they run continuously
+   across every part and the shell reads as one machined slab. */
+.brik-chassis {
+  background-color: #141414;
+  background-image:
+    var(--brik-grain),
+    radial-gradient(
+      150% 120% at 6% -22%,
+      rgba(255, 255, 255, 0.055),
+      rgba(255, 255, 255, 0.012) 40%,
+      transparent 66%
+    ),
+    linear-gradient(var(--brik-chassis-top) 0%, #141414 55%, var(--brik-chassis-bot) 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.07),
+    inset 0 -2px 0 rgba(0, 0, 0, 0.9);
+}
+
+/* Bars inside the chassis are translucent tints, never opaque fills. */
+.brik-chassis-bar {
+  background-image: linear-gradient(rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0));
+  box-shadow: inset 0 -4px 4px -3px rgba(0, 0, 0, 0.7);
+}
+
+.brik-chassis-bar-foot {
+  background-image: linear-gradient(rgba(255, 255, 255, 0.035), rgba(0, 0, 0, 0.14));
+  box-shadow: inset 0 3px 3px -2px rgba(0, 0, 0, 0.7);
+}
+
+/* A tab strip: the same tint, a shallower falloff. */
+.brik-chassis-bar-tabs {
+  background-image: linear-gradient(rgba(255, 255, 255, 0.028), rgba(0, 0, 0, 0.05));
+  box-shadow: inset 0 -3px 3px -2px rgba(0, 0, 0, 0.6);
+}
+
+/* ---- Wells ------------------------------------------------------------ */
+
+.brik-well {
+  background: var(--brik-well);
+  border-radius: var(--brik-radius-well);
+  box-shadow: var(--brik-sink), 0 1px 0 var(--brik-lit-lip);
+}
+
+/* A well that displays type. Deeper cut, darker floor. */
+.brik-well-screen {
+  position: relative;
+  overflow: hidden;
+  background: var(--brik-well-screen);
+  border-radius: var(--brik-radius-well);
+  box-shadow: var(--brik-sink-deep), 0 1px 0 var(--brik-lit-lip);
+}
+
+.brik-scan::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.55;
+  background-image: repeating-linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.02) 0 1px,
+    transparent 1px 8px
+  );
+}
+
+.brik-scan::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(130% 80% at 50% -10%, rgba(255, 255, 255, 0.04), transparent 65%);
+  box-shadow: inset 0 0 90px 30px rgba(0, 0, 0, 0.5);
+}
+
+/* Wells are milled open with clip-path. Never scaleY: it squashes the content
+   inside the well while it grows, which reads as a rendering bug. */
+.brik-cut {
+  clip-path: inset(0 0 100% 0);
+  transition: clip-path var(--brik-cut);
+}
+
+.brik-cut[data-open="true"] {
+  clip-path: inset(0 0 0% 0);
+}
+
+/* Once the cut has finished the clip comes off. It is a boot cue, not a
+   permanent constraint, and a clip-path left on a scroll container stops
+   clipping its composited layer: scrolled lines then paint outside the well. */
+.brik-cut[data-settled="true"] {
+  clip-path: none;
+  transition: none;
+}
+
+/* ---- Keys ------------------------------------------------------------- */
+
+.brik-key {
+  border-radius: var(--brik-radius-key);
+  border: 1px solid var(--brik-key-edge);
+  background: linear-gradient(var(--brik-key-top), var(--brik-key-bot));
+  color: #c9c9c4;
+  cursor: pointer;
+  transition:
+    transform var(--brik-travel),
+    box-shadow var(--brik-travel);
+  box-shadow: inset 0 1px 0 var(--brik-lit-key), var(--brik-contact);
+}
+
+.brik-key:active {
+  transform: translateY(1px);
+  box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.7);
+}
+
+.brik-key-primary {
+  border-color: var(--brik-key-cream-edge);
+  background: linear-gradient(var(--brik-key-cream-top), var(--brik-key-cream-bot));
+  color: #141414;
+  font-weight: 500;
+  box-shadow:
+    inset 0 1px 0 var(--brik-lit-cream),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.16),
+    var(--brik-raise);
+}
+
+.brik-key-primary:active {
+  transform: translateY(1px);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3), var(--brik-contact);
+}
+
+/* Dead until the build succeeds. The cream fill arriving is the reward, and it
+   is the only cream object on screen. */
+.brik-key:disabled,
+.brik-key[aria-disabled="true"] {
+  background: linear-gradient(#1c1c1c, #161616);
+  border-color: #242424;
+  color: var(--brik-etch-dim);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04), var(--brik-contact);
+  transform: none;
+  cursor: default;
+}
+
+/* ---- Etched chassis markings ------------------------------------------ */
+
+.brik-etch {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  color: var(--brik-etch);
+  text-shadow: var(--brik-etch-shadow);
+}
+
+.brik-etch-sm {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.14em;
+  color: var(--brik-etch-faint);
+  text-shadow: var(--brik-etch-shadow);
+}
+
+.brik-etch-dim {
+  color: var(--brik-etch-dim);
+}
+
+/* Stamped, not debossed: debossing fails below 28px. */
+.brik-stamped {
+  color: var(--brik-cream);
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.85);
+}
+
+/* ---- Lamps ------------------------------------------------------------ */
+
+.brik-lamp {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  flex: none;
+  display: grid;
+  place-items: center;
+  background: var(--brik-well);
+  box-shadow:
+    inset 0 1px 2px rgba(0, 0, 0, 0.95),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.028);
+}
+
+/* Latch on in 0ms, decay off in 220ms. Current arrives instantly, filaments
+   take a moment to die. A symmetrical fade reads as software. */
+.brik-lamp > i {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  display: block;
+  opacity: 0;
+  transition: opacity var(--brik-latch-off) linear;
+}
+
+.brik-lamp[data-on="true"] > i {
+  opacity: 1;
+  transition-duration: var(--brik-latch-on);
+}
+
+.brik-lamp[data-state="fail"] > i {
+  background: var(--brik-lamp-fail);
+  box-shadow: 0 0 6px 1px rgba(226, 86, 74, 0.75), 0 0 15px 4px rgba(226, 86, 74, 0.2);
+}
+
+.brik-lamp[data-state="busy"] > i {
+  background: var(--brik-lamp-busy);
+  box-shadow: 0 0 6px 1px rgba(199, 154, 74, 0.75), 0 0 15px 4px rgba(199, 154, 74, 0.2);
+}
+
+.brik-lamp[data-state="live"] > i {
+  background: var(--brik-lamp-live);
+  box-shadow: 0 0 6px 1px rgba(111, 169, 122, 0.75), 0 0 15px 4px rgba(111, 169, 122, 0.2);
+}
+
+.brik-lamp-text {
+  opacity: 0.22;
+  transition: opacity var(--brik-latch-off) linear;
+}
+
+.brik-lamp-text[data-on="true"] {
+  opacity: 1;
+  transition-duration: var(--brik-latch-on);
+}
+
+/* Lamp cluster, recessed into the bar */
+.brik-annunciator {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background: #0a0a0a;
+  border-radius: var(--radius-control);
+  padding: 7px 15px;
+  box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.9), 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+/* ---- Seams and grips -------------------------------------------------- */
+
+/* The joint between parts is a black trough you can see into. Inside a part
+   there are no lines at all. */
+.brik-seam-v,
+.brik-seam-h {
+  background: #000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  transition: opacity 160ms linear, box-shadow 120ms linear;
+  touch-action: none;
+}
+
+.brik-seam-v {
+  width: var(--brik-seam-w);
+  cursor: col-resize;
+  box-shadow: inset -1px 0 0 rgba(255, 255, 255, 0.045), 1px 0 0 rgba(255, 255, 255, 0.028);
+}
+
+.brik-seam-h {
+  height: var(--brik-seam-w);
+  cursor: row-resize;
+  box-shadow: inset 0 -1px 0 rgba(255, 255, 255, 0.04), 0 1px 0 rgba(255, 255, 255, 0.025);
+}
+
+.brik-seam-v:hover,
+.brik-seam-v[data-dragging="true"] {
+  box-shadow: inset -1px 0 0 rgba(255, 255, 255, 0.14), 1px 0 0 rgba(255, 255, 255, 0.07);
+}
+
+.brik-seam-h:hover,
+.brik-seam-h[data-dragging="true"] {
+  box-shadow: inset 0 -1px 0 rgba(255, 255, 255, 0.12), 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.brik-seam-v:focus-visible,
+.brik-seam-h:focus-visible {
+  outline: 2px solid var(--brik-cream);
+  outline-offset: 1px;
+}
+
+/* Below md the parts stack instead of sitting side by side, so the vertical
+   joints do not exist and there is nothing there to grip. */
+@media (max-width: 767px) {
+  .brik-seam-v {
+    display: none;
+  }
+}
+
+/* Knurl — three hairlines. Only on seams that actually drag. */
+.brik-grip-v,
+.brik-grip-h {
+  display: flex;
+  gap: 3px;
+  align-items: center;
+  pointer-events: none;
+}
+
+.brik-grip-v {
+  flex-direction: column;
+}
+
+.brik-grip-v > span {
+  width: 9px;
+  height: 1px;
+  background: var(--brik-grip);
+}
+
+.brik-grip-h > span {
+  height: 9px;
+  width: 1px;
+  background: var(--brik-grip);
+}
+
+/* ---- Assembly --------------------------------------------------------- */
+
+/* Three moulded parts, two seams. Below md the parts stack and the visitor
+   switches between them, so there is nothing to drag and no seam to grip. */
+.brik-work {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+@media (min-width: 768px) {
+  .brik-work {
+    display: grid;
+    grid-template-columns:
+      var(--brik-rail) var(--brik-seam-a) minmax(0, 1fr)
+      var(--brik-seam-w) var(--brik-agent);
+  }
+}
+
+/* ---- Segment meter ---------------------------------------------------- */
+
+.brik-meter {
+  display: flex;
+  gap: 2px;
+  padding: 4px 6px;
+  background: var(--brik-well);
+  border-radius: var(--brik-radius-wall);
+  box-shadow: inset 0 1px 4px rgba(0, 0, 0, 0.9), 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.brik-meter > span {
+  width: 6px;
+  height: 11px;
+  border-radius: 1px;
+  background: #101010;
+  box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.9);
+}
+
+.brik-meter > span[data-lit="busy"] {
+  background: var(--brik-lamp-busy);
+  box-shadow: 0 0 4px 1px rgba(199, 154, 74, 0.45);
+}
+
+.brik-meter > span[data-lit="live"] {
+  background: #8fa97a;
+  box-shadow: 0 0 4px 1px rgba(143, 169, 122, 0.45);
+}
+
+.brik-meter > span[data-lit="fail"] {
+  background: var(--brik-lamp-fail);
+  box-shadow: 0 0 4px 1px rgba(226, 86, 74, 0.45);
+}
+
+/* Every number in the shell. Digits changing width as they update is the most
+   software-y tell there is. */
+.brik-figures {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---- Boot cues -------------------------------------------------------- */
+
+.brik-power {
+  opacity: 0;
+  transition: opacity 300ms ease-out;
+}
+
+.brik-power[data-on="true"] {
+  opacity: 1;
+}
+
+/* 0ms is right for lamps and wrong for type. Text that snaps in reads as
+   flicker; give it 150ms. */
+.brik-stamp-in {
+  opacity: 0;
+  transition: opacity var(--brik-stamp);
+}
+
+.brik-stamp-in[data-on="true"] {
+  opacity: 1;
+}
+
+.brik-caret {
+  display: inline-block;
+  width: 7px;
+  height: 1em;
+  vertical-align: -2px;
+  background: var(--brik-cream);
+  animation: brik-caret 1s step-end infinite;
+}
+
+@keyframes brik-caret {
+  0%,
+  55% {
+    opacity: 1;
+  }
+  56%,
+  100% {
+    opacity: 0;
+  }
+}

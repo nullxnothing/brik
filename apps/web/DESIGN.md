@@ -53,16 +53,53 @@ blocks. Progress is four small marks (WRITE → TEST → BUILD → DEPLOY). Pane
 - `/workspace` — Operate. A real container: every file, line of output, address, and balance on this
   surface was read out of it. Center pane carries `Preview | Code`: Code while the run is in flight,
   auto-switching to Preview on a successful deploy unless the visitor has picked a tab themselves.
-  Right rail is Agent or Solana with a composer pinned below it. There is no run animation, because
-  the pacing is the toolchain's.
+  Right rail is Agent or Solana with a composer pinned below it. The pacing of a run is the
+  toolchain's; the only thing on a clock is the shell assembling itself once, on arrival.
 
-  The agent stream stays a task runner, never chat bubbles: an objective with a cream left rule,
-  then checked steps, each one a command the workspace actually ran. Free text is answered honestly,
-  because no agent is connected yet, and never with fabricated work.
+  The agent stream stays a task runner, never chat bubbles: an objective with a knurled left rule,
+  then checked steps, each one a command the workspace actually ran. Free text is answered honestly
+  and never with fabricated work.
 
   Two elements wait on capabilities that do not exist yet, and say so rather than standing in for
   them. Preview has no app to frame until deploys produce a URL; it names the state and points at
   the program id. The composer has no suggested-change chip until an agent can make the edit.
+
+  It is built to the machined-depth layer below.
+
+## Machined depth (workspace shell only)
+
+Authority: the workspace-depth handoff adopted 2026-08-11. It **amends one rule** in the base
+system: inside the shell a flat 1px `#2A2A2A` border is replaced by a two-tone edge, a light top
+line and a black bottom line. Marketing and docs keep the flat border and the rest of the base
+system is unchanged. Tokens and recipes live in `app/depth.css`, imported after `globals.css`
+declares the base tokens.
+
+1. **One light source** for the whole product: above, slightly left. A raised part catches it on its
+   top edge, falls into shadow at its bottom, and casts a 1px contact shadow. Never a second light.
+2. **Three planes, three jobs.** Chassis holds things and carries the grain; a well is cut in and
+   holds content; a key sits above and is pressable. Raised means pressable, recessed means content,
+   flush means structure. A decorative depth cue is a bug.
+3. **The chassis has a material.** Non-repeating monochrome noise at 5.5% plus one wide off-axis
+   sheen, both on the shell root so they run continuously across every part. Bars inside the shell
+   are translucent tints, never opaque fills. Wells are never textured.
+4. **Status is lamps, not text.** An LED in a punched socket, latching on in 0ms and decaying off in
+   220ms. Current arrives instantly; filaments take a moment to die.
+5. **Chassis type is etched.** `FILES`, `TERMINAL`, `AGENT`, `LOCALNET` are markings on the case:
+   `#5C5C57` with a 1px black text shadow. The wordmark is stamped, not debossed.
+6. **Keys travel** 1px on press, losing their top highlight, in 60ms linear.
+
+Guardrails: shadows stay tight and black, 1 to 2px of contact, never a cloud. Highlights are single
+hairlines at 4 to 8% white. The UI is never tilted. No literal objects. Only lamps and screens glow.
+
+Assembly is three moulded parts and three seams, not six bordered boxes. Seams are a 3px black
+trough, draggable, knurled with three hairlines, and keyboard-resizable. Radii are concentric,
+`inner = outer − wall`: shell 14, wall 5, well 9, key 7. Every number in the shell is tabular.
+
+The boot sequence plays once on arrival and only assembles the case: power-on, the annunciator
+self-test, the seams, the wells milled open with `clip-path` (never `scaleY`, which squashes the
+content inside as it grows), then the etched markings and the legend plate. Everything with a fact
+in it is driven by the run's own events instead, so a step that completes faster than an animation
+is never made to wait for one. `prefers-reduced-motion` skips to the assembled state.
 
 ## Touch-ups applied to the handoff (documented deltas)
 
@@ -86,3 +123,31 @@ WCAG AA for text and were raised by the smallest amount that passes.
    `>=` as single glyphs; source shown to a stranger has to read literally.
 9. Em dashes removed from pinned copy (house rule): "Describe it or pick a template. Brik builds,
    tests, and deploys it to devnet while you watch."
+
+## Deltas from the machined-depth handoff
+
+Six, each because the handoff's prototype could invent a value this product has to measure.
+
+1. **No slot counter.** The reference foot and legend plate tick a slot number. Nothing in the run
+   protocol reports a slot, and a number on this surface that was not read out of the container is
+   the one thing this product does not do. The plate reads `BALANCE` instead, and the foot carries
+   the meter and the run percentage. The Solana panel carries the lease countdown, which is real
+   and does tick.
+2. **No unit number, and real toolchain versions.** `UNIT 0x4C` is invented, so it is gone.
+   `ANCHOR 0.30 · RUST 1.79 · SOLANA 1.18` becomes the versions the image was verified with:
+   Anchor 0.31.1, Rust 1.85, Agave 3.1.9, Node 22.
+3. **The key legends are bound.** The plate is reference that is always true, so every legend on it
+   answers: `⌘B` files, `⌘J` terminal, `⌘⏎` build, `⌘/` agent. `⌘K` command had no palette behind
+   it and was dropped rather than printed. The modifier resolves to `Ctrl` off a Mac.
+4. **The editor stays monochrome.** The reference colours Rust keywords amber and strings green.
+   Amber is what the annunciator means by BUSY, eighteen pixels above the same screen, so the base
+   system's rule holds: state hues mark state and nothing else. Keywords carry emphasis in cream.
+5. **The meter measures steps, not time.** Fourteen segments latch against the run's five real
+   steps, so it reads 000% before the validator is up and 100% at DEPLOYED, and never fills on a
+   timer while the toolchain is still working.
+6. **The clip comes off a well once its cut lands.** A `clip-path` left on a scroll container stops
+   clipping its composited layer, and scrolled terminal lines then paint outside the well.
+
+Two additions the handoff does not cover, both required by the base system: seams are focusable
+separators that resize with the arrow keys, Home, and End, and the annunciator carries a screen
+reader status alongside the lamps.

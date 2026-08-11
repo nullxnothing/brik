@@ -27,7 +27,7 @@ export function AppPreview({
         : "Your app will appear here";
 
   return (
-    <div className="flex h-full flex-col items-center justify-center gap-5 bg-canvas p-8 text-center">
+    <div className="flex h-full flex-col items-center justify-center gap-5 p-8 text-center">
       {isSettled ? <BrikMark size={22} /> : <BrikLoader size={28} />}
       <div className="max-w-[46ch]">
         <p className="text-body-lg text-fg">{headline}</p>

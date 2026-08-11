@@ -453,6 +453,44 @@ Two things that do survive, both checked: file **mtimes are preserved** through
 the build, which is the mechanism cargo fingerprints rely on, and a sandbox
 started in **492ms** with no ready-wait.
 
+## The workspace shell is machined
+
+The shell was one flat plane: every surface `#151515`, every edge the same grey
+`#2A2A2A` line. It is now built to the workspace-depth handoff, which amends one
+rule in the base design system and moves no layout. Every surface has a job:
+chassis holds, wells hold content, keys press and travel 1px. One light source
+for the whole product, above and slightly left. Grain and sheen live on the shell
+root so they run continuously and the shell reads as one slab rather than six
+boxes. Status is lamps in punched sockets that latch on in 0ms and decay off in
+220ms. The three parts are separated by 3px knurled seams that drag, clamp, and
+persist per tab.
+
+The boot sequence assembles the case once on arrival: power-on, annunciator
+self-test, seams, wells milled open with `clip-path`, etched markings, legend
+plate. It ends at roughly 1.4s and it only ever animates the case. **Nothing with
+a fact in it is on a timer.** The file tree, the source, the terminal, the meter,
+and the lamps are all folded from the run's own events, so a step that finishes
+faster than an animation is never made to wait for one, and the meter reads 000%
+until the validator is actually up.
+
+Six values in the reference prototype were invented and are not shipped: a
+ticking slot counter, a unit number, four toolchain versions that were not this
+image's, and a `⌘K` command palette that does not exist. What replaced them is
+listed in DESIGN.md under "Deltas from the machined-depth handoff". The rule that
+every number on this surface was read out of the container did not move for a
+design pass.
+
+Verified in a browser against a real E2B sandbox at 1512×944 and at 390px: the
+full run reached DEPLOYED with 4 tests passing, the meter latched to 14/14, the
+cream Deploy key arrived only at the end, the boot cues fired in the designed
+order (self-test → seams → editor, rail, terminal → four labels → plate), the
+seams dragged and persisted, `prefers-reduced-motion` skipped straight to the
+assembled state, and there were no console errors and no horizontal scroll.
+
+One bug this turned up and fixed: a `clip-path` left on a well after its cut
+lands stops clipping the well's composited scroll layer, so scrolled terminal
+lines paint outside it. The clip comes off once the cut has finished.
+
 ## Deliberate deviations from DESIGN.md
 
 Both are recorded in DESIGN.md itself. The Preview pane no longer renders a

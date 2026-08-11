@@ -3,15 +3,17 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AppPreview } from "../../components/app-preview";
 import type { Status } from "../../components/ui";
-import { Composer, readStoredKey, storeKey } from "./composer";
+import { Seam } from "./chassis";
+import { Composer } from "./composer";
 import { Editor, Files } from "./editor";
+import { StatusFoot } from "./foot";
 import { WorkspaceHeader } from "./header";
+import { Nameplate } from "./nameplate";
 import { AgentPanel, SolanaPanel, Terminal } from "./panels";
-import { releaseWorkspace, streamAgent, streamRun } from "./run-client";
-import { applyEvent, applyFailure, initialRun, restartRun } from "./run-state";
-
-const NO_WORKSPACE =
-  "There is no workspace running to act on. Deploy to start one, then ask again.";
+import { useBoot } from "./use-boot";
+import { usePanes } from "./use-panes";
+import { litSegments, useRun } from "./use-run";
+import { useShortcuts } from "./use-shortcuts";
 
 /** What the workspace is doing, for the pane that has nothing else to show. */
 const STATUS_LINE: Record<Status, string> = {
@@ -22,6 +24,15 @@ const STATUS_LINE: Record<Status, string> = {
   failed: "The run stopped.",
   deployed:
     "There is no shareable preview URL yet. The program id and the deploy transaction are in the Solana panel.",
+};
+
+const STATUS_WORD: Record<Status, string> = {
+  sleeping: "Provisioning the workspace",
+  ready: "Workspace ready",
+  building: "Building",
+  testing: "Testing",
+  failed: "The run failed",
+  deployed: "Deployed",
 };
 
 type CenterTab = "preview" | "code";
@@ -36,86 +47,29 @@ const MOBILE_TABS: { label: string; view: MobileView; right?: RightTab }[] = [
   { label: "Solana", view: "right", right: "solana" },
 ];
 
-export function WorkspaceShell({
-  task,
-  template,
-}: {
-  task: string;
-  template: string;
-}) {
-  const [run, setRun] = useState(() => initialRun(task));
-  const [isRunning, setIsRunning] = useState(true);
-  const [isAgentRunning, setIsAgentRunning] = useState(false);
-  /** The turn in flight, so a redeploy or a closed tab can call it off. */
-  const agentRef = useRef<AbortController | null>(null);
-  /** The visitor's own model key, if they gave one. Read from their tab after
-   *  mount so the server and the client render the same first pass. */
-  const [modelKey, setModelKey] = useState("");
-  useEffect(() => setModelKey(readStoredKey()), []);
-  const rememberKey = useCallback((key: string) => {
-    storeKey(key);
-    setModelKey(key);
-  }, []);
+export function WorkspaceShell({ task, template }: { task: string; template: string }) {
+  const {
+    run,
+    isRunning,
+    isAgentRunning,
+    modelKey,
+    rememberKey,
+    redeploy,
+    sendMessage,
+  } = useRun(task, template);
+  const boot = useBoot();
+  const { sizes, dragging, startDrag, nudge } = usePanes();
+
   const [centerTab, setCenterTab] = useState<CenterTab>("code");
   const isTabPinned = useRef(false);
   const [rightTab, setRightTab] = useState<RightTab>("agent");
+  const [isRailOpen, setIsRailOpen] = useState(true);
   const [isTerminalOpen, setIsTerminalOpen] = useState(true);
   const [mobileView, setMobileView] = useState<MobileView>("editor");
-  const [runToken, setRunToken] = useState(0);
-  /** The live workspace, mirrored out of state so unload handlers can read it. */
-  const workspaceRef = useRef<string | null>(null);
-  /** Set by a redeploy, which restarts the run against the warm container
-   *  instead of releasing it the way an unmount does. */
-  const isRedeploy = useRef(false);
 
+  // A phone has no room for a terminal and a pane at once.
   useEffect(() => {
-    const controller = new AbortController();
-    setIsRunning(true);
-    setRun((prev) => (prev.workspaceId ? restartRun(prev) : prev));
-
-    streamRun(
-      { workspaceId: workspaceRef.current ?? undefined, template },
-      controller.signal,
-      (event) => {
-        if (controller.signal.aborted) return;
-        if (event.type === "workspace") workspaceRef.current = event.id;
-        if (event.type === "failed") workspaceRef.current = null;
-        setRun((prev) => applyEvent(prev, event));
-      },
-    )
-      .catch((error: unknown) => {
-        if (controller.signal.aborted) return;
-        workspaceRef.current = null;
-        setRun((prev) =>
-          applyFailure(
-            prev,
-            error instanceof Error ? error.message : "The workspace run stopped.",
-          ),
-        );
-      })
-      .finally(() => {
-        if (!controller.signal.aborted) setIsRunning(false);
-      });
-
-    return () => {
-      controller.abort();
-      if (isRedeploy.current) {
-        isRedeploy.current = false;
-        return;
-      }
-      const id = workspaceRef.current;
-      workspaceRef.current = null;
-      if (id) releaseWorkspace(id);
-    };
-  }, [runToken, template]);
-
-  // A closed tab must not leave a container running until its TTL.
-  useEffect(() => {
-    const release = () => {
-      if (workspaceRef.current) releaseWorkspace(workspaceRef.current);
-    };
-    window.addEventListener("pagehide", release);
-    return () => window.removeEventListener("pagehide", release);
+    if (window.matchMedia("(max-width: 767px)").matches) setIsTerminalOpen(false);
   }, []);
 
   // Land on the preview once there is something to look at.
@@ -128,168 +82,201 @@ export function WorkspaceShell({
     isTabPinned.current = true;
   };
 
-  // An abandoned turn must not hold the container past the page that asked
-  // for it, and a redeploy would otherwise race the agent for the same files.
-  useEffect(() => () => agentRef.current?.abort(), []);
-
-  const redeploy = useCallback(() => {
-    agentRef.current?.abort();
-    agentRef.current = null;
-    setIsAgentRunning(false);
-    isRedeploy.current = true;
+  const build = useCallback(() => {
+    if (isRunning || isAgentRunning) return;
     if (!isTabPinned.current) setCenterTab("code");
-    setRunToken((token) => token + 1);
-  }, []);
+    redeploy();
+  }, [isRunning, isAgentRunning, redeploy]);
 
-  const sendMessage = (text: string) => {
+  const ask = useCallback((text: string) => {
     setRightTab("agent");
-    const workspaceId = workspaceRef.current;
-    if (!workspaceId) {
-      setRun((prev) => ({
-        ...prev,
-        entries: [
-          ...prev.entries,
-          { kind: "task", text },
-          { kind: "note", text: NO_WORKSPACE },
-        ],
-      }));
-      return;
-    }
+    sendMessage(text);
+  }, [sendMessage]);
 
-    setRun((prev) => ({
-      ...prev,
-      entries: [...prev.entries, { kind: "task", text }],
-    }));
+  const modifier = useShortcuts({
+    onFiles: () => {
+      setIsRailOpen((open) => !open);
+      setMobileView("files");
+    },
+    onTerminal: () => setIsTerminalOpen((open) => !open),
+    onBuild: build,
+    onAgent: () => {
+      setRightTab("agent");
+      setMobileView("right");
+      document.getElementById("composer")?.focus();
+    },
+  });
 
-    const controller = new AbortController();
-    agentRef.current = controller;
-    setIsAgentRunning(true);
-
-    streamAgent(
-      { workspaceId, message: text, apiKey: modelKey || undefined },
-      controller.signal,
-      (event) => {
-        if (controller.signal.aborted) return;
-        setRun((prev) => applyEvent(prev, event));
-      },
-    )
-      .catch((error: unknown) => {
-        if (controller.signal.aborted) return;
-        setRun((prev) =>
-          applyEvent(prev, {
-            type: "note",
-            text:
-              error instanceof Error ? error.message : "The agent turn stopped.",
-          }),
-        );
-      })
-      .finally(() => {
-        if (agentRef.current === controller) agentRef.current = null;
-        if (!controller.signal.aborted) setIsAgentRunning(false);
-      });
+  const isBusy = isRunning || isAgentRunning;
+  const isDeployed = run.status === "deployed";
+  const lamps = {
+    fail: run.status === "failed",
+    busy: isBusy && run.status !== "failed",
+    live: isDeployed && !isBusy,
   };
 
-  const isDeployed = run.status === "deployed";
-
   return (
-    <div className="flex h-dvh flex-col overflow-hidden">
-      <WorkspaceHeader
-        project={run.project}
-        status={run.status}
-        isRunning={isRunning}
-        isAgentRunning={isAgentRunning}
-        isDeployed={isDeployed}
-        onDeploy={redeploy}
-      />
+    <div className="h-dvh bg-[#050505] md:p-2">
+      <div
+        className="brik-chassis brik-power flex h-full flex-col overflow-hidden md:rounded-[var(--brik-radius-shell)]"
+        data-on={boot.power}
+      >
+        <WorkspaceHeader
+          project={run.project}
+          named={boot.labels.terminal}
+          lamps={boot.selfTest ?? lamps}
+          status={STATUS_WORD[run.status]}
+          isBusy={isBusy}
+          isDeployed={isDeployed}
+          onDeploy={build}
+        />
 
-      <div className="flex shrink-0 border-b border-line md:hidden">
-        {MOBILE_TABS.map((tab) => {
-          const isActive =
-            mobileView === tab.view && (!tab.right || rightTab === tab.right);
-          return (
-            <button
-              key={tab.label}
-              type="button"
-              onClick={() => {
-                setMobileView(tab.view);
-                if (tab.right) setRightTab(tab.right);
-              }}
-              className={`meta-label -mb-px min-h-11 flex-1 border-b px-2 py-3 ${
-                isActive ? "border-cream text-fg" : "border-transparent text-fg-3"
-              }`}
+        <div className="brik-chassis-bar-tabs flex shrink-0 md:hidden">
+          {MOBILE_TABS.map((tab) => {
+            const isActive =
+              mobileView === tab.view && (!tab.right || rightTab === tab.right);
+            return (
+              <button
+                key={tab.label}
+                type="button"
+                onClick={() => {
+                  setMobileView(tab.view);
+                  if (tab.right) setRightTab(tab.right);
+                }}
+                className={`min-h-11 flex-1 px-2 py-3 font-mono text-[11px] tracking-[0.14em] uppercase ${
+                  isActive
+                    ? "text-fg shadow-[inset_0_-2px_0_var(--brik-cream)]"
+                    : "text-[var(--brik-etch)] [text-shadow:0_1px_0_rgba(0,0,0,.9)]"
+                }`}
+              >
+                {tab.label}
+              </button>
+            );
+          })}
+        </div>
+
+        <div
+          className="brik-work"
+          style={
+            {
+              "--brik-rail": isRailOpen ? `${sizes.rail}px` : "0px",
+              "--brik-seam-a": isRailOpen ? "var(--brik-seam-w)" : "0px",
+              "--brik-agent": `${sizes.agent}px`,
+            } as React.CSSProperties
+          }
+        >
+          <aside
+            className={`min-h-0 overflow-hidden md:flex md:flex-col ${
+              mobileView === "files" ? "flex flex-1 flex-col" : "hidden"
+            }`}
+          >
+            <Files
+              files={run.files}
+              entryFile={run.entryFile}
+              open={boot.cuts.rail}
+              settled={boot.settled}
+              labelled={boot.labels.files}
+            />
+          </aside>
+
+          {isRailOpen && (
+            <Seam
+              pane="rail"
+              size={sizes.rail}
+              visible={boot.seams.a}
+              dragging={dragging === "rail"}
+              onPointerDown={startDrag("rail")}
+              onKeyDown={nudge("rail")}
+            />
+          )}
+
+          <section
+            className={`min-h-0 flex-col md:flex ${
+              mobileView === "editor" ? "flex flex-1" : "hidden"
+            }`}
+          >
+            <div
+              className="brik-chassis-bar-tabs brik-stamp-in flex h-[46px] shrink-0 items-end gap-1.5 px-4"
+              data-on={boot.labels.code}
             >
-              {tab.label}
-            </button>
-          );
-        })}
-      </div>
-
-      <main className="grid min-h-0 flex-1 md:grid-cols-[188px_1fr_320px]">
-        <aside
-          className={`min-h-0 border-line md:block md:border-r ${
-            mobileView === "files" ? "block" : "hidden"
-          }`}
-        >
-          <Files files={run.files} entryFile={run.entryFile} />
-        </aside>
-
-        <section
-          className={`flex min-h-0 flex-col md:flex ${
-            mobileView === "editor" ? "flex" : "hidden"
-          }`}
-        >
-          <div className="flex shrink-0 items-center justify-between gap-4 border-b border-line pr-4">
-            <div className="flex">
               {(["preview", "code"] as CenterTab[]).map((tab) => (
                 <button
                   key={tab}
                   type="button"
                   onClick={() => selectTab(tab)}
-                  className={`-mb-px min-h-11 border-b px-4 py-3 text-body capitalize ${
+                  aria-current={centerTab === tab}
+                  className={`px-4 py-2 text-[14px] capitalize ${
                     centerTab === tab
-                      ? "border-cream text-fg"
-                      : "border-transparent text-fg-3"
+                      ? "rounded-t-[var(--brik-radius-key)] border border-b-0 border-[#2C2C2C] bg-[linear-gradient(#242424,#1B1B1B)] text-fg shadow-[inset_0_1px_0_rgba(255,255,255,.08),0_-3px_8px_-3px_rgba(0,0,0,.8)]"
+                      : "text-[#8a8a84] [text-shadow:0_1px_0_rgba(0,0,0,.85)]"
                   }`}
                 >
                   {tab}
                 </button>
               ))}
-            </div>
-            {centerTab === "code" && run.entryFile && (
-              <span className="hidden truncate font-mono text-code-sm text-fg-3 lg:block">
-                {run.entryFile}
+              <span className="brik-etch ml-auto hidden truncate pb-2.5 text-[11px] tracking-[0.12em] text-[var(--brik-etch-faint)] lg:block">
+                {run.entryFile ?? "RUST · ANCHOR 0.31.1"}
               </span>
-            )}
-          </div>
-
-          {centerTab === "code" ? (
-            <Editor source={run.source} />
-          ) : (
-            <div className="min-h-0 flex-1">
-              <AppPreview
-                status={run.status}
-                detail={run.failure ?? STATUS_LINE[run.status]}
-              />
             </div>
-          )}
-        </section>
 
-        <aside
-          className={`min-h-0 border-line md:block md:border-l ${
-            mobileView === "right" ? "block" : "hidden"
-          }`}
-        >
-          <div className="flex h-full min-h-0 flex-col">
-            <div className="hidden shrink-0 border-b border-line md:flex">
+            {centerTab === "code" ? (
+              <Editor
+                source={run.source}
+                open={boot.cuts.editor}
+                settled={boot.settled}
+                nameplate={
+                  <Nameplate
+                    program={run.program}
+                    wallet={run.wallet}
+                    balance={run.balance}
+                    modifier={modifier}
+                    visible={boot.plate && run.source.length === 0}
+                    leaving={run.source.length > 0}
+                  />
+                }
+              />
+            ) : (
+              <div className="min-h-0 flex-1 px-4 pt-3.5 pb-3.5">
+                <div className="brik-well-screen brik-scan h-full">
+                  <div className="absolute inset-0 overflow-auto">
+                    <AppPreview
+                      status={run.status}
+                      detail={run.failure ?? STATUS_LINE[run.status]}
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+          </section>
+
+          <Seam
+            pane="agent"
+            size={sizes.agent}
+            visible={boot.seams.b}
+            dragging={dragging === "agent"}
+            onPointerDown={startDrag("agent")}
+            onKeyDown={nudge("agent")}
+          />
+
+          <aside
+            className={`min-h-0 flex-col md:flex ${
+              mobileView === "right" ? "flex flex-1" : "hidden"
+            }`}
+          >
+            <div
+              className="brik-chassis-bar-tabs brik-stamp-in hidden h-[46px] shrink-0 items-center gap-6 px-5 md:flex"
+              data-on={boot.labels.agent}
+            >
               {(["agent", "solana"] as RightTab[]).map((tab) => (
                 <button
                   key={tab}
                   type="button"
                   onClick={() => setRightTab(tab)}
-                  className={`meta-label -mb-px min-h-11 border-b px-4 py-3 ${
+                  aria-current={rightTab === tab}
+                  className={`flex h-full items-center font-mono text-[11px] tracking-[0.14em] uppercase ${
                     rightTab === tab
-                      ? "border-cream text-fg"
-                      : "border-transparent text-fg-3"
+                      ? "text-fg shadow-[inset_0_-2px_0_var(--brik-cream)]"
+                      : "text-[var(--brik-etch)] [text-shadow:0_1px_0_rgba(0,0,0,.9)]"
                   }`}
                 >
                   {tab}
@@ -299,16 +286,13 @@ export function WorkspaceShell({
 
             {rightTab === "agent" ? (
               <>
-                <AgentPanel
-                  entries={run.entries}
-                  isRunning={isRunning || isAgentRunning}
-                />
+                <AgentPanel entries={run.entries} isRunning={isBusy} />
                 <Composer
-                  disabled={isRunning || isAgentRunning}
+                  disabled={isBusy}
                   offerKey={run.offerKey ?? false}
                   hasKey={modelKey.length > 0}
                   onKey={rememberKey}
-                  onMessage={sendMessage}
+                  onMessage={ask}
                 />
               </>
             ) : (
@@ -321,35 +305,43 @@ export function WorkspaceShell({
                 ttlSeconds={run.ttlSeconds}
               />
             )}
-          </div>
-        </aside>
-      </main>
-
-      <section
-        className="shrink-0 border-t border-line"
-        style={{ height: isTerminalOpen ? 152 : 0 }}
-      >
-        {isTerminalOpen && <Terminal lines={run.terminal} />}
-      </section>
-
-      <footer className="flex h-9 shrink-0 items-center justify-between gap-4 border-t border-line px-4">
-        <button
-          type="button"
-          onClick={() => setIsTerminalOpen((open) => !open)}
-          className="meta-label text-fg-3 transition-colors duration-150 hover:text-fg"
-          aria-expanded={isTerminalOpen}
-        >
-          Terminal <span className="glyph">{isTerminalOpen ? "▾" : "▴"}</span>
-        </button>
-        <div className="flex items-center gap-5">
-          <span className="meta-label text-fg-3">Localnet</span>
-          {run.balance !== undefined && (
-            <span className="meta-label text-fg-3">
-              {run.balance.toFixed(2)} SOL
-            </span>
-          )}
+          </aside>
         </div>
-      </footer>
+
+        {isTerminalOpen && (
+          <>
+            <Seam
+              pane="terminal"
+              size={sizes.terminal}
+              visible={boot.seams.c}
+              dragging={dragging === "terminal"}
+              onPointerDown={startDrag("terminal")}
+              onKeyDown={nudge("terminal")}
+            />
+            <div
+              className="shrink-0 px-4 py-3.5"
+              style={{ height: sizes.terminal + 28 }}
+            >
+              <Terminal
+                lines={run.terminal}
+                open={boot.cuts.terminal}
+                settled={boot.settled}
+                labelled={boot.labels.terminal}
+                isRunning={isRunning}
+              />
+            </div>
+          </>
+        )}
+
+        <StatusFoot
+          status={run.status}
+          lit={litSegments(run.entries, run.status, isRunning)}
+          balance={run.balance}
+          isTerminalOpen={isTerminalOpen}
+          onToggleTerminal={() => setIsTerminalOpen((open) => !open)}
+          modifier={modifier}
+        />
+      </div>
     </div>
   );
 }

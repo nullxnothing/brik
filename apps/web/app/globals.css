@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "./depth.css";
 
 /* Brik design tokens — design-system handoff, dark default.
    Deltas from the handoff are documented in DESIGN.md ("Touch-ups"). */

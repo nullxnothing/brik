@@ -2,9 +2,13 @@
 
 import { useEffect, useRef, useState } from "react";
 import { BrikLoader } from "../../components/logo";
-import { Meter } from "../../components/ui";
 import type { Entry, TerminalLine } from "../../lib/workspace/events";
+import { Etch } from "./chassis";
 
+/**
+ * The agent stream stays a task runner, never chat bubbles: an objective with a
+ * knurled left rule, then the steps, each one a command the workspace ran.
+ */
 export function AgentPanel({
   entries,
   isRunning,
@@ -20,13 +24,13 @@ export function AgentPanel({
   }, [entries.length]);
 
   return (
-    <div className="min-h-0 flex-1 space-y-3 overflow-auto p-4">
+    <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-auto p-5">
       {entries.map((entry, i) => {
         if (entry.kind === "task") {
           return (
             <p
               key={i}
-              className="border-l border-cream pl-3 text-body font-medium text-fg first:mt-0 [&:not(:first-child)]:mt-6"
+              className="border-l-2 border-[var(--brik-grip)] pl-3.5 text-body font-medium text-fg [&:not(:first-child)]:mt-3"
             >
               {entry.text}
             </p>
@@ -34,7 +38,7 @@ export function AgentPanel({
         }
         if (entry.kind === "note") {
           return (
-            <p key={i} className="text-body text-fg-3">
+            <p key={i} className="text-[13.5px] leading-[1.65] text-[#8a8a84]">
               {entry.text}
             </p>
           );
@@ -89,11 +93,22 @@ function useSecondsLeft(expiresAt?: number): number | null {
   return Math.max(0, Math.round((expiresAt - now) / 1000));
 }
 
+/** A reading on the case: etched term, measured value. */
 function Row({ term, value }: { term: string; value: string }) {
   return (
     <div className="flex justify-between gap-4">
-      <dt className="text-fg-3">{term}</dt>
-      <dd className="text-fg">{value}</dd>
+      <dt className="tracking-[0.12em] text-[var(--brik-etch-dim)]">{term}</dt>
+      <dd className="brik-figures truncate text-[#8a8a84]">{value}</dd>
+    </div>
+  );
+}
+
+/** A value long enough to need its own well. */
+function Readout({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div>
+      <div className="brik-etch mb-2 block text-[10px]">{label}</div>
+      {children}
     </div>
   );
 }
@@ -117,62 +132,79 @@ export function SolanaPanel({
   const hasLease = secondsLeft !== null && ttlSeconds !== undefined;
 
   return (
-    <div className="flex min-h-0 flex-col">
-      <div className="min-h-0 flex-1 space-y-6 overflow-auto p-4">
-        <dl className="space-y-3 font-mono text-code-sm">
-          <Row term="Cluster" value="localnet" />
-          <Row term="Wallet" value={wallet ? shortAddress(wallet) : "not funded"} />
-          <Row
-            term="Balance"
-            value={balance === undefined ? "unknown" : `${balance.toFixed(2)} SOL`}
-          />
-        </dl>
-
-        <div>
-          <div className="meta-label mb-2 text-fg-3">Program</div>
-          {program ? (
-            <p className="rounded-control border border-hairline bg-sunken px-3 py-2 font-mono text-code-sm break-all text-fg">
-              {program}
-            </p>
-          ) : (
-            <p className="text-body text-fg-3">Not deployed yet.</p>
-          )}
-        </div>
-
-        <div>
-          <div className="meta-label mb-2 text-fg-3">Recent transactions</div>
-          {tx ? (
-            <div className="rounded-control border border-hairline bg-sunken px-3 py-2">
-              <p className="font-mono text-code-sm break-all text-fg-2">
-                {tx.slice(0, 22)}…
-              </p>
-              <p className="meta-label mt-1.5 text-ok">Confirmed</p>
-            </div>
-          ) : (
-            <p className="text-body text-fg-3">No transactions yet.</p>
-          )}
-        </div>
-
+    <div className="min-h-0 flex-1 space-y-6 overflow-auto p-5">
+      <dl className="space-y-2.5 font-mono text-[11.5px]">
+        <Row term="CLUSTER" value="localnet" />
+        <Row term="WALLET" value={wallet ? shortAddress(wallet) : "--"} />
+        <Row
+          term="BALANCE"
+          value={balance === undefined ? "--" : `${balance.toFixed(2)} SOL`}
+        />
         {hasLease && (
-          <Meter
-            filled={Math.ceil((secondsLeft / ttlSeconds) * 10)}
-            label="Workspace time left"
-            value={`${Math.ceil(secondsLeft / 60)} min`}
+          <Row
+            term="LEASE"
+            value={`${Math.ceil(secondsLeft / 60)} min left`}
           />
         )}
-      </div>
+      </dl>
+
+      <Readout label="PROGRAM">
+        {program ? (
+          <p className="brik-well break-all px-3 py-2.5 font-mono text-[11.5px] leading-[1.7] text-fg">
+            {program}
+          </p>
+        ) : (
+          <p className="text-[13.5px] leading-[1.65] text-[#8a8a84]">
+            Not deployed yet.
+          </p>
+        )}
+      </Readout>
+
+      <Readout label="LAST TRANSACTION">
+        {tx ? (
+          <div className="brik-well px-3 py-2.5">
+            <p className="break-all font-mono text-[11.5px] leading-[1.7] text-[#8a8a84]">
+              {tx}
+            </p>
+            <p className="mt-1.5 font-mono text-[10px] tracking-[0.16em] text-ok">
+              CONFIRMED
+            </p>
+          </div>
+        ) : (
+          <p className="text-[13.5px] leading-[1.65] text-[#8a8a84]">
+            No transactions yet.
+          </p>
+        )}
+      </Readout>
     </div>
   );
 }
 
 const TERMINAL_TONE: Record<string, string> = {
-  cmd: "text-fg",
-  ok: "text-ok",
-  err: "text-err",
-  muted: "text-fg-3",
+  cmd: "text-[#8a8a84]",
+  ok: "text-[#8fa97a]",
+  err: "text-[var(--brik-lamp-fail)]",
+  muted: "text-[#6f6f6b]",
 };
 
-export function Terminal({ lines }: { lines: TerminalLine[] }) {
+/**
+ * The terminal screen. Darker than the panels because it emits, and the only
+ * other surface in the shell allowed to.
+ */
+export function Terminal({
+  lines,
+  open,
+  settled,
+  labelled,
+  isRunning,
+}: {
+  lines: TerminalLine[];
+  open: boolean;
+  /** The cut has finished, so the clip comes off. */
+  settled: boolean;
+  labelled: boolean;
+  isRunning: boolean;
+}) {
   const endRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -180,15 +212,35 @@ export function Terminal({ lines }: { lines: TerminalLine[] }) {
   }, [lines.length]);
 
   return (
-    <div className="literal h-full overflow-auto bg-sunken p-4 font-mono text-code-sm leading-[1.8]">
-      {lines.map((line, i) => (
-        <div key={i} className={TERMINAL_TONE[line.tone ?? "muted"]}>
-          {line.text}
+    <div
+      className="brik-well-screen brik-scan brik-cut h-full"
+      data-open={open}
+      data-settled={settled}
+    >
+      <div className="literal absolute inset-0 overflow-auto px-[18px] pb-3.5 font-mono text-[12px] leading-[1.9] text-[#7c7c77]">
+        {/* A marking on the case, not a line of output: it stays put while the
+            log scrolls under it. */}
+        <div className="sticky top-0 z-10 bg-[var(--brik-well-screen)] pt-3.5 pb-1.5">
+          <Etch on={labelled} className="text-[10.5px]">
+            TERMINAL · anchor
+          </Etch>
         </div>
-      ))}
-      <div ref={endRef} className="text-fg-2">
-        ${" "}
-        <span className="inline-block h-[1em] w-[7px] translate-y-[2px] bg-fg-3" />
+        {lines.map((line, i) => (
+          <div
+            key={i}
+            className={`whitespace-pre-wrap ${TERMINAL_TONE[line.tone ?? "muted"]}`}
+          >
+            {line.text}
+          </div>
+        ))}
+        <div ref={endRef}>
+          {!isRunning && (
+            <>
+              <span className="text-[var(--brik-etch)]">$ </span>
+              <span className="brik-caret" aria-hidden />
+            </>
+          )}
+        </div>
       </div>
     </div>
   );
