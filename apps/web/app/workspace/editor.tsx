@@ -1,6 +1,6 @@
 "use client";
 
-import { Etch } from "./chassis";
+import { Etch } from "../../components/chassis";
 import { useStagger } from "./use-boot";
 
 const KEYWORDS = new Set([

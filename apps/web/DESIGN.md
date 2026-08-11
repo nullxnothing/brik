@@ -49,6 +49,11 @@ blocks. Progress is four small marks (WRITE → TEST → BUILD → DEPLOY). Pane
 - `/` landing — Persuade. Dark. Hero (pinned headline) + demo frame that plays once on view,
   building-blocks grid with functional visualizations, workflow strip, template cards, tech proof,
   ascii-field final CTA, minimal footer.
+
+  The demo frame is the one place on this page built to the machined layer below, because it is a
+  picture of the workspace and has to be the same machine: the same chassis, wells, lamps, and
+  segment meter, from the same components in `components/chassis.tsx`. Its seams are fixed rather
+  than draggable, so they carry no knurl. Everything around it keeps the flat 1px border.
 - `/new` — Operate. "What do you want to build?" Describe (primary) · templates · import · blank.
 - `/workspace` — Operate. A real container: every file, line of output, address, and balance on this
   surface was read out of it. Center pane carries `Preview | Code`: Code while the run is in flight,

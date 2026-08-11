@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AppPreview } from "../../components/app-preview";
 import type { Status } from "../../components/ui";
-import { Seam } from "./chassis";
+import { Seam } from "./seam";
 import { Composer } from "./composer";
 import { Editor, Files } from "./editor";
 import { StatusFoot } from "./foot";

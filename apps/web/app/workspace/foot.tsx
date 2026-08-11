@@ -1,7 +1,7 @@
 "use client";
 
 import type { Status } from "../../components/ui";
-import { SegmentMeter, type LampState } from "./chassis";
+import { SegmentMeter, type LampState } from "../../components/chassis";
 
 /**
  * The status foot: a readout strip, not a status bar with a spinner in it.

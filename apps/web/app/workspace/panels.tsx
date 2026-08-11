@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { BrikLoader } from "../../components/logo";
 import type { Entry, TerminalLine } from "../../lib/workspace/events";
-import { Etch } from "./chassis";
+import { Etch } from "../../components/chassis";
 
 /**
  * The agent stream stays a task runner, never chat bubbles: an objective with a

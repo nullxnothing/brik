@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { BrikWordmark } from "../../components/logo";
-import { Annunciator, type Lamps } from "./chassis";
+import { Annunciator, type Lamps } from "../../components/chassis";
 
 /**
  * The top bar: a translucent tint over the chassis, so the grain and the sheen
