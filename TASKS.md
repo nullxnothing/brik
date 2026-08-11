@@ -27,11 +27,13 @@
 
    Two decisions ride along with it, both with evidence already gathered and
    neither taken:
-   - **Shrink the image.** A measured path from 10.1GB to about 5.2GB raw
-     (2.32GB to 1.33GB compressed) exists, the largest single win being to pin
-     `RUSTUP_TOOLCHAIN` so Anchor never auto-installs a 1.5GB nightly, plus a
-     minimal rustup profile. Worth doing regardless of provider: compressed pull
-     bytes are what the 5-minute activation target actually spends.
+   - **Shrink the image further.** Done so far: 7.65GB to 6.11GB extracted,
+     which already clears E2B's free 10GB ceiling. What is left is the risky
+     tier, roughly 600MB of Agave perf-libs, ledger-tool, and unused
+     platform-tools triples, plus about 690MB of rustup docs on the stable
+     toolchain that only a minimal profile or a flatten stage can reach. Neither
+     is needed to answer the provider question, so both can wait until there is
+     a reason.
    - **Swap the validator to Agave 3.0.14** to drop `seccomp=unconfined`
      (STATE.md, verified). Only needed if the provider is container-based, and
      it costs feature-set fidelity against devnet.

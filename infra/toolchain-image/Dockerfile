@@ -46,6 +46,22 @@ RUN cargo install --git https://github.com/coral-xyz/anchor \
     && avm install "${ANCHOR_VERSION}" \
     && avm use "${ANCHOR_VERSION}"
 
+# Install the nightly toolchain Anchor's IDL build needs, without its docs.
+#
+# anchor build generates the IDL with a host-side compile that runs under
+# +nightly, and left alone rustup fetches a full nightly on first use: 1.5GB, of
+# which 926MB is documentation nothing reads. Installing it here with the
+# minimal profile costs 592MB instead.
+#
+# Pinning RUSTUP_TOOLCHAIN to the stable toolchain instead looks like it removes
+# nightly entirely, and it does compile the scratch program. It then fails every
+# real template: under stable the IDL build cannot resolve a `seeds` expression
+# that names another account, so a program with any PDA gets
+# "cannot find value `mint` in this scope" from inside #[derive(Accounts)].
+# Nightly is load-bearing. tools/verify-templates is what catches this, because
+# the scratch program built here has no PDAs and passes either way.
+RUN rustup toolchain install nightly --profile minimal
+
 # Pre-build a scratch Anchor project AT THE PATH A WORKSPACE ACTUALLY USES.
 #
 # This is the core of the build-time budget (docs/07 §2), and the path is the
@@ -75,6 +91,10 @@ RUN cargo install --git https://github.com/coral-xyz/anchor \
 #    to generate the IDL, and its debug symbols were 1.7GB of a 2.0GB target
 #    directory. Dropping them takes the target to 891MB, which is smaller than
 #    this layer was before anchor-spl was added, with no loss of build speed.
+# 2b. The cargo git checkouts and unpacked registry sources go once the build is
+#    done, 278MB together. registry/cache and registry/index stay: cache holds
+#    the .crate archives cargo re-extracts from, and deleting index/*/.cache
+#    breaks an offline build outright.
 # 3. npm, because yarn is not installed. This is what makes anchor test work
 #    offline; node_modules costs 85MB. @solana/spl-token is added on top
 #    because a template test cannot create a mint or a token account without
@@ -92,7 +112,8 @@ RUN mkdir -p /workspace \
     && sed -i "s|^test = .*|test = \"npx ts-mocha -p ./tsconfig.json -t 1000000 tests/**/*.ts\"|" Anchor.toml \
     && npm install --no-audit --no-fund \
     && npm install --no-audit --no-fund --save-dev @solana/spl-token \
-    && anchor build
+    && anchor build \
+    && rm -rf /root/.cargo/git /root/.cargo/registry/src
 
 # The pre-build is also what populates the SBF platform-tools cache. Without it,
 # cargo-build-sbf downloads a tarball from GitHub on first build, which is a hard
@@ -105,8 +126,13 @@ RUN ls -d /root/.cache/solana/*/platform-tools >/dev/null 2>&1 \
     || { echo "pre-built target missing: first user build would be a cold compile"; exit 1; } \
     && test -d /workspace/project/node_modules/ts-mocha \
     || { echo "node_modules missing: anchor test would need egress"; exit 1; } \
-    && ls -d /root/.cargo/registry/src/*/anchor-spl-* >/dev/null 2>&1 \
-    || { echo "anchor-spl not vendored: SPL templates could not build offline"; exit 1; }
+    && ls /workspace/project/target/sbpf-solana-solana/release/deps/libanchor_spl-*.rlib \
+         >/dev/null 2>&1 \
+    || { echo "anchor-spl not compiled: SPL templates would be a cold build"; exit 1; } \
+    && ls /root/.cargo/registry/cache/*/anchor-spl-*.crate >/dev/null 2>&1 \
+    || { echo "anchor-spl archive missing: cargo could not re-extract it offline"; exit 1; } \
+    && test -d /root/.rustup/toolchains/nightly-x86_64-unknown-linux-gnu \
+    || { echo "nightly missing: IDL generation fails for any program with a PDA"; exit 1; }
 
 # Programs the test validator's genesis does not carry, dumped now so a
 # workspace can run its validator with egress switched off. Genesis already

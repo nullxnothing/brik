@@ -36,8 +36,12 @@ Step timings inside a run:
 deliberately disabled as "Coming soon". That gate is unchanged: `/workspace`
 needs local Docker, so it is not something a visitor can be sent to yet.
 
-**The toolchain image** `brik/solana-toolchain:dev` (10.1GB) is built and
-verified: Agave 3.1.9, Anchor 0.31.1, Rust 1.85.0, Node 22.
+**The toolchain image** `brik/solana-toolchain:dev` is built and verified:
+Agave 3.1.9, Anchor 0.31.1, Rust 1.85.0, Node 22. **6.11GB extracted**, 8.93GB
+as Docker reports it, down from 7.65GB / 10.1GB. That matters because a sandbox
+provider's disk quota measures the extracted size, and E2B's free tier caps it
+at 10GB, so the image now fits the tier that can answer the provider question
+without a $150/mo commitment.
 
 ## The constraint that shapes templates
 

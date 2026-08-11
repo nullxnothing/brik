@@ -95,6 +95,37 @@ Three things this layer gets right that are easy to get wrong:
   demonstrably there. The workspace runs `anchor keys sync` after writing a
   template, which is the supported fix.
 
+## Size
+
+6.11GB extracted, 8.93GB as Docker reports it. The gap is layer copy-up: the
+pre-build layer rewrites files earlier layers already shipped. Extracted size is
+what a sandbox provider's disk quota actually measures.
+
+Two things got it down from 7.65GB, both measured here:
+
+- Nightly installed with `--profile minimal`, 592MB instead of 1.5GB. Left to
+  itself, `anchor build` makes rustup fetch a full nightly on first use, 926MB
+  of which is documentation nothing reads.
+- The cargo git checkouts and unpacked registry sources deleted after the build,
+  278MB. `registry/cache` and `registry/index` stay: cache holds the `.crate`
+  archives cargo re-extracts from, and deleting `index/*/.cache` breaks an
+  offline build outright.
+
+**Do not pin `RUSTUP_TOOLCHAIN` to stable to avoid nightly.** It looks like a
+clean 1.5GB win and it compiles the scratch program, so the image builds green.
+It then fails every real template: under stable the IDL build cannot resolve a
+`seeds` expression naming another account, and any program with a PDA dies with
+`cannot find value 'mint' in this scope` from inside `#[derive(Accounts)]`.
+Nightly is load-bearing for IDL generation. `pnpm verify-templates` is what
+catches this, because the scratch program has no PDAs and passes either way.
+
+Three other things are load-bearing and must not be pruned. `target/debug`,
+`target/release`, and `target/sbpf-solana-solana` are all live: stripping debug
+symbols from the target directory saves 276MB and takes the next build from
+1.3s to 39s, because it destroys cargo's fingerprints. Deleting `target/release`
+costs 36s despite being 135MB, because cross-compiling to SBF puts host proc
+macros and build scripts there.
+
 ## Pinned versions
 
 | Component | Version | Bump policy |
