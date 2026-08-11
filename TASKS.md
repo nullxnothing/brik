@@ -36,48 +36,42 @@
   the container's copy, and an impossible request ends in a refusal backed by a
   command rather than a fabricated success. STATE.md has both transcripts and
   the two bugs driving it turned up.
+- **The workspace is open to the internet** — https://www.brik.builders runs a
+  real Anchor project in an E2B sandbox for anyone who presses Start building,
+  and the agent changes it on request. Verified on the deployed site, including
+  that leaving the page releases the sandbox. What that took, and what it does
+  not yet include, is in STATE.md.
 
 ## Next, in dependency order
 
-0. **Open the workspace on the live site.** The landing CTAs point at `/new`
-   now, so the page and the deployment disagree until this lands. Four things,
-   and only the first is a flag:
-   - `BRIK_WORKSPACE_ENABLED=1` in Vercel production, and a rebuild, because
-     the page gate resolves at build time.
-   - `E2B_API_KEY` and `E2B_TEMPLATE=brik-solana-toolchain` in Vercel. Neither
-     is there. Vercel has no Docker daemon, so without both there is no sandbox
-     provider at all.
-   - `maxDuration` on `/api/workspace/run` and `/api/workspace/agent`. A run is
-     39 to 41s on E2B and an agent turn is minutes; the platform default cuts
-     both off. App Router allows up to 1800s.
-   - The lease store below. Without it `getWorkspace` misses across instances,
-     so the agent turn cannot find the workspace the run created, the unload
-     DELETE cannot release it, and the cap does not hold. Every visitor would
-     leave a sandbox running for its full 900s TTL, uncapped, on the E2B
-     account.
+1. **Anonymous limits.** This is now urgent rather than scheduled, because the
+   route is public. Nothing stops a stranger starting sandboxes and spending
+   model tokens: `BRIK_MAX_WORKSPACES` counts per process, and on serverless
+   each instance counts its own. Every message is two meters at once, a sandbox
+   and a model. Depends on a shared store, which is what makes the lease store
+   below its dependency rather than the other way round.
 
-   The last one is why this is not a config change. Costs real money the moment
-   it is exposed.
+2. **A lease store.** Reconnecting to an E2B sandbox by id covers the agent turn
+   and the release, so the deployment works, but the cap and the sweeper are
+   still per-process and an adopted lease's deadline is a guess. A shared store
+   is what the limits above need to count against.
 
-1. **An approval step.** `requiresApproval()` already says write and run need
+3. **An approval step.** `requiresApproval()` already says write and run need
    one, and nothing asks. The agent writes files and runs commands unsupervised,
-   which is survivable only because the container has no egress and a TTL. This
-   is the first thing that stops being acceptable once a stranger can reach it.
+   which is survivable only because the sandbox has no egress and a TTL. A
+   stranger can reach it now, so this has stopped being theoretical.
 
-2. **A lease store.** Leases live in one Node process, so a restart forgets them
-   and a serverless deployment gives every request a different one. Forced as
-   soon as the control plane runs anywhere other than one long-lived process.
+4. **Make the template suites rerunnable.** Found by the agent on the live site:
+   a jar PDA derived from the wallet pubkey means running a suite twice against
+   the same validator fails, `initialize` on an account already in use and then
+   an accumulated balance. `pnpm verify-templates` cannot see it because every
+   template gets a fresh sandbox. Anyone who redeploys inside one workspace can.
 
-3. **Devnet deploy, preview URLs, fork.** The growth loop, and what the Preview
+5. **Devnet deploy, preview URLs, fork.** The growth loop, and what the Preview
    pane is waiting on. Needs a funded treasury; ~1.27 SOL of rent per deploy.
 
-4. **Auth, persistence, and abuse controls.** Per docs/02 the rate limits ship
-   in the same release as the anonymous flow, not after. The concurrency cap is
-   a host limit, not a per-visitor quota. The workspace routes stay closed in
-   production until this lands, which is the only thing keeping an anonymous
-   visitor from starting sandboxes on someone else's budget. The agent turn is
-   now a second meter on the same route: every message spends model tokens as
-   well as a container.
+6. **Auth and persistence.** Per docs/02 signup gates saving and never the first
+   success. Nothing survives a closed tab today, and the UI does not yet say so.
 
 ## Worth doing, not blocking
 

@@ -32,18 +32,30 @@ Step timings inside a run:
 | `anchor test --skip-build --skip-deploy` | 0.5s to 4s |
 | Deploy rent | 1.266 SOL |
 
-**The landing page** is live at https://brik.builders. Until 2026-08-11
-`/workspace` was reachable by typing the URL and served the old scripted demo:
-a hardcoded program id and a fabricated "Deploy success". `/workspace`, `/new`,
-and both `/api/workspace` routes answer 404 in production. Verified after the
-deploy: `curl -sL https://www.brik.builders/workspace` returns 404 and that
-program id appears zero times, on the apex and on www.
+**The workspace is open to the internet.** Anyone can open
+https://www.brik.builders, press Start building, and get a real Anchor project
+built, deployed, and tested in an E2B sandbox, then ask an agent to change it.
+No Docker, no signup, no checkout. Earlier the same day `/workspace` served the
+old scripted demo with a hardcoded program id; it was closed, then opened for
+real.
 
-**The page's CTAs now point at `/new`**, and the disabled "Coming soon" button
-is gone from the nav, the hero, and the closing band. That is a deliberate
-mismatch with the paragraph above and it is not deployed: on the live site those
-buttons would land on a 404. What it takes to make them true is in TASKS.md
-under the deployment item, and it is more than flipping the flag.
+Verified on the live site, not locally:
+
+- Tip jar reached `DEPLOYED` with all five run steps green.
+- "add a `ping` instruction that logs pong, then build it and confirm it is in
+  the IDL" — the agent read the project, wrote `lib.rs`, built, checked the
+  generated IDL, wrote a test, and deployed. `fn ping` and `pong` were in the
+  editor afterwards because they were on the sandbox's disk, and `tests/ping.ts`
+  appeared in the file list.
+- **It reported a failure it did not cause.** The run ended `4 passing, 2
+  failing`, and the agent traced both to the template suite not being
+  idempotent rather than to its own change, then proved it by running that suite
+  alone. See the known limit below.
+- Leaving the page released the sandbox: E2B's own API reported zero running
+  sandboxes six seconds later.
+
+The page's CTAs point at `/new` and the disabled "Coming soon" button is gone
+from the nav, the hero, and the closing band.
 
 The switch is `isWorkspaceOpen()` in `apps/web/lib/workspace/gate.ts`: open in
 development, closed in production unless `BRIK_WORKSPACE_ENABLED` is `1`, so a
@@ -64,13 +76,26 @@ without a $150/mo commitment.
 
 ## What is deployed
 
-`www.brik.builders` serves `dpl_9nS16mUv7iiDDs92uAMYFthfdA2x`, built from
-`02c4896` on 2026-08-11. The apex 308s to www and resolves to the same
-deployment. Production carries one environment variable,
-`NEXT_PUBLIC_SITE_URL`; `BRIK_WORKSPACE_ENABLED` is absent, which is what closes
-the workspace routes. A closed route renders `app/not-found.tsx` in the site's
-own type and reports its title as "Not found", rather than Next's unstyled
-default under a tab that still said "Workspace".
+`www.brik.builders` serves `dpl_7TAX5rVmRJv9H5FRGmeML91PkMAu`, built from
+`0a50b00` on 2026-08-11. The apex 308s to www and resolves to the same
+deployment. Production carries five environment variables:
+
+| | Why |
+| --- | --- |
+| `NEXT_PUBLIC_SITE_URL` | Absolute Open Graph image URLs |
+| `BRIK_WORKSPACE_ENABLED=1` | Opens `/workspace`, `/new`, and the API routes |
+| `E2B_TEMPLATE=brik-solana-toolchain` | Which sandbox to start |
+| `E2B_API_KEY` | Vercel has no Docker daemon, so this is the only provider |
+| `ANTHROPIC_API_KEY` | The agent. Without it the composer says so and stops |
+
+Closing it again is `BRIK_WORKSPACE_ENABLED=0` and a redeploy. Both parts are
+needed: the page gate resolves at build time, so the variable alone changes
+nothing. A closed route renders `app/not-found.tsx` in the site's own type and
+reports its title as "Not found".
+
+`maxDuration` is 300s on the run route and 800s on the agent route. The platform
+default cuts a function off well before either is done: a run is 39 to 41s on
+E2B, and the two agent turns measured in a browser took 3 and 7 minutes.
 
 **Every number on the landing page is measured, so changing what it describes
 changes the page.** The hero animation is a tip-jar run at the step timings
@@ -249,13 +274,30 @@ were turned away with a plain sentence rather than a stack trace.
   not before.
 - `exec` is request/response. Streaming it is enough for a build and a deploy;
   an interactive terminal needs a session primitive that does not exist.
+- **Nothing limits a visitor.** `BRIK_MAX_WORKSPACES` is a per-process capacity
+  limit, and on a serverless deployment each instance counts its own. A stranger
+  can start sandboxes and spend model tokens on the deployed site with no quota
+  in front of either. This is the largest open risk now that the route is
+  public, and it is the next slice.
+- **No approval step.** `requiresApproval()` classifies write and run as needing
+  one and nothing asks, so anything the agent decides to do it does. Survivable
+  only because the sandbox has no egress and a TTL.
+- **The template suites are not idempotent**, which the agent found on the live
+  site rather than any test here. A jar PDA is derived from the wallet pubkey,
+  so running a suite twice against the same validator fails: `initialize` hits
+  `account already in use` and the tip assertion reads an accumulated balance.
+  `pnpm verify-templates` never sees it because every template gets a fresh
+  sandbox. Anyone who redeploys inside one workspace does.
 - Leases live in the Node process. A server restart forgets them, and the
-  containers it forgot survive until their own TTL, then get swept.
-- **The control plane cannot run where the site runs.** It shells out to the
-  docker CLI, and Vercel functions have no Docker daemon. `E2BProvider` now
-  exists behind `SandboxProvider` and is verified, but the control plane still
-  instantiates `DockerProvider` directly, and the toolchain image is not
-  published as an E2B template yet. Those two are what remain.
+  containers it forgot survive until their own TTL, then get swept. On E2B a
+  miss is now recoverable: `E2BProvider.getWorkspace` reconnects to a live
+  sandbox by id, and the registry adopts what comes back, so the agent turn and
+  the release both work from an instance that never created the workspace.
+  Verified on the deployed site both ways. This is not the lease store: the cap
+  and the sweeper are still per-process, and an adopted lease's deadline is a
+  ceiling rather than the sandbox's real one.
+- ~~The control plane cannot run where the site runs.~~ Settled: it runs on
+  Vercel against E2B, and a visitor with no Docker gets a real build.
 - The io_uring requirement **cannot** be dropped from Agave.
   `assert!(io_uring_supported())` is verbatim in `fs/src/dirs.rs` in 3.1.9,
   3.1.14, 4.0.0, 4.1.2, 4.2.0, 4.3.0-alpha.3 and master, with no flag; there is
