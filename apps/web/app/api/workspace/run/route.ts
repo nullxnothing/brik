@@ -20,6 +20,9 @@ import { runWorkspace } from "../../../../lib/workspace/run";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+/** A run is 13 to 16s on Docker and 39 to 41s on E2B, and the platform default
+ *  would cut the stream off mid-build. */
+export const maxDuration = 300;
 
 interface RunRequest {
   /** Reuse a warm workspace so a redeploy skips container start and validator

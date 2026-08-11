@@ -17,6 +17,9 @@ import { getWorkspace } from "../../../../lib/workspace/registry";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+/** A turn is minutes, not seconds: the two measured in a browser took 3 and 7.
+ *  The loop's own budget stops at 10 minutes, so this is the outer bound. */
+export const maxDuration = 800;
 
 interface AgentRequest {
   workspaceId?: string;
