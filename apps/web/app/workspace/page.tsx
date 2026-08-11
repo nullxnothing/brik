@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
+import { notFound } from "next/navigation";
 import { DEFAULT_TEMPLATE, findTemplate } from "../../lib/templates";
+import { isWorkspaceOpen } from "../../lib/workspace/gate";
 import { WorkspaceShell } from "./workspace-shell";
 
 export const metadata: Metadata = {
@@ -13,6 +15,10 @@ export default async function Workspace({
 }: {
   searchParams: Promise<{ task?: string; template?: string; repo?: string }>;
 }) {
+  // The route stays in the repo because it is the product. It answers only
+  // where the container it needs can actually be started.
+  if (!isWorkspaceOpen()) notFound();
+
   const { task, template, repo } = await searchParams;
   const preset = findTemplate(template) ?? DEFAULT_TEMPLATE;
 

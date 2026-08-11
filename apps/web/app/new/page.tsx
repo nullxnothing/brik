@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
+import { notFound } from "next/navigation";
 import { SiteFooter } from "../../components/site-footer";
 import { SiteNav } from "../../components/site-nav";
+import { isWorkspaceOpen } from "../../lib/workspace/gate";
 import { StartForm } from "./start-form";
 
 export const metadata: Metadata = {
@@ -14,6 +16,9 @@ export default async function NewProject({
 }: {
   searchParams: Promise<{ source?: string }>;
 }) {
+  // Every path off this page starts a workspace, so it closes with one.
+  if (!isWorkspaceOpen()) notFound();
+
   const { source } = await searchParams;
 
   return (

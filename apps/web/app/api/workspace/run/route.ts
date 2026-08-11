@@ -1,5 +1,6 @@
 import { DEFAULT_TEMPLATE, findTemplate } from "../../../../lib/templates";
 import type { RunEvent } from "../../../../lib/workspace/events";
+import { isWorkspaceOpen } from "../../../../lib/workspace/gate";
 import {
   CapacityError,
   createWorkspace,
@@ -51,6 +52,9 @@ function messageFor(error: unknown): string {
 }
 
 export async function POST(request: Request): Promise<Response> {
+  // Before the body is read, because past this line a container gets started.
+  if (!isWorkspaceOpen()) return new Response(null, { status: 404 });
+
   const body = (await request.json().catch(() => ({}))) as RunRequest;
   const encoder = new TextEncoder();
 
