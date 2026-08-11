@@ -27,6 +27,22 @@ import type {
 
 const DEFAULT_TEMPLATE = process.env.E2B_TEMPLATE ?? "base";
 
+/**
+ * Every command and file operation runs as root, and this is not incidental.
+ *
+ * An E2B sandbox defaults to uid 1000, `user`, with $HOME at /home/user. That
+ * account cannot read /root or write /workspace, which is exactly where the
+ * toolchain image keeps everything that makes a build fast: the cargo registry
+ * and the SBF platform-tools cache under /root, and the pre-built project at
+ * /workspace/project. Run as the default user and `anchor build` cannot see any
+ * of it, so the workspace silently pays a cold 40s compile instead of ~3s, or
+ * fails outright with egress off.
+ *
+ * Verified in a sandbox: as `user`, /root is unreadable and /workspace is not
+ * writable; with user "root", $HOME is /root and both are available.
+ */
+const RUN_AS = "root";
+
 function elapsed(startedAt: number): number {
   return Date.now() - startedAt;
 }
@@ -49,6 +65,7 @@ class E2BWorkspace implements Workspace {
     const started = Date.now();
     try {
       const result = await this.sandbox.commands.run(command, {
+        user: RUN_AS,
         cwd: opts?.cwd,
         envs: opts?.env,
         timeoutMs: opts?.timeoutMs,
@@ -82,15 +99,15 @@ class E2BWorkspace implements Workspace {
   }
 
   async readFile(path: string): Promise<string> {
-    return this.sandbox.files.read(path);
+    return this.sandbox.files.read(path, { user: RUN_AS });
   }
 
   async writeFile(path: string, content: string): Promise<void> {
-    await this.sandbox.files.write(path, content);
+    await this.sandbox.files.write(path, content, { user: RUN_AS });
   }
 
   async listFiles(path: string): Promise<string[]> {
-    const entries = await this.sandbox.files.list(path);
+    const entries = await this.sandbox.files.list(path, { user: RUN_AS });
     return entries.map((entry) => entry.name);
   }
 

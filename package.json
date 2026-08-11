@@ -8,7 +8,8 @@
     "build": "pnpm -r build",
     "typecheck": "pnpm -r typecheck",
     "bakeoff": "pnpm --filter @brik/bakeoff start",
-    "verify-templates": "pnpm --filter @brik/verify-templates start"
+    "verify-templates": "pnpm --filter @brik/verify-templates start",
+    "publish-template": "pnpm --filter @brik/toolchain-image start"
   },
   "packageManager": "pnpm@10.33.0",
   "engines": {
