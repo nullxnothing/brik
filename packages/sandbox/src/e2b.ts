@@ -43,6 +43,34 @@ const DEFAULT_TEMPLATE = process.env.E2B_TEMPLATE ?? "base";
  */
 const RUN_AS = "root";
 
+/**
+ * The environment the image declares but E2B does not carry.
+ *
+ * E2B's Dockerfile converter drops `ENV` entirely: measured in a template built
+ * from a Dockerfile declaring three variables, none reached the sandbox, not in
+ * the command's environment, not in pid 1's, not in any shell init file. Since
+ * the toolchain image puts cargo, rustup, anchor, and the Solana CLI on PATH
+ * through `ENV`, a command that relies on it finds none of them.
+ *
+ * Supplying it per exec is enough, and is verified: with PATH passed this way a
+ * binary that was unreachable a moment earlier resolves. It is duplicated from
+ * the Dockerfile rather than derived from it, so the two have to be changed
+ * together; the image's own `ENV` line is what this mirrors.
+ */
+const WORKSPACE_ENV: Record<string, string> = {
+  PATH: [
+    "/root/.cargo/bin",
+    "/root/.local/share/solana/install/active_release/bin",
+    "/usr/local/sbin",
+    "/usr/local/bin",
+    "/usr/sbin",
+    "/usr/bin",
+    "/sbin",
+    "/bin",
+  ].join(":"),
+  HOME: "/root",
+};
+
 function elapsed(startedAt: number): number {
   return Date.now() - startedAt;
 }
@@ -67,7 +95,7 @@ class E2BWorkspace implements Workspace {
       const result = await this.sandbox.commands.run(command, {
         user: RUN_AS,
         cwd: opts?.cwd,
-        envs: opts?.env,
+        envs: { ...WORKSPACE_ENV, ...opts?.env },
         timeoutMs: opts?.timeoutMs,
         onStdout: opts?.onStdout,
         onStderr: opts?.onStderr,
