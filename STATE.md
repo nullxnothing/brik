@@ -81,8 +81,8 @@ without a $150/mo commitment.
 
 ## What is deployed
 
-`www.brik.builders` serves `dpl_F9GYgz5DMEGQRZT1SCiHUUrqXBNi`, built from
-`67d0883` on 2026-08-11. The apex 308s to www and resolves to the same
+`www.brik.builders` serves `dpl_6yqSiU4gUjAK2DHtcht5qDc2qDDg`, built from
+`f1e4c38` on 2026-08-11. The apex 308s to www and resolves to the same
 deployment. Production carries five environment variables:
 
 | | Why |
@@ -486,6 +486,13 @@ cream Deploy key arrived only at the end, the boot cues fired in the designed
 order (self-test → seams → editor, rail, terminal → four labels → plate), the
 seams dragged and persisted, `prefers-reduced-motion` skipped straight to the
 assembled state, and there were no console errors and no horizontal scroll.
+
+Then again on the deployment itself before the domain moved. A preview URL
+cannot check this: `BRIK_WORKSPACE_ENABLED` is production-only and the page gate
+resolves at build time, so `/workspace` builds as a 404 on any other target. The
+build was made with `vercel deploy --prod --skip-domain`, driven end to end on
+its own URL with production's keys, and promoted only after it reached DEPLOYED.
+The same run was repeated on `www.brik.builders` afterwards.
 
 One bug this turned up and fixed: a `clip-path` left on a well after its cut
 lands stops clipping the well's composited scroll layer, so scrolled terminal
