@@ -1,6 +1,7 @@
 import { DEFAULT_TEMPLATE, findTemplate } from "../../../../lib/templates";
 import type { RunEvent } from "../../../../lib/workspace/events";
 import {
+  CapacityError,
   createWorkspace,
   destroyWorkspace,
   getWorkspace,
@@ -36,6 +37,9 @@ async function leaseFor(body: RunRequest) {
 }
 
 function messageFor(error: unknown): string {
+  // Already a sentence written for a visitor, so it goes through untouched.
+  if (error instanceof CapacityError) return error.message;
+
   const text = error instanceof Error ? error.message : String(error);
   if (/ENOENT/.test(text)) {
     return "Docker is not reachable from the server. Start Docker Desktop and try again.";

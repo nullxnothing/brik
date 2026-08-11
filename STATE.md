@@ -106,6 +106,13 @@ Four independent mechanisms, each observed:
 
 After every test above, `docker ps -a --filter label=brik.workspace=1` was empty.
 
+**Concurrency is capped** at `BRIK_MAX_WORKSPACES`, default 4, because each
+workspace is a container off a 6.11GB image and a few open tabs would otherwise
+take the host down. The slot is claimed before the first await, so a burst
+cannot slip past the check. Verified with six simultaneous requests against a
+cap of two: peak container count was exactly two, two runs deployed, and four
+were turned away with a plain sentence rather than a stack trace.
+
 ## Known limits
 
 - `--security-opt seccomp=unconfined` is still required by the shipped image,
