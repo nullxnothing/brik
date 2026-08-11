@@ -71,68 +71,29 @@ RUN rustup toolchain install nightly --profile minimal
 # against a 41.7s cold baseline), while overlaying a template's source onto
 # this directory in place builds in ~1.2s.
 #
-# anchor init takes a workspace NAME under the cwd, not a path. --no-install
-# because it shells out to yarn, which is not in this image; npm install below
-# does the same job. The target directory is deliberately kept: it is the
-# product of this layer.
+# The steps live in prepare-project.sh rather than inline here, because this has
+# to survive two parsers. Docker and E2B's Dockerfile-to-template converter
+# disagree about escape sequences: E2B rewrites a backslash-n inside a RUN into
+# a literal letter n, which collapsed the Cargo.toml edit into one corrupt line
+# and failed the build. Measured in a probe template: a COPYed file arrives byte
+# for byte, so the script is the one form both parsers agree on and the local
+# image and the E2B template cannot drift.
 #
-# Three deliberate edits before the build, each measured:
-#
-# 1. The dependency set is the UNION of what every template needs, because a
-#    workspace runs with egress off and literally cannot fetch a crate at
-#    runtime (verified: cargo fails to resolve index.crates.io). A template may
-#    therefore only use crates compiled here. anchor-spl with "metadata" pulls
-#    the SPL token and Metaplex bindings; "init-if-needed" is an anchor-lang
-#    feature, and features are part of the fingerprint, so the superset has to
-#    be compiled now or a template using it triggers a cold rebuild.
-#    anchor-spl also has to join the idl-build feature, or the SBF build
-#    succeeds and IDL generation fails on the anchor_spl account types.
-# 2. debug = false on the dev profile. anchor build compiles the test profile
-#    to generate the IDL, and its debug symbols were 1.7GB of a 2.0GB target
-#    directory. Dropping them takes the target to 891MB, which is smaller than
-#    this layer was before anchor-spl was added, with no loss of build speed.
-# 2b. The cargo git checkouts and unpacked registry sources go once the build is
-#    done, 278MB together. registry/cache and registry/index stay: cache holds
-#    the .crate archives cargo re-extracts from, and deleting index/*/.cache
-#    breaks an offline build outright.
-# 3. npm, because yarn is not installed. This is what makes anchor test work
-#    offline; node_modules costs 85MB. @solana/spl-token is added on top
-#    because a template test cannot create a mint or a token account without
-#    it, and npm install is as unavailable at runtime as cargo fetch is.
-RUN mkdir -p /workspace \
-    && cd /workspace \
-    && anchor init project --no-git --no-install \
-    && cd /workspace/project \
-    && sed -i "s|^anchor-lang = .*|anchor-lang = { version = \"${ANCHOR_VERSION}\", features = [\"init-if-needed\"] }\nanchor-spl = { version = \"${ANCHOR_VERSION}\", features = [\"metadata\"] }|" \
-         programs/project/Cargo.toml \
-    && sed -i "s|^idl-build = .*|idl-build = [\"anchor-lang/idl-build\", \"anchor-spl/idl-build\"]|" \
-         programs/project/Cargo.toml \
-    && printf '\n[profile.dev]\ndebug = false\n' >> Cargo.toml \
-    && sed -i "s|^package_manager = .*|package_manager = \"npm\"|" Anchor.toml \
-    && sed -i "s|^test = .*|test = \"npx ts-mocha -p ./tsconfig.json -t 1000000 tests/**/*.ts\"|" Anchor.toml \
-    && npm install --no-audit --no-fund \
-    && npm install --no-audit --no-fund --save-dev @solana/spl-token \
-    && anchor build \
-    && rm -rf /root/.cargo/git /root/.cargo/registry/src
+# The script explains each edit it makes and why.
+COPY prepare-project.sh /tmp/prepare-project.sh
+RUN chmod +x /tmp/prepare-project.sh \
+    && /tmp/prepare-project.sh \
+    && rm /tmp/prepare-project.sh
 
 # The pre-build is also what populates the SBF platform-tools cache. Without it,
 # cargo-build-sbf downloads a tarball from GitHub on first build, which is a hard
 # failure in a workspace running with egress off. Fail the image build now rather
 # than the user's first build later. The cache lives under $HOME, so a workspace
 # must run as the same user that built this layer (root).
-RUN ls -d /root/.cache/solana/*/platform-tools >/dev/null 2>&1 \
-    || { echo "platform-tools cache missing: offline anchor build would fail"; exit 1; } \
-    && test -f /workspace/project/target/deploy/project.so \
-    || { echo "pre-built target missing: first user build would be a cold compile"; exit 1; } \
-    && test -d /workspace/project/node_modules/ts-mocha \
-    || { echo "node_modules missing: anchor test would need egress"; exit 1; } \
-    && ls /workspace/project/target/sbpf-solana-solana/release/deps/libanchor_spl-*.rlib \
-         >/dev/null 2>&1 \
-    || { echo "anchor-spl not compiled: SPL templates would be a cold build"; exit 1; } \
-    && ls /root/.cargo/registry/cache/*/anchor-spl-*.crate >/dev/null 2>&1 \
-    || { echo "anchor-spl archive missing: cargo could not re-extract it offline"; exit 1; } \
-    && test -d /root/.rustup/toolchains/nightly-x86_64-unknown-linux-gnu \
-    || { echo "nightly missing: IDL generation fails for any program with a PDA"; exit 1; }
+COPY verify-image.sh /tmp/verify-image.sh
+RUN chmod +x /tmp/verify-image.sh \
+    && /tmp/verify-image.sh \
+    && rm /tmp/verify-image.sh
 
 # Programs the test validator's genesis does not carry, dumped now so a
 # workspace can run its validator with egress switched off. Genesis already
