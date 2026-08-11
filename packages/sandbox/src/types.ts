@@ -72,4 +72,8 @@ export interface SandboxProvider {
   readonly name: string;
   createWorkspace(spec: WorkspaceSpec): Promise<Workspace>;
   getWorkspace(id: string): Promise<Workspace | null>;
+  /** Drop a workspace from the provider's bookkeeping. Destroying it is the
+   *  caller's job; this only stops the provider holding a handle to something
+   *  that is gone. */
+  forget(id: string): Promise<void>;
 }

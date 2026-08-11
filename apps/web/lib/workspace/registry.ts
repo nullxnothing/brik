@@ -1,21 +1,41 @@
 import {
   DockerProvider,
+  E2BProvider,
   reapExitedWorkspaces,
+  type SandboxProvider,
   type Workspace,
 } from "@brik/sandbox";
 
 /**
  * Workspace leases for the local control plane. Server only.
  *
- * There is no database yet, so a lease lives in this process and a container
- * outlives it. Three things keep the machine from filling up with 9.89GB-image
- * containers: the container's own `sleep` TTL makes it exit unattended, the
- * sweeper destroys leases past their deadline, and the same sweep removes any
- * BRIK container that is no longer running, including ones a crashed process
- * left behind.
+ * There is no database yet, so a lease lives in this process and the sandbox it
+ * points at outlives it. Three things keep a host from filling up: the sandbox
+ * expires on its own, the sweeper destroys leases past their deadline, and on
+ * Docker the same sweep removes any BRIK container that is no longer running,
+ * including ones a crashed process left behind.
  */
 
-const IMAGE = process.env.BRIK_WORKSPACE_IMAGE ?? "brik/solana-toolchain:dev";
+/**
+ * Which sandbox runs the workspace.
+ *
+ * E2B when it is configured, local Docker otherwise, so a developer with Docker
+ * needs no credentials and a deployment that has no Docker daemon still works.
+ * Both sit behind `SandboxProvider`; nothing above this line knows which is in
+ * use. The image name and the template id are not interchangeable, so they are
+ * chosen together.
+ */
+function chooseProvider(): { provider: SandboxProvider; image: string } {
+  const template = process.env.E2B_TEMPLATE;
+  if (process.env.E2B_API_KEY && template) {
+    return { provider: new E2BProvider(), image: template };
+  }
+  return {
+    provider: new DockerProvider(),
+    image: process.env.BRIK_WORKSPACE_IMAGE ?? "brik/solana-toolchain:dev",
+  };
+}
+
 const TTL_SECONDS = Number(process.env.BRIK_WORKSPACE_TTL_SECONDS ?? 900);
 const SWEEP_INTERVAL_MS = 30_000;
 
@@ -45,7 +65,7 @@ interface Lease {
 
 declare global {
   var __brikLeases: Map<string, Lease> | undefined;
-  var __brikProvider: DockerProvider | undefined;
+  var __brikSandbox: { provider: SandboxProvider; image: string } | undefined;
   var __brikSweeper: ReturnType<typeof setInterval> | undefined;
   var __brikStarting: { count: number } | undefined;
 }
@@ -53,7 +73,7 @@ declare global {
 // Next reloads route modules on edit; the leases have to outlive that or the
 // containers they track become unreachable orphans.
 const leases = (globalThis.__brikLeases ??= new Map<string, Lease>());
-const provider = (globalThis.__brikProvider ??= new DockerProvider());
+const { provider, image: IMAGE } = (globalThis.__brikSandbox ??= chooseProvider());
 /** Containers that have been asked for but do not have a lease yet. Counted
  *  against the cap, or two requests arriving together both pass the check and
  *  the host ends up with one more container than it agreed to. */
@@ -64,7 +84,9 @@ async function sweep(): Promise<void> {
   for (const [id, lease] of leases) {
     if (lease.expiresAt <= now) await destroyWorkspace(id);
   }
-  await reapExitedWorkspaces();
+  // Docker only: a stopped container lingers until something removes it. A
+  // managed provider reaps its own sandboxes when their timeout expires.
+  if (provider.name === "docker") await reapExitedWorkspaces();
 }
 
 function startSweeper(): void {
@@ -74,7 +96,7 @@ function startSweeper(): void {
   }, SWEEP_INTERVAL_MS);
   timer.unref?.();
   globalThis.__brikSweeper = timer;
-  void reapExitedWorkspaces().catch(() => {});
+  if (provider.name === "docker") void reapExitedWorkspaces().catch(() => {});
 }
 
 export async function createWorkspace(): Promise<{
