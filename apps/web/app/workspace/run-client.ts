@@ -3,14 +3,14 @@ import type { RunEvent } from "../../lib/workspace/events";
 /** Client half of the workspace protocol: post a run, read its events. */
 
 export async function streamRun(
-  workspaceId: string | undefined,
+  request: { workspaceId?: string; template: string },
   signal: AbortSignal,
   onEvent: (event: RunEvent) => void,
 ): Promise<void> {
   const response = await fetch("/api/workspace/run", {
     method: "POST",
     headers: { "content-type": "application/json" },
-    body: JSON.stringify({ workspaceId }),
+    body: JSON.stringify(request),
     signal,
   });
   if (!response.ok || !response.body) {

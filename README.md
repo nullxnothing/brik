@@ -27,6 +27,7 @@ packages/sandbox      Sandbox provider abstraction (Docker baseline; managed ada
 packages/agent        Agent harness skeleton (vendor-neutral: tools, routing, budgets, task state)
 infra/toolchain-image Pinned Solana toolchain image (Rust, Agave, Anchor, Node) with pre-warmed caches
 tools/bakeoff         Provider bake-off harness — measures cold start and anchor build times
+tools/verify-templates Builds, deploys, and tests every template in a real workspace
 docs/                 Business, product, brand, and operations documentation
 ```
 
@@ -48,10 +49,21 @@ Docker running and the toolchain image built:
 docker build -t brik/solana-toolchain:dev infra/toolchain-image
 ```
 
-Opening `/workspace` then starts a container, boots its validator, and streams
-`anchor build` and `anchor deploy` into the terminal panel. Containers carry a
-`brik.workspace=1` label and a TTL (`BRIK_WORKSPACE_TTL_SECONDS`, default 900);
-leaving the page releases one immediately.
+Opening `/workspace` then starts a container, boots its validator, writes the
+chosen template in, and streams `anchor build`, `anchor deploy`, and
+`anchor test` into the terminal panel. Containers carry a `brik.workspace=1`
+label and a TTL (`BRIK_WORKSPACE_TTL_SECONDS`, default 900); leaving the page
+releases one immediately.
+
+To check every template still builds, deploys, and passes its tests:
+
+```sh
+pnpm dev              # one terminal
+pnpm verify-templates # another
+```
+
+A workspace has no egress, so a template may only use crates and packages the
+toolchain image already carries. That is what this catches.
 
 To run the sandbox bake-off baseline:
 

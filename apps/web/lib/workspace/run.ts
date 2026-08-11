@@ -1,29 +1,34 @@
 import type { ExecResult, Workspace } from "@brik/sandbox";
+import type { Template } from "../templates";
 import { toneFor, type RunEvent, type TerminalLine } from "./events";
 
 /**
- * One workspace run: boot the validator, build the program, deploy it.
+ * One workspace run: boot the validator, write the template in, build it,
+ * deploy it, and run its tests.
  *
  * Every line the UI shows comes from this file, and every line this file sends
  * came out of the container. There is no agent yet, so the run does not write
- * code: it builds and deploys the project the image already carries.
+ * code of its own: it starts the template the visitor chose.
  */
 
-/** The pre-built Anchor project baked into the toolchain image. Building it in
- *  place is what keeps a build at ~1.5s; cargo fingerprints embed absolute
- *  paths, so a copy elsewhere is a cold compile. */
+/** The pre-built Anchor project baked into the toolchain image. Overlaying a
+ *  template onto it in place is what keeps a build at a few seconds; cargo
+ *  fingerprints embed absolute paths, so a copy elsewhere is a cold compile. */
 const PROJECT_DIR = "/workspace/project";
 const PROJECT_NAME = "project";
 const ENTRY_FILE = "programs/project/src/lib.rs";
+const TEST_FILE = "tests/project.ts";
 
 const BOOT_TIMEOUT_MS = 120_000;
 const BUILD_TIMEOUT_MS = 15 * 60_000;
 const DEPLOY_TIMEOUT_MS = 10 * 60_000;
+const TEST_TIMEOUT_MS = 10 * 60_000;
 
 export type Send = (event: RunEvent) => void;
 
 interface Context {
   workspace: Workspace;
+  template: Template;
   send: Send;
   signal: AbortSignal;
 }
@@ -114,6 +119,34 @@ function fail(ctx: Context, message: string): false {
   return false;
 }
 
+/**
+ * Put the template into the pre-built project. Only these two files are
+ * replaced: the manifests stay as the image compiled them, which is what lets
+ * cargo reuse the pre-built target directory.
+ *
+ * Then sync the program id. Each image build generates a fresh program keypair,
+ * so a template's declare_id! is stale the moment the image is rebuilt. Left
+ * alone the program still builds and deploys, and the client then talks to the
+ * declared address instead of the deployed one, so every test fails against a
+ * program that is demonstrably there. `anchor keys sync` rewrites the
+ * declaration from the keypair, which is why the source is read back afterwards
+ * rather than assumed.
+ */
+async function writeTemplate(ctx: Context): Promise<ExecResult> {
+  await ctx.workspace.writeFile(
+    `${PROJECT_DIR}/${ENTRY_FILE}`,
+    ctx.template.program,
+  );
+  await ctx.workspace.writeFile(
+    `${PROJECT_DIR}/${TEST_FILE}`,
+    ctx.template.test,
+  );
+  return ctx.workspace.exec("anchor keys sync", {
+    cwd: PROJECT_DIR,
+    signal: ctx.signal,
+  });
+}
+
 /** Report the project as it exists on disk, rather than as a template claims. */
 async function sendProject(ctx: Context): Promise<void> {
   const source = await ctx.workspace.readFile(`${PROJECT_DIR}/${ENTRY_FILE}`);
@@ -166,7 +199,11 @@ export async function runWorkspace(ctx: Context): Promise<boolean> {
   }
 
   ctx.send({ type: "status", status: "ready" });
-  ctx.send({ type: "step", text: "Read the project" });
+  ctx.send({ type: "step", text: `Open the ${ctx.template.name} template` });
+  const sync = await writeTemplate(ctx);
+  if (sync.exitCode !== 0) {
+    return fail(ctx, failureMessage("anchor keys sync", sync));
+  }
   await sendProject(ctx);
 
   ctx.send({ type: "status", status: "building" });
@@ -199,6 +236,19 @@ export async function runWorkspace(ctx: Context): Promise<boolean> {
 
   const balance = await readBalance(ctx);
   if (balance !== null) ctx.send({ type: "balance", balance });
+
+  // The suite runs against the program that was just deployed, so the build and
+  // deploy anchor would otherwise repeat are both skipped.
+  ctx.send({ type: "status", status: "testing" });
+  ctx.send({ type: "step", text: "Run the tests" });
+  const test = await runCommand(
+    ctx,
+    "anchor test --skip-local-validator --skip-build --skip-deploy",
+    { cwd: PROJECT_DIR, timeoutMs: TEST_TIMEOUT_MS },
+  );
+  if (test.exitCode !== 0) {
+    return fail(ctx, failureMessage("anchor test", test));
+  }
 
   ctx.send({ type: "status", status: "deployed" });
   return true;

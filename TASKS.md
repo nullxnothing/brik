@@ -2,33 +2,38 @@
 
 ## Done
 
-- **Toolchain image** — `brik/solana-toolchain:dev`, pinned and pre-warmed. The
-  pre-built project at `/workspace/project` builds in ~1.5s in place.
+- **Toolchain image** — `brik/solana-toolchain:dev`, pinned and pre-warmed, now
+  carrying the union of template dependencies so a workspace with egress off can
+  still build and test what it is given.
 - **Local validator per workspace** — `brik-localnet`, boots in ~2s, funds 1000
   SOL, works with egress off. No faucet anywhere in the flow.
 - **Provider bake-off harness** — `pnpm bakeoff`, Docker baseline measured.
 - **Landing page** — live, app-entry CTAs gated as "Coming soon".
 - **Real workspace run** — browser to a real `anchor build` and `anchor deploy`
-  in a container that did not exist before the request, streamed live, ending in
-  a real program id. Failure and cleanup paths verified (see STATE.md).
+  in a container that did not exist before the request, streamed live. Failure
+  and cleanup paths verified (see STATE.md).
+- **Real templates** — four Anchor programs with test suites, written into the
+  workspace and proven by `pnpm verify-templates`: 12 tests passing across four
+  templates, each built, deployed, and tested in 12 to 14 seconds.
 
-## Next, one slice each
+## Next, in dependency order
 
-- **A real project to build.** Every workspace currently builds the same scratch
-  program. Needs template projects that overlay onto `/workspace/project` in
-  place, or the warm-build advantage is lost.
-- **The agent.** The composer answers honestly that nothing is connected. This
-  is the slice that makes the agent panel a plan rather than a fixed script, and
-  brings back the suggested-change chip.
-- **Tests in the run.** Requires deciding how `node_modules` gets into a
-  workspace that runs with egress off.
-- **Provider decision.** E2B and Fly are the live candidates; both must be
-  proven to run this image's validator (io_uring) before either is chosen.
-- **Persistence and auth.** Leases live in one Node process today, so a workspace
-  cannot survive a restart or be reattached from another tab.
-- **Preview URLs and devnet deploy.** What the Preview pane is waiting on.
+1. **A managed sandbox provider.** The blocker for anything being live: the
+   control plane shells out to the docker CLI and Vercel has no Docker daemon.
+   Desk research points at E2B, with Fly Machines as runner-up, and confirms the
+   io_uring requirement cannot be dropped (STATE.md). Settling it needs a paid
+   account, so it is the first thing that costs money.
+2. **A lease store.** Forced by (1): leases live in one Node process today, and
+   serverless gives every request a different one.
+3. **The agent.** `packages/agent` is types and a comment. This is what makes
+   the composer answer honestly instead of declining, and what brings back the
+   suggested-change chip.
+4. **Devnet deploy, preview URLs, fork.** The growth loop, and what the Preview
+   pane is waiting on. Needs a funded treasury; ~1.27 SOL of rent per deploy.
+5. **Auth, persistence, and abuse controls.** Per docs/02 the rate limits ship
+   in the same release as the anonymous flow, not after.
 
 ## Not started
 
-Billing, sharing and fork, GitHub import (the `/new` field accepts a repo URL
-and the workspace ignores it), collaboration.
+Billing, GitHub import (the `/new` field accepts a repo URL and the workspace
+ignores it), GitHub push, collaboration, mainnet anything.

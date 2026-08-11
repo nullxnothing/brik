@@ -1,3 +1,4 @@
+import { DEFAULT_TEMPLATE, findTemplate } from "../../../../lib/templates";
 import type { RunEvent } from "../../../../lib/workspace/events";
 import {
   createWorkspace,
@@ -22,6 +23,9 @@ interface RunRequest {
   /** Reuse a warm workspace so a redeploy skips container start and validator
    *  boot. Ignored if the lease is gone. */
   workspaceId?: string;
+  /** Which template to start. Falls back to the default rather than failing,
+   *  because an unknown slug is a stale link, not an error worth a dead end. */
+  template?: string;
 }
 
 async function leaseFor(body: RunRequest) {
@@ -80,6 +84,7 @@ export async function POST(request: Request): Promise<Response> {
         });
         keepWorkspace = await runWorkspace({
           workspace: lease.workspace,
+          template: findTemplate(body.template) ?? DEFAULT_TEMPLATE,
           send,
           signal: gone.signal,
         });

@@ -1,4 +1,4 @@
-import type { Status } from "../../components/ui";
+import type { Status } from "../status";
 
 /**
  * The wire protocol between the workspace route and the workspace UI.

@@ -39,11 +39,13 @@ GitHub · blank) → `/workspace` running immediately, anonymous and ephemeral �
 sandbox into a saved project.
 
 Current build stage: the workspace runs for real and nothing else does. Opening `/workspace` starts a
-container from the toolchain image, boots its own validator, builds the pre-built Anchor project, and
-deploys it to that validator, streaming real stdout. There is no agent, no auth, no database, no
-persistence, no template projects, and no preview URL, so the workspace builds the project the image
-ships with and says so. Landing-page CTAs stay gated until those land. Nothing in the UI may claim a
-backend capability that does not exist yet (no fake login, no fake persistence promises).
+container from the toolchain image, boots its own validator, writes the chosen template in, then
+builds, deploys, and tests it against that validator, streaming real stdout. Four templates are real
+Anchor programs with real suites. There is no agent, no auth, no database, no persistence, and no
+preview URL, so the composer declines honestly and the Preview pane says what it is waiting on.
+Landing-page CTAs stay gated until the workspace can run somewhere other than a developer's own
+Docker. Nothing in the UI may claim a backend capability that does not exist yet (no fake login, no
+fake persistence promises).
 
 ## Status vocabulary (fixed)
 

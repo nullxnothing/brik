@@ -4,8 +4,7 @@ import { TOKEN_GATE } from "./token-gate";
 import { USDC_CHECKOUT } from "./usdc-checkout";
 import type { Template } from "./types";
 
-export type { FollowUp, Template } from "./types";
-export { isAnchorProject } from "./types";
+export type { Template } from "./types";
 
 export const TEMPLATES: Template[] = [
   TIP_JAR,

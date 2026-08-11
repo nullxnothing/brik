@@ -1,63 +1,32 @@
-export interface FollowUp {
-  /** Suggested change shown under the composer. */
-  chip: string;
-  /** What the agent says it is writing. */
-  unit: string;
-  test: string;
-  /** The whole file after the change, so the editor never shows a half-edit. */
-  source: string[];
-  /** Indices in `source` that are new, rendered as additions. */
-  added: number[];
-}
-
+/**
+ * A template is the source a workspace starts from.
+ *
+ * `program` and `test` are written into the container's pre-built Anchor
+ * project, replacing its scratch program and suite. Nothing else is written,
+ * which is deliberate: the manifests stay exactly as the image compiled them,
+ * so cargo reuses the pre-built target directory and the build takes seconds
+ * rather than a minute.
+ *
+ * The consequence is a hard constraint on template authors. A workspace runs
+ * with egress off and cannot fetch a crate or an npm package, so a template may
+ * only use what the image already carries: anchor-lang (with init-if-needed),
+ * anchor-spl (with metadata), and for the suite, @coral-xyz/anchor,
+ * @solana/spl-token, chai, and mocha. Reaching for anything else fails the
+ * build inside the workspace rather than here.
+ *
+ * `tools/verify-templates` compiles and runs every template in the image, which
+ * is what keeps that constraint honest.
+ */
 export interface Template {
   slug: string;
   name: string;
   tagline: string;
+  /** Shown on the template card. Names what the program actually uses. */
   stack: string;
+  /** The objective the workspace opens with. */
   task: string;
-  /** Workspace project folder and header label. */
-  project: string;
-  entryFile: string;
-  files: string[];
-  /** The instruction or unit the agent writes, used in its step labels. */
-  unit: string;
-  tests: string[];
-  source: string[];
-  followUp: FollowUp;
-}
-
-export function isAnchorProject(template: Template): boolean {
-  return template.entryFile.startsWith("programs/");
-}
-
-export interface Edit {
-  /** Index in the base file to splice at. */
-  at: number;
-  /** Base lines replaced by this edit. */
-  remove?: number;
-  lines: string[];
-}
-
-/**
- * Splice edits into a file and report which resulting lines are new, so the
- * editor can render a diff without anyone hand-counting line numbers.
- */
-export function applyEdits(base: string[], edits: Edit[]) {
-  const ordered = [...edits].sort((a, b) => a.at - b.at);
-  const source: string[] = [];
-  const added: number[] = [];
-  let cursor = 0;
-
-  for (const edit of ordered) {
-    source.push(...base.slice(cursor, edit.at));
-    for (const line of edit.lines) {
-      added.push(source.length);
-      source.push(line);
-    }
-    cursor = edit.at + (edit.remove ?? 0);
-  }
-  source.push(...base.slice(cursor));
-
-  return { source, added };
+  /** The Anchor program, written to programs/project/src/lib.rs. */
+  program: string;
+  /** The mocha suite, written to tests/project.ts. */
+  test: string;
 }

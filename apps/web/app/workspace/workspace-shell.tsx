@@ -37,7 +37,13 @@ const MOBILE_TABS: { label: string; view: MobileView; right?: RightTab }[] = [
   { label: "Solana", view: "right", right: "solana" },
 ];
 
-export function WorkspaceShell({ task }: { task: string }) {
+export function WorkspaceShell({
+  task,
+  template,
+}: {
+  task: string;
+  template: string;
+}) {
   const [run, setRun] = useState(() => initialRun(task));
   const [isRunning, setIsRunning] = useState(true);
   const [centerTab, setCenterTab] = useState<CenterTab>("code");
@@ -57,12 +63,16 @@ export function WorkspaceShell({ task }: { task: string }) {
     setIsRunning(true);
     setRun((prev) => (prev.workspaceId ? restartRun(prev) : prev));
 
-    streamRun(workspaceRef.current ?? undefined, controller.signal, (event) => {
-      if (controller.signal.aborted) return;
-      if (event.type === "workspace") workspaceRef.current = event.id;
-      if (event.type === "failed") workspaceRef.current = null;
-      setRun((prev) => applyEvent(prev, event));
-    })
+    streamRun(
+      { workspaceId: workspaceRef.current ?? undefined, template },
+      controller.signal,
+      (event) => {
+        if (controller.signal.aborted) return;
+        if (event.type === "workspace") workspaceRef.current = event.id;
+        if (event.type === "failed") workspaceRef.current = null;
+        setRun((prev) => applyEvent(prev, event));
+      },
+    )
       .catch((error: unknown) => {
         if (controller.signal.aborted) return;
         workspaceRef.current = null;
@@ -87,7 +97,7 @@ export function WorkspaceShell({ task }: { task: string }) {
       workspaceRef.current = null;
       if (id) releaseWorkspace(id);
     };
-  }, [runToken]);
+  }, [runToken, template]);
 
   // A closed tab must not leave a container running until its TTL.
   useEffect(() => {

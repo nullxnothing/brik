@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { Status } from "../lib/status";
 import { MARK_SMALL_PATH } from "./logo";
 
 type ButtonVariant = "primary" | "secondary" | "ghost";
@@ -48,13 +49,7 @@ export function ComingSoon({ compact = false }: { compact?: boolean }) {
   );
 }
 
-export type Status =
-  | "ready"
-  | "building"
-  | "testing"
-  | "failed"
-  | "deployed"
-  | "sleeping";
+export type { Status } from "../lib/status";
 
 const STATUS_TONE: Record<Status, { dot: string; text: string }> = {
   ready: { dot: "#3A3A3A", text: "var(--brik-fg-3)" },

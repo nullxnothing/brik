@@ -14,14 +14,15 @@ export default async function Workspace({
   searchParams: Promise<{ task?: string; template?: string; repo?: string }>;
 }) {
   const { task, template, repo } = await searchParams;
+  const preset = findTemplate(template) ?? DEFAULT_TEMPLATE;
 
   // The objective the visitor arrived with. It labels the run; nothing acts on
-  // it until an agent exists.
+  // it until an agent exists, so it falls back to what the template does.
   const objective =
     task?.slice(0, 160) ??
     (repo
       ? `Set up and build ${repo.replace(/^https:\/\/github\.com\//, "")}`
-      : (findTemplate(template) ?? DEFAULT_TEMPLATE).task);
+      : preset.task);
 
-  return <WorkspaceShell task={objective} />;
+  return <WorkspaceShell task={objective} template={preset.slug} />;
 }
