@@ -5,19 +5,24 @@ import { StatusBadge, type Status } from "./ui";
 
 const FINAL_TICK = 7;
 
+/**
+ * Every number below is a measured tip-jar run, not a dressed-up one: see the
+ * step timings in STATE.md. No program id, because the one a run produces
+ * belongs to that run.
+ */
 const AGENT_STEPS = [
   { at: 0, label: "Read the project and plan the change" },
   { at: 1, label: "Write the send_tip instruction" },
-  { at: 4, label: "anchor build · finished in 14.2s" },
-  { at: 5, label: "Tests passing 3/3" },
-  { at: 7, label: "Deployed to the local validator" },
+  { at: 4, label: "anchor build · finished in 3s" },
+  { at: 5, label: "Tests passing 4/4" },
+  { at: 7, label: "Deployed to the workspace validator" },
 ];
 
 const TERMINAL_LINES = [
   { at: 3, text: "$ anchor build", ok: false },
-  { at: 4, text: "Finished release [optimized] in 14.2s", ok: true },
+  { at: 4, text: "Finished release [optimized] in 3s", ok: true },
   { at: 6, text: "$ anchor deploy", ok: false },
-  { at: 7, text: "Deploy success · 7xKX…gAsU", ok: true },
+  { at: 7, text: "Deploy success · 4.3s · 1.266 SOL rent", ok: true },
 ];
 
 function statusAt(tick: number): Status {
@@ -79,21 +84,23 @@ export function DemoFrame() {
       </div>
 
       <div className="grid md:grid-cols-[164px_1fr_248px]">
+        {/* The layout a workspace actually opens: a template writes the
+            program and the suite into the pre-built Anchor project, and
+            nothing else. */}
         <div className="hidden border-r border-line p-4 font-mono text-code-sm leading-[1.9] text-fg-2 md:block">
           <div>programs/</div>
-          <div className="text-fg">&nbsp;&nbsp;lib.rs</div>
-          <div>app/</div>
-          <div>&nbsp;&nbsp;page.tsx</div>
-          <div>&nbsp;&nbsp;wallet.tsx</div>
+          <div>&nbsp;&nbsp;project/</div>
+          <div className="text-fg">&nbsp;&nbsp;&nbsp;&nbsp;src/lib.rs</div>
           <div>tests/</div>
-          <div>&nbsp;&nbsp;tip-jar.ts</div>
+          <div>&nbsp;&nbsp;project.ts</div>
           <div>Anchor.toml</div>
+          <div>Cargo.toml</div>
         </div>
 
         <pre className="overflow-x-auto bg-canvas p-4 font-mono text-code-sm leading-[1.85] text-fg-2">
           <span className="text-fg-3">#[program]</span>
           {"\n"}
-          <span className="font-medium text-cream">pub mod</span> tip_jar {"{"}
+          <span className="font-medium text-cream">pub mod</span> project {"{"}
           {"\n"}
           {"    "}
           <span className="font-medium text-cream">pub fn</span> send_tip(
@@ -109,7 +116,8 @@ export function DemoFrame() {
             <span className="font-medium text-cream">let</span> jar = &amp;
             <span className="font-medium text-cream">mut</span> ctx.accounts.jar;
             {"\n"}
-            {"        "}jar.total = jar.total.checked_add(amount)?;{"\n"}
+            {"        "}jar.total = jar.total.checked_add(amount){"\n"}
+            {"            "}.ok_or(TipJarError::Overflow)?;{"\n"}
             {"        "}Ok(()){"\n"}
           </span>
           {"    "}

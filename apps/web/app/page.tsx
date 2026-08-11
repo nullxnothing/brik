@@ -39,18 +39,19 @@ const CAPABILITIES = [
     title: "A workspace, not a sandbox",
     body: "Rust, Anchor, the Solana CLI, and Node are installed before the page finishes loading. Your terminal is a real terminal.",
     visual: (
+      // Read out of brik/solana-toolchain:dev. Changing the image changes these.
       <div className="font-mono text-code-sm leading-[1.9] text-fg-3">
         <div>
-          <span className="text-fg-2">rustc</span> 1.86.0
+          <span className="text-fg-2">rustc</span> 1.85.0
         </div>
         <div>
-          <span className="text-fg-2">solana-cli</span> 2.1.5
+          <span className="text-fg-2">solana-cli</span> 3.1.9
         </div>
         <div>
-          <span className="text-fg-2">anchor-cli</span> 0.31.0
+          <span className="text-fg-2">anchor-cli</span> 0.31.1
         </div>
         <div>
-          <span className="text-fg-2">node</span> 22.14.0
+          <span className="text-fg-2">node</span> 22.23.2
         </div>
       </div>
     ),
@@ -62,7 +63,7 @@ const CAPABILITIES = [
       <div className="font-mono text-code-sm leading-[1.9]">
         <div className="text-err">error[E0308]: mismatched types</div>
         <div className="text-fg-3">↳ jar.total expects u64, found u32</div>
-        <div className="text-fg-2">edit programs/tip-jar/src/lib.rs</div>
+        <div className="text-fg-2">edit programs/project/src/lib.rs</div>
         <div className="text-ok">retry · build complete</div>
       </div>
     ),
@@ -72,10 +73,10 @@ const CAPABILITIES = [
     body: "Every workspace runs its own Solana validator, so SOL is unlimited and deploys are instant. Push to devnet when you want a URL to share.",
     visual: (
       <div className="font-mono text-code-sm leading-[1.9] text-fg-3">
-        <div className="text-fg-2">brik.dev/p/tip-jar</div>
-        <div>Program 7xKX…gAsU</div>
+        <div className="text-fg-2">brik-localnet start</div>
+        <div>Wallet funded · 1000 SOL</div>
         <div>
-          <span className="text-ok">Live</span> · 41 forks
+          <span className="text-ok">Ready</span> · 1.9s
         </div>
       </div>
     ),

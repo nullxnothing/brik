@@ -4,11 +4,16 @@ import { DEFAULT_TEMPLATE, findTemplate } from "../../lib/templates";
 import { isWorkspaceOpen } from "../../lib/workspace/gate";
 import { WorkspaceShell } from "./workspace-shell";
 
-export const metadata: Metadata = {
-  title: "Workspace",
-  description:
-    "A running Solana workspace: a container with the toolchain, a local validator, and a live build.",
-};
+// Metadata is resolved even when the page renders as a 404, so a closed route
+// would otherwise put "Workspace" in the tab of a page that says nothing here.
+export function generateMetadata(): Metadata {
+  if (!isWorkspaceOpen()) return { title: "Not found" };
+  return {
+    title: "Workspace",
+    description:
+      "A running Solana workspace: a container with the toolchain, a local validator, and a live build.",
+  };
+}
 
 export default async function Workspace({
   searchParams,

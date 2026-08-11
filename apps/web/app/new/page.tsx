@@ -5,11 +5,14 @@ import { SiteNav } from "../../components/site-nav";
 import { isWorkspaceOpen } from "../../lib/workspace/gate";
 import { StartForm } from "./start-form";
 
-export const metadata: Metadata = {
-  title: "Start a project",
-  description:
-    "Describe an app, open a template, or import a repository. Brik gives you a running Solana workspace in seconds.",
-};
+export function generateMetadata(): Metadata {
+  if (!isWorkspaceOpen()) return { title: "Not found" };
+  return {
+    title: "Start a project",
+    description:
+      "Describe an app, open a template, or import a repository. Brik gives you a running Solana workspace in seconds.",
+  };
+}
 
 export default async function NewProject({
   searchParams,
