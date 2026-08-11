@@ -9,6 +9,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@brik/agent": "workspace:*",
     "@brik/sandbox": "workspace:*",
     "@tailwindcss/postcss": "^4.3.3",
     "next": "^15.3.0",

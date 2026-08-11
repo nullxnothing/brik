@@ -108,7 +108,44 @@ The image now carries the union: `anchor-lang` with `init-if-needed`,
   calls `anchor keys sync` after writing the template, which is why the source
   shown in the editor is read back from the container afterwards.
 
-## The agent runs, and is not wired up yet
+## The agent is wired to the composer
+
+Typing into the composer runs the agent against the workspace on screen. Its
+steps arrive in the agent panel and its command output in the terminal, both
+live, over the same NDJSON protocol a run uses. `POST /api/workspace/agent`
+takes `{ workspaceId, message }`; it never allocates or destroys a workspace,
+because the page already holds that lease and an agent failing leaves a
+perfectly good container behind.
+
+Driven in a browser against a real container on 2026-08-11:
+
+- **A real change.** "add a set_owner instruction that transfers the jar to a
+  new owner, and build it" — the agent read the program, noticed that
+  overwriting `jar.owner` would break the PDA seeds and brick the jar, split
+  `creator` from `owner` instead, wrote `lib.rs`, built it, and read the
+  generated IDL to confirm `set_owner` was dispatchable. It then found the
+  leftover jar account from the earlier run had the old 57-byte layout, rewrote
+  the suite to use a fresh keypair, redeployed, and ran the tests. Its summary
+  listed what it changed beyond the ask and corrected one of its own wrong
+  assumptions. Verified independently with `docker exec`: `set_owner`,
+  `creator`, and `OwnerChanged` are in the container's copy of `lib.rs`, which
+  is what the editor was showing.
+- **An impossible one.** "add the reqwest crate ... and fetch example.com
+  inside the program" ended in a refusal backed by evidence rather than a
+  fabricated success: offline resolution dead-ended on yanked and uncached
+  crates, then a `std::net` probe compiled but failed at runtime with
+  `custom program error: 0x1776`, because the SBF VM has no socket syscalls. It
+  restored the project, rebuilt, redeployed, and left all 12 tests passing.
+
+Two bugs were found by driving it rather than by reading it, both fixed. Step
+ids restarted per turn, so a second turn's steps overwrote the first turn's
+instead of appending; ids now carry a per-turn prefix. And the final summary was
+sent again as a note when the turn ended by talking, so the agent appeared to
+say the same thing twice.
+
+The panel now distinguishes a failed step from a finished one. A step event may
+carry an `id` and a `state`, which is what lets a running step become one that
+succeeded or failed; without that a failed command still rendered with a tick.
 
 `packages/agent` is a bounded tool-calling loop over four tools that act on the
 sandbox: list, read, write, and run a command. The vendor sits behind a
@@ -123,8 +160,14 @@ sandbox: list, read, write, and run a command. The vendor sits behind a
   built it, and then read the generated IDL to confirm `ping` was dispatchable
   rather than merely compiling. Six tool calls, seven checks.
 
-**Nothing in the product calls it.** The composer still declines every request,
-which remains honest until the wiring lands.
+Both still pass. The loop gained one thing for this: an optional `onOutput`,
+which tees a command's raw output to a caller with a terminal to show. It is a
+tee and not the evidence — what the model sees is still the `ExecResult` the
+command returned, so nothing about it changes what a step may claim.
+
+**There is no approval step.** `requiresApproval()` classifies write and run as
+needing one and nothing asks. Anything the agent decides to do, it does, inside
+a container with no egress and a TTL.
 
 ## What does not exist
 
@@ -139,7 +182,9 @@ Three modules under `apps/web`, no new service:
   an orphan reaper. Server only.
 - `lib/workspace/run.ts` — the run sequence. Every line the UI shows originates
   here and came out of the container.
-- `app/api/workspace/run` (POST, streams newline-delimited JSON) and
+- `lib/workspace/agent.ts` — one agent turn, translated into run events.
+- `app/api/workspace/run` (POST, streams newline-delimited JSON),
+  `app/api/workspace/agent` (POST, the same protocol for one turn), and
   `app/api/workspace/[id]` (DELETE).
 
 `RunState` is still a reduction over an event stream; the events are now real
@@ -282,8 +327,9 @@ started in **492ms** with no ready-wait.
 
 Both are recorded in DESIGN.md itself. The Preview pane no longer renders a
 template app in browser chrome, because there is no deployment to frame and no
-URL to show. The composer no longer offers a suggested change, because no agent
-exists to make the edit. Both return with the slice that makes them true.
+URL to show. The composer no longer offers a suggested change; the agent behind
+it is real now, but a suggestion it did not make would still be invented. Both
+return with the slice that makes them true.
 
 ## Verifying this
 

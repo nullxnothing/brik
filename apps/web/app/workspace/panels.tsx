@@ -39,19 +39,27 @@ export function AgentPanel({
             </p>
           );
         }
-        const isActive = i === lastStep && isRunning;
+        // A step that reported how it ended says so; one that did not falls
+        // back to the run's convention, where the last step is the live one.
+        const isActive = entry.state
+          ? entry.state === "running"
+          : i === lastStep && isRunning;
+        const hasFailed = entry.state === "failed";
         return (
           <div key={i} className="flex gap-3 text-body">
             <span className="mt-0.5 shrink-0 text-fg-3">
               {isActive ? (
                 <BrikLoader size={14} />
               ) : (
-                <span className="text-ok" aria-hidden>
-                  ✓
+                <span className={hasFailed ? "text-err" : "text-ok"} aria-hidden>
+                  {hasFailed ? "✗" : "✓"}
                 </span>
               )}
             </span>
-            <span className={isActive ? "text-fg" : "text-fg-2"}>{entry.text}</span>
+            <span className={isActive ? "text-fg" : "text-fg-2"}>
+              {hasFailed && <span className="sr-only">Failed: </span>}
+              {entry.text}
+            </span>
           </div>
         );
       })}

@@ -7,12 +7,11 @@ import { Composer } from "./composer";
 import { Editor, Files } from "./editor";
 import { WorkspaceHeader } from "./header";
 import { AgentPanel, SolanaPanel, Terminal } from "./panels";
-import { releaseWorkspace, streamRun } from "./run-client";
+import { releaseWorkspace, streamAgent, streamRun } from "./run-client";
 import { applyEvent, applyFailure, initialRun, restartRun } from "./run-state";
 
-const NOT_CONNECTED =
-  "No agent is connected yet, so the workspace cannot act on your request. " +
-  "It builds and deploys the project the toolchain image ships with.";
+const NO_WORKSPACE =
+  "There is no workspace running to act on. Deploy to start one, then ask again.";
 
 /** What the workspace is doing, for the pane that has nothing else to show. */
 const STATUS_LINE: Record<Status, string> = {
@@ -46,6 +45,9 @@ export function WorkspaceShell({
 }) {
   const [run, setRun] = useState(() => initialRun(task));
   const [isRunning, setIsRunning] = useState(true);
+  const [isAgentRunning, setIsAgentRunning] = useState(false);
+  /** The turn in flight, so a redeploy or a closed tab can call it off. */
+  const agentRef = useRef<AbortController | null>(null);
   const [centerTab, setCenterTab] = useState<CenterTab>("code");
   const isTabPinned = useRef(false);
   const [rightTab, setRightTab] = useState<RightTab>("agent");
@@ -118,22 +120,61 @@ export function WorkspaceShell({
     isTabPinned.current = true;
   };
 
+  // An abandoned turn must not hold the container past the page that asked
+  // for it, and a redeploy would otherwise race the agent for the same files.
+  useEffect(() => () => agentRef.current?.abort(), []);
+
   const redeploy = useCallback(() => {
+    agentRef.current?.abort();
+    agentRef.current = null;
+    setIsAgentRunning(false);
     isRedeploy.current = true;
     if (!isTabPinned.current) setCenterTab("code");
     setRunToken((token) => token + 1);
   }, []);
 
   const sendMessage = (text: string) => {
+    setRightTab("agent");
+    const workspaceId = workspaceRef.current;
+    if (!workspaceId) {
+      setRun((prev) => ({
+        ...prev,
+        entries: [
+          ...prev.entries,
+          { kind: "task", text },
+          { kind: "note", text: NO_WORKSPACE },
+        ],
+      }));
+      return;
+    }
+
     setRun((prev) => ({
       ...prev,
-      entries: [
-        ...prev.entries,
-        { kind: "task", text },
-        { kind: "note", text: NOT_CONNECTED },
-      ],
+      entries: [...prev.entries, { kind: "task", text }],
     }));
-    setRightTab("agent");
+
+    const controller = new AbortController();
+    agentRef.current = controller;
+    setIsAgentRunning(true);
+
+    streamAgent({ workspaceId, message: text }, controller.signal, (event) => {
+      if (controller.signal.aborted) return;
+      setRun((prev) => applyEvent(prev, event));
+    })
+      .catch((error: unknown) => {
+        if (controller.signal.aborted) return;
+        setRun((prev) =>
+          applyEvent(prev, {
+            type: "note",
+            text:
+              error instanceof Error ? error.message : "The agent turn stopped.",
+          }),
+        );
+      })
+      .finally(() => {
+        if (agentRef.current === controller) agentRef.current = null;
+        if (!controller.signal.aborted) setIsAgentRunning(false);
+      });
   };
 
   const isDeployed = run.status === "deployed";
@@ -144,6 +185,7 @@ export function WorkspaceShell({
         project={run.project}
         status={run.status}
         isRunning={isRunning}
+        isAgentRunning={isAgentRunning}
         isDeployed={isDeployed}
         onDeploy={redeploy}
       />
@@ -245,8 +287,14 @@ export function WorkspaceShell({
 
             {rightTab === "agent" ? (
               <>
-                <AgentPanel entries={run.entries} isRunning={isRunning} />
-                <Composer disabled={isRunning} onMessage={sendMessage} />
+                <AgentPanel
+                  entries={run.entries}
+                  isRunning={isRunning || isAgentRunning}
+                />
+                <Composer
+                  disabled={isRunning || isAgentRunning}
+                  onMessage={sendMessage}
+                />
               </>
             ) : (
               <SolanaPanel

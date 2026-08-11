@@ -8,6 +8,7 @@ export function WorkspaceHeader({
   project,
   status,
   isRunning,
+  isAgentRunning,
   isDeployed,
   onDeploy,
 }: {
@@ -15,6 +16,9 @@ export function WorkspaceHeader({
   project?: string;
   status: Status;
   isRunning: boolean;
+  /** A turn in flight. Separate from a run, because the button may not claim a
+   *  build is happening when the agent is reading files. */
+  isAgentRunning: boolean;
   isDeployed: boolean;
   onDeploy: () => void;
 }) {
@@ -41,7 +45,7 @@ export function WorkspaceHeader({
           type="button"
           onClick={onDeploy}
           className="btn btn-primary btn-compact"
-          disabled={isRunning}
+          disabled={isRunning || isAgentRunning}
           aria-label={isDeployed ? "Redeploy the program" : "Deploy the program"}
         >
           {isRunning ? (
@@ -50,6 +54,11 @@ export function WorkspaceHeader({
               <span className="hidden sm:inline">
                 {status === "testing" ? "Testing" : "Building"}
               </span>
+            </>
+          ) : isAgentRunning ? (
+            <>
+              <BrikLoader size={13} />
+              <span className="hidden sm:inline">Working</span>
             </>
           ) : isDeployed ? (
             "Redeploy"

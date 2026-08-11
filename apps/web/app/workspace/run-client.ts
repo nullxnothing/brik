@@ -2,15 +2,16 @@ import type { RunEvent } from "../../lib/workspace/events";
 
 /** Client half of the workspace protocol: post a run, read its events. */
 
-export async function streamRun(
-  request: { workspaceId?: string; template: string },
+async function post(
+  path: string,
+  body: unknown,
   signal: AbortSignal,
   onEvent: (event: RunEvent) => void,
 ): Promise<void> {
-  const response = await fetch("/api/workspace/run", {
+  const response = await fetch(path, {
     method: "POST",
     headers: { "content-type": "application/json" },
-    body: JSON.stringify(request),
+    body: JSON.stringify(body),
     signal,
   });
   if (!response.ok || !response.body) {
@@ -31,6 +32,23 @@ export async function streamRun(
       if (line.trim()) onEvent(JSON.parse(line) as RunEvent);
     }
   }
+}
+
+export function streamRun(
+  request: { workspaceId?: string; template: string },
+  signal: AbortSignal,
+  onEvent: (event: RunEvent) => void,
+): Promise<void> {
+  return post("/api/workspace/run", request, signal, onEvent);
+}
+
+/** One agent turn against the workspace this page already holds. */
+export function streamAgent(
+  request: { workspaceId: string; message: string },
+  signal: AbortSignal,
+  onEvent: (event: RunEvent) => void,
+): Promise<void> {
+  return post("/api/workspace/agent", request, signal, onEvent);
 }
 
 /** Best effort: `keepalive` so it still lands from a page that is unloading. */

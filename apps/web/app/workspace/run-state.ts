@@ -55,10 +55,27 @@ export function applyEvent(state: RunState, event: RunEvent): RunState {
       };
     case "status":
       return { ...state, status: event.status };
-    case "step":
+    case "step": {
+      const step: Entry = {
+        kind: "step",
+        text: event.text,
+        id: event.id,
+        state: event.state,
+      };
+      const at = event.id
+        ? state.entries.findIndex(
+            (entry) => entry.kind === "step" && entry.id === event.id,
+          )
+        : -1;
+      if (at < 0) return { ...state, entries: [...state.entries, step] };
+      const entries = [...state.entries];
+      entries[at] = step;
+      return { ...state, entries };
+    }
+    case "note":
       return {
         ...state,
-        entries: [...state.entries, { kind: "step", text: event.text }],
+        entries: [...state.entries, { kind: "note", text: event.text }],
       };
     case "term":
       return {

@@ -14,7 +14,7 @@ import { toneFor, type RunEvent, type TerminalLine } from "./events";
 /** The pre-built Anchor project baked into the toolchain image. Overlaying a
  *  template onto it in place is what keeps a build at a few seconds; cargo
  *  fingerprints embed absolute paths, so a copy elsewhere is a cold compile. */
-const PROJECT_DIR = "/workspace/project";
+export const PROJECT_DIR = "/workspace/project";
 const PROJECT_NAME = "project";
 const ENTRY_FILE = "programs/project/src/lib.rs";
 const TEST_FILE = "tests/project.ts";
@@ -39,7 +39,7 @@ interface Context {
  *  line that never ends. */
 const LINE_BREAK = /\r\n|\r|\n/;
 
-class LineBuffer {
+export class LineBuffer {
   private pending = "";
 
   constructor(private readonly send: Send) {}
@@ -147,19 +147,27 @@ async function writeTemplate(ctx: Context): Promise<ExecResult> {
   });
 }
 
-/** Report the project as it exists on disk, rather than as a template claims. */
-async function sendProject(ctx: Context): Promise<void> {
-  const source = await ctx.workspace.readFile(`${PROJECT_DIR}/${ENTRY_FILE}`);
-  const listing = await ctx.workspace.exec(
+/**
+ * Report the project as it exists on disk, rather than as a template claims.
+ * Also what an agent turn calls once it has finished writing, so the editor
+ * shows the container's copy rather than the one the model says it wrote.
+ */
+export async function sendProject(
+  workspace: Workspace,
+  send: Send,
+  signal: AbortSignal,
+): Promise<void> {
+  const source = await workspace.readFile(`${PROJECT_DIR}/${ENTRY_FILE}`);
+  const listing = await workspace.exec(
     "find . -type f -not -path './target/*' -not -path './node_modules/*' | sort",
-    { cwd: PROJECT_DIR, signal: ctx.signal },
+    { cwd: PROJECT_DIR, signal },
   );
   const files = listing.stdout
     .split("\n")
     .map((line) => line.trim().replace(/^\.\//, ""))
     .filter(Boolean);
 
-  ctx.send({
+  send({
     type: "project",
     name: PROJECT_NAME,
     entryFile: ENTRY_FILE,
@@ -204,7 +212,7 @@ export async function runWorkspace(ctx: Context): Promise<boolean> {
   if (sync.exitCode !== 0) {
     return fail(ctx, failureMessage("anchor keys sync", sync));
   }
-  await sendProject(ctx);
+  await sendProject(ctx.workspace, ctx.send, ctx.signal);
 
   ctx.send({ type: "status", status: "building" });
   ctx.send({ type: "step", text: "Build the program" });

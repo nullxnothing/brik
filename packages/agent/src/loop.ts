@@ -74,6 +74,8 @@ export interface RunAgentOptions {
   onStep?: (step: TaskStep) => void;
   /** Prose the model produced between tool calls. */
   onText?: (text: string) => void;
+  /** Raw command output as it is produced, for a caller showing a terminal. */
+  onOutput?: (chunk: string) => void;
 }
 
 function systemPrompt(projectDir: string, tools: Tool[]): string {
@@ -177,6 +179,7 @@ export async function runAgent(opts: RunAgentOptions): Promise<AgentTask> {
     workspace: opts.workspace,
     projectDir: opts.projectDir,
     signal,
+    onOutput: opts.onOutput,
   };
   const messages: AgentMessage[] = [
     { role: "user", content: opts.objective },

@@ -10,6 +10,9 @@ importers:
 
   apps/web:
     dependencies:
+      '@brik/agent':
+        specifier: workspace:*
+        version: link:../../packages/agent
       '@brik/sandbox':
         specifier: workspace:*
         version: link:../../packages/sandbox

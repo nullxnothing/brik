@@ -16,10 +16,14 @@ export interface TerminalLine {
   tone?: TerminalTone;
 }
 
+/** How a step ended. Absent means the run never said, and the panel falls back
+ *  to treating the last one as the live one. */
+export type StepState = "running" | "done" | "failed";
+
 /** Agent stream item. `task` is the objective, `note` is the workspace talking. */
 export type Entry =
   | { kind: "task"; text: string }
-  | { kind: "step"; text: string }
+  | { kind: "step"; text: string; id?: string; state?: StepState }
   | { kind: "note"; text: string };
 
 export type RunEvent =
@@ -32,9 +36,16 @@ export type RunEvent =
       ttlSeconds: number;
     }
   | { type: "status"; status: Status }
-  /** Appends a step to the agent panel; earlier steps are marked complete. */
-  | { type: "step"; text: string }
+  /**
+   * Appends a step to the agent panel; earlier steps are marked complete.
+   * An `id` updates the step it names rather than appending, which is how a
+   * step that is running becomes one that succeeded or failed. Without it a
+   * failed step would still render with a tick.
+   */
+  | { type: "step"; text: string; id?: string; state?: StepState }
   | { type: "term"; lines: TerminalLine[] }
+  /** The workspace or the agent talking, in prose. */
+  | { type: "note"; text: string }
   /** The project as it actually exists in the container. */
   | { type: "project"; name: string; entryFile: string; files: string[]; source: string[] }
   | { type: "wallet"; address: string; balance: number }

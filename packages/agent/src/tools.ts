@@ -30,6 +30,13 @@ export interface ToolContext {
   /** The project root every relative path is resolved against. */
   projectDir: string;
   signal: AbortSignal;
+  /**
+   * Raw output as a command produces it, for a caller with a terminal to show.
+   * A tee, not the evidence: what the model sees is still the `ExecResult` the
+   * command returned, so nothing here can change what a step is allowed to
+   * claim.
+   */
+  onOutput?: (chunk: string) => void;
 }
 
 export interface Tool {
@@ -167,6 +174,8 @@ export const RUN_COMMAND: Tool = {
       cwd: ctx.projectDir,
       signal: ctx.signal,
       timeoutMs: 15 * 60_000,
+      onStdout: ctx.onOutput,
+      onStderr: ctx.onOutput,
     });
     return {
       ok: result.exitCode === 0,

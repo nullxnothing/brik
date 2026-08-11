@@ -27,24 +27,19 @@
   measured now, and a closed route lands on a real page instead of Next's
   default 404. What remains on that page is intent rather than fabrication, and
   it is listed below.
+- **The agent is connected** — the composer runs it against the workspace on
+  screen, over the same streaming protocol a run uses. Proven in a browser on a
+  real container, both ways: a change it made is on disk and the editor shows
+  the container's copy, and an impossible request ends in a refusal backed by a
+  command rather than a fabricated success. STATE.md has both transcripts and
+  the two bugs driving it turned up.
 
 ## Next, in dependency order
 
-1. **The agent.** The loop exists and is verified; what remains is a key and the
-   wiring. `packages/agent` has the bounded tool-calling loop, four sandbox
-   tools, risk classification, and the Anthropic provider. `pnpm verify-agent`
-   runs it against a real container with a scripted model: 11 checks, including
-   that the file the agent wrote is on disk and the compiler accepted it.
-
-   `pnpm verify-agent --live` swaps in a real model: Claude Opus 5 took
-   "add a ping instruction and build it", made the edit, compiled it, and
-   checked the generated IDL to confirm the instruction was dispatchable rather
-   than merely compiling. Seven checks, all passing.
-
-   One thing is left: **wire it to the workspace.** The composer still declines
-   every request. The run emits `RunEvent`s and the loop emits `TaskStep`s, so
-   this is a mapping between two existing shapes plus a route that takes a
-   message.
+1. **An approval step.** `requiresApproval()` already says write and run need
+   one, and nothing asks. The agent writes files and runs commands unsupervised,
+   which is survivable only because the container has no egress and a TTL. This
+   is the first thing that stops being acceptable once a stranger can reach it.
 
 2. **A lease store.** Leases live in one Node process, so a restart forgets them
    and a serverless deployment gives every request a different one. Forced as
@@ -57,7 +52,9 @@
    in the same release as the anonymous flow, not after. The concurrency cap is
    a host limit, not a per-visitor quota. The workspace routes stay closed in
    production until this lands, which is the only thing keeping an anonymous
-   visitor from starting sandboxes on someone else's budget.
+   visitor from starting sandboxes on someone else's budget. The agent turn is
+   now a second meter on the same route: every message spends model tokens as
+   well as a container.
 
 ## Worth doing, not blocking
 
