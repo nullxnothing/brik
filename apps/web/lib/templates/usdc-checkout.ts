@@ -136,7 +136,11 @@ describe("usdc checkout", () => {
 
   /** 49 USDC, which has six decimals. */
   const AMOUNT = 49_000_000;
-  const orderId = new anchor.BN(1);
+
+  // A fresh id each run. The order's address is derived from it, so a fixed id
+  // could only be used once against a given validator: the second run finds the
+  // order already in use. Real orders are unique for the same reason.
+  const orderId = new anchor.BN(Date.now());
 
   let mint: anchor.web3.PublicKey;
   let buyerTokens: anchor.web3.PublicKey;

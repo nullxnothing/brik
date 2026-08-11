@@ -3,6 +3,7 @@ import type {
   ExecOptions,
   ExecResult,
   PortForward,
+  RunningWorkspace,
   SandboxProvider,
   Workspace,
   WorkspaceSpec,
@@ -211,6 +212,28 @@ export class E2BProvider implements SandboxProvider {
     } catch {
       return null;
     }
+  }
+
+  /**
+   * Every sandbox E2B is running that this product started.
+   *
+   * Filtered by the metadata `createWorkspace` stamps on, so an account shared
+   * with anything else is never told to kill someone else's sandbox.
+   */
+  async listWorkspaces(): Promise<RunningWorkspace[]> {
+    if (!this.apiKey) return [];
+    const paginator = Sandbox.list({
+      apiKey: this.apiKey,
+      query: { metadata: { brik: "workspace" } },
+    });
+
+    const running: RunningWorkspace[] = [];
+    while (paginator.hasNext) {
+      for (const info of await paginator.nextItems()) {
+        running.push({ id: info.sandboxId, startedAt: info.startedAt });
+      }
+    }
+    return running;
   }
 
   async forget(id: string): Promise<void> {

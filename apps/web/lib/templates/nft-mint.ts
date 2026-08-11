@@ -249,12 +249,27 @@ describe("nft mint", () => {
   anchor.setProvider(provider);
 
   const program = anchor.workspace.project as Program<Project>;
-  const authority = provider.wallet.publicKey;
+  const connection = provider.connection;
+
+  // A fresh authority each run. The collection's address is derived from it,
+  // so a suite that used the provider's own wallet could only be run once
+  // against a given validator: the second run finds it already in use. The
+  // buyer stays the provider's wallet, because minting does not derive from it.
+  const authority = anchor.web3.Keypair.generate();
+  const buyer = provider.wallet.publicKey;
 
   const [collection] = anchor.web3.PublicKey.findProgramAddressSync(
-    [Buffer.from("collection"), authority.toBuffer()],
+    [Buffer.from("collection"), authority.publicKey.toBuffer()],
     program.programId,
   );
+
+  before(async () => {
+    const airdrop = await connection.requestAirdrop(
+      authority.publicKey,
+      5 * anchor.web3.LAMPORTS_PER_SOL,
+    );
+    await connection.confirmTransaction(airdrop, "confirmed");
+  });
 
   function metadataFor(mint: anchor.web3.PublicKey) {
     const seeds = [Buffer.from("metadata"), TOKEN_METADATA_PROGRAM_ID.toBuffer(), mint.toBuffer()];
@@ -272,7 +287,8 @@ describe("nft mint", () => {
   it("opens a collection", async () => {
     await program.methods
       .createCollection("Orbital Series", "ORB", "https://example.com/orbital.json", new anchor.BN(1000), new anchor.BN(0))
-      .accountsPartial({ collection, authority })
+      .accountsPartial({ collection, authority: authority.publicKey })
+      .signers([authority])
       .rpc();
 
     const account = await program.account.collection.fetch(collection);
@@ -283,7 +299,7 @@ describe("nft mint", () => {
 
   it("mints one NFT with metadata and a master edition", async () => {
     const mint = anchor.web3.Keypair.generate();
-    const buyerTokens = getAssociatedTokenAddressSync(mint.publicKey, authority);
+    const buyerTokens = getAssociatedTokenAddressSync(mint.publicKey, buyer);
     const { metadata, masterEdition } = metadataFor(mint.publicKey);
 
     await program.methods
@@ -294,7 +310,7 @@ describe("nft mint", () => {
         buyerTokens,
         metadata,
         masterEdition,
-        buyer: authority,
+        buyer,
         tokenMetadataProgram: TOKEN_METADATA_PROGRAM_ID,
       })
       .signers([mint])

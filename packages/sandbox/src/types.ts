@@ -68,10 +68,25 @@ export interface Workspace {
   destroy(): Promise<void>;
 }
 
+/** A sandbox the provider says is running, whether or not anything here
+ *  remembers asking for it. */
+export interface RunningWorkspace {
+  id: string;
+  startedAt: Date;
+}
+
 export interface SandboxProvider {
   readonly name: string;
   createWorkspace(spec: WorkspaceSpec): Promise<Workspace>;
   getWorkspace(id: string): Promise<Workspace | null>;
+  /**
+   * Everything this provider is running for us right now.
+   *
+   * The provider is the only honest answer to "what is actually costing money",
+   * because a lease can be lost while the sandbox it named keeps running.
+   * Optional: Docker reaps its own exited containers by label instead.
+   */
+  listWorkspaces?(): Promise<RunningWorkspace[]>;
   /** Drop a workspace from the provider's bookkeeping. Destroying it is the
    *  caller's job; this only stops the provider holding a handle to something
    *  that is gone. */

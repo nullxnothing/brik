@@ -125,42 +125,59 @@ describe("tip jar", () => {
   anchor.setProvider(provider);
 
   const program = anchor.workspace.project as Program<Project>;
-  const owner = provider.wallet.publicKey;
+  const connection = provider.connection;
+
+  // A fresh owner each run. The jar's address is derived from it, so a suite
+  // that used the provider's own wallet could only be run once against a given
+  // validator: the second run finds the account already in use.
+  const owner = anchor.web3.Keypair.generate();
 
   const [jar] = anchor.web3.PublicKey.findProgramAddressSync(
-    [Buffer.from("jar"), owner.toBuffer()],
+    [Buffer.from("jar"), owner.publicKey.toBuffer()],
     program.programId,
   );
 
+  before(async () => {
+    const airdrop = await connection.requestAirdrop(
+      owner.publicKey,
+      5 * anchor.web3.LAMPORTS_PER_SOL,
+    );
+    await connection.confirmTransaction(airdrop, "confirmed");
+  });
+
   it("opens a jar with an empty total", async () => {
-    await program.methods.initialize().accountsPartial({ jar, owner }).rpc();
+    await program.methods
+      .initialize()
+      .accountsPartial({ jar, owner: owner.publicKey })
+      .signers([owner])
+      .rpc();
 
     const account = await program.account.tipJar.fetch(jar);
-    assert.equal(account.owner.toBase58(), owner.toBase58());
+    assert.equal(account.owner.toBase58(), owner.publicKey.toBase58());
     assert.equal(account.total.toNumber(), 0);
     assert.equal(account.count.toNumber(), 0);
   });
 
   it("records a tip and moves the lamports", async () => {
     const amount = 2 * anchor.web3.LAMPORTS_PER_SOL;
-    const before = await provider.connection.getBalance(jar);
+    const before = await connection.getBalance(jar);
 
     await program.methods
       .sendTip(new anchor.BN(amount))
-      .accountsPartial({ jar, tipper: owner })
+      .accountsPartial({ jar, tipper: provider.wallet.publicKey })
       .rpc();
 
     const account = await program.account.tipJar.fetch(jar);
     assert.equal(account.total.toNumber(), amount);
     assert.equal(account.count.toNumber(), 1);
-    assert.equal(await provider.connection.getBalance(jar), before + amount);
+    assert.equal(await connection.getBalance(jar), before + amount);
   });
 
   it("rejects a zero tip", async () => {
     try {
       await program.methods
         .sendTip(new anchor.BN(0))
-        .accountsPartial({ jar, tipper: owner })
+        .accountsPartial({ jar, tipper: provider.wallet.publicKey })
         .rpc();
       assert.fail("a zero tip should not be accepted");
     } catch (err) {
@@ -169,12 +186,16 @@ describe("tip jar", () => {
   });
 
   it("withdraws everything above rent to the owner", async () => {
-    await program.methods.withdraw().accountsPartial({ jar, owner }).rpc();
+    await program.methods
+      .withdraw()
+      .accountsPartial({ jar, owner: owner.publicKey })
+      .signers([owner])
+      .rpc();
 
-    const rent = await provider.connection.getMinimumBalanceForRentExemption(
+    const rent = await connection.getMinimumBalanceForRentExemption(
       8 + 32 + 8 + 8 + 1,
     );
-    assert.equal(await provider.connection.getBalance(jar), rent);
+    assert.equal(await connection.getBalance(jar), rent);
   });
 });
 `,

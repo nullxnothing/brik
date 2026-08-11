@@ -7,6 +7,7 @@ import {
 } from "@brik/sandbox";
 import {
   claimSlot,
+  claimedWorkspaces,
   limitsConfigured,
   releaseSlot,
   swapSlot,
@@ -204,3 +205,55 @@ export async function destroyWorkspace(id: string): Promise<boolean> {
 }
 
 export const WORKSPACE_TTL_SECONDS = TTL_SECONDS;
+
+/**
+ * How long a sandbox may be running before the reaper is willing to believe
+ * nobody claimed it. Longer than the reservation above, so one that is still
+ * being created is never mistaken for an orphan.
+ */
+const ORPHAN_GRACE_MS =
+  Number(process.env.BRIK_ORPHAN_GRACE_SECONDS ?? 180) * 1000;
+
+/**
+ * Destroy sandboxes the provider is running that nothing has claimed.
+ *
+ * A client that disconnects releases its container locally and does not on a
+ * serverless host: the function is gone before the cleanup runs, so the sandbox
+ * survives to its own timeout with nobody waiting on it. The provider knows
+ * what is running and the store knows what was claimed; the difference is what
+ * is being paid for and not used.
+ *
+ * Refuses to act rather than guess. With no store there are no claims to
+ * compare against, and every running sandbox would look like an orphan.
+ */
+export async function reapOrphans(): Promise<{
+  running: number;
+  reaped: string[];
+  skipped: string;
+}> {
+  if (!provider.listWorkspaces) {
+    return { running: 0, reaped: [], skipped: `${provider.name} cannot list` };
+  }
+  const claimed = await claimedWorkspaces();
+  if (!claimed) {
+    return { running: 0, reaped: [], skipped: "no store to compare against" };
+  }
+
+  const running = await provider.listWorkspaces();
+  const cutoff = Date.now() - ORPHAN_GRACE_MS;
+  const reaped: string[] = [];
+
+  for (const sandbox of running) {
+    if (claimed.has(sandbox.id)) continue;
+    if (sandbox.startedAt.getTime() > cutoff) continue;
+    await destroyWorkspace(sandbox.id);
+    // Destroying by id covers a lease this process happens to hold. When it
+    // does not, the sandbox still has to go.
+    const workspace = await provider.getWorkspace(sandbox.id);
+    await workspace?.destroy().catch(() => {});
+    await provider.forget(sandbox.id);
+    reaped.push(sandbox.id);
+  }
+
+  return { running: running.length, reaped, skipped: "" };
+}

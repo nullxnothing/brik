@@ -300,6 +300,21 @@ export async function swapSlot(
   );
 }
 
+/**
+ * Every workspace this deployment has claimed a slot for.
+ *
+ * The reaper compares this against what the provider is actually running: a
+ * sandbox in the second list and not the first is one nobody is waiting on.
+ * Returns null when there is no store, because "no claims" and "cannot tell"
+ * must not look the same to something whose job is to kill things.
+ */
+export async function claimedWorkspaces(): Promise<Set<string> | null> {
+  const redis = store();
+  if (!redis) return null;
+  const members = await redis.zrange<string[]>(LIVE_KEY, 0, -1);
+  return new Set(members);
+}
+
 export async function releaseSlot(id: string): Promise<void> {
   const redis = store();
   if (!redis) return;
