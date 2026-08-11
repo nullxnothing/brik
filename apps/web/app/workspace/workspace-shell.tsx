@@ -2,76 +2,27 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AppPreview } from "../../components/app-preview";
-import { isAnchorProject, type Template } from "../../lib/templates";
 import type { Status } from "../../components/ui";
 import { Composer } from "./composer";
+import { Editor, Files } from "./editor";
 import { WorkspaceHeader } from "./header";
-import { AgentPanel, Editor, Files, SolanaPanel, Terminal } from "./panels";
-import {
-  buildFollowUpFrames,
-  buildFrames,
-  notConnectedNote,
-  START_BALANCE,
-  type Entry,
-  type Frame,
-  type TerminalLine,
-} from "./run-script";
+import { AgentPanel, SolanaPanel, Terminal } from "./panels";
+import { releaseWorkspace, streamRun } from "./run-client";
+import { applyEvent, applyFailure, initialRun, restartRun } from "./run-state";
 
-interface RunState {
-  status: Status;
-  entries: Entry[];
-  terminal: TerminalLine[];
-  code: number;
-  source: string[];
-  added: number[];
-  changed: string[];
-  program?: string;
-  tx?: string;
-  balance: number;
-}
+const NOT_CONNECTED =
+  "No agent is connected yet, so the workspace cannot act on your request. " +
+  "It builds and deploys the project the toolchain image ships with.";
 
-function applyFrame(state: RunState, frame: Frame): RunState {
-  return {
-    status: frame.status ?? state.status,
-    entries: frame.agent
-      ? [...state.entries, { kind: "step", text: frame.agent }]
-      : state.entries,
-    terminal: frame.term
-      ? [...(frame.clearTerm ? [] : state.terminal), ...frame.term]
-      : state.terminal,
-    code: frame.code ?? state.code,
-    source: frame.source ?? state.source,
-    added: frame.added ?? state.added,
-    changed:
-      frame.file && !state.changed.includes(frame.file)
-        ? [...state.changed, frame.file]
-        : state.changed,
-    program: frame.program ?? state.program,
-    tx: frame.tx ?? state.tx,
-    balance: frame.balance ?? state.balance,
-  };
-}
-
-function makeInitial(template: Template, task: string): RunState {
-  return {
-    status: "sleeping",
-    entries: [{ kind: "task", text: task }],
-    terminal: [],
-    code: 0,
-    source: template.source,
-    added: [],
-    changed: [],
-    balance: START_BALANCE,
-  };
-}
-
+/** What the workspace is doing, for the pane that has nothing else to show. */
 const STATUS_LINE: Record<Status, string> = {
-  sleeping: "Starting the validator.",
+  sleeping: "Starting the workspace validator.",
   ready: "Reading the project.",
-  building: "Compiling your program.",
+  building: "Running the toolchain in the container.",
   testing: "Running the tests.",
-  failed: "Fixing a build error.",
-  deployed: "Deployed.",
+  failed: "The run stopped.",
+  deployed:
+    "There is no shareable preview URL yet. The program id and the deploy transaction are in the Solana panel.",
 };
 
 type CenterTab = "preview" | "code";
@@ -86,61 +37,66 @@ const MOBILE_TABS: { label: string; view: MobileView; right?: RightTab }[] = [
   { label: "Solana", view: "right", right: "solana" },
 ];
 
-export function WorkspaceShell({
-  task,
-  template,
-}: {
-  task: string;
-  template: Template;
-}) {
-  const [run, setRun] = useState<RunState>(() => makeInitial(template, task));
+export function WorkspaceShell({ task }: { task: string }) {
+  const [run, setRun] = useState(() => initialRun(task));
   const [isRunning, setIsRunning] = useState(true);
-  const [hasUsedSuggestion, setHasUsedSuggestion] = useState(false);
   const [centerTab, setCenterTab] = useState<CenterTab>("code");
   const isTabPinned = useRef(false);
   const [rightTab, setRightTab] = useState<RightTab>("agent");
   const [isTerminalOpen, setIsTerminalOpen] = useState(true);
   const [mobileView, setMobileView] = useState<MobileView>("editor");
-  const timers = useRef<number[]>([]);
-
-  const clearTimers = useCallback(() => {
-    timers.current.forEach(window.clearTimeout);
-    timers.current = [];
-  }, []);
-
-  const runFrames = useCallback(
-    (frames: Frame[], from: RunState) => {
-      clearTimers();
-      setIsRunning(true);
-      if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-        setRun(frames.reduce(applyFrame, from));
-        setIsRunning(false);
-        return;
-      }
-      setRun(from);
-      let elapsed = 0;
-      frames.forEach((frame, index) => {
-        elapsed += frame.delay;
-        const id = window.setTimeout(() => {
-          setRun((prev) => applyFrame(prev, frame));
-          if (index === frames.length - 1) setIsRunning(false);
-        }, elapsed);
-        timers.current.push(id);
-      });
-    },
-    [clearTimers],
-  );
-
-  const play = useCallback(() => {
-    setHasUsedSuggestion(false);
-    if (!isTabPinned.current) setCenterTab("code");
-    runFrames(buildFrames(template), makeInitial(template, task));
-  }, [runFrames, template, task]);
+  const [runToken, setRunToken] = useState(0);
+  /** The live workspace, mirrored out of state so unload handlers can read it. */
+  const workspaceRef = useRef<string | null>(null);
+  /** Set by a redeploy, which restarts the run against the warm container
+   *  instead of releasing it the way an unmount does. */
+  const isRedeploy = useRef(false);
 
   useEffect(() => {
-    play();
-    return clearTimers;
-  }, [play, clearTimers]);
+    const controller = new AbortController();
+    setIsRunning(true);
+    setRun((prev) => (prev.workspaceId ? restartRun(prev) : prev));
+
+    streamRun(workspaceRef.current ?? undefined, controller.signal, (event) => {
+      if (controller.signal.aborted) return;
+      if (event.type === "workspace") workspaceRef.current = event.id;
+      if (event.type === "failed") workspaceRef.current = null;
+      setRun((prev) => applyEvent(prev, event));
+    })
+      .catch((error: unknown) => {
+        if (controller.signal.aborted) return;
+        workspaceRef.current = null;
+        setRun((prev) =>
+          applyFailure(
+            prev,
+            error instanceof Error ? error.message : "The workspace run stopped.",
+          ),
+        );
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setIsRunning(false);
+      });
+
+    return () => {
+      controller.abort();
+      if (isRedeploy.current) {
+        isRedeploy.current = false;
+        return;
+      }
+      const id = workspaceRef.current;
+      workspaceRef.current = null;
+      if (id) releaseWorkspace(id);
+    };
+  }, [runToken]);
+
+  // A closed tab must not leave a container running until its TTL.
+  useEffect(() => {
+    const release = () => {
+      if (workspaceRef.current) releaseWorkspace(workspaceRef.current);
+    };
+    window.addEventListener("pagehide", release);
+    return () => window.removeEventListener("pagehide", release);
+  }, []);
 
   // Land on the preview once there is something to look at.
   useEffect(() => {
@@ -152,21 +108,20 @@ export function WorkspaceShell({
     isTabPinned.current = true;
   };
 
-  const runSuggestion = () => {
-    setHasUsedSuggestion(true);
+  const redeploy = useCallback(() => {
+    isRedeploy.current = true;
     if (!isTabPinned.current) setCenterTab("code");
-    runFrames(buildFollowUpFrames(template), {
-      ...run,
-      status: "ready",
-      entries: [...run.entries, { kind: "task", text: template.followUp.chip }],
-    });
-  };
+    setRunToken((token) => token + 1);
+  }, []);
 
   const sendMessage = (text: string) => {
-    const note = notConnectedNote(isDeployed && !hasUsedSuggestion);
     setRun((prev) => ({
       ...prev,
-      entries: [...prev.entries, { kind: "task", text }, { kind: "note", text: note }],
+      entries: [
+        ...prev.entries,
+        { kind: "task", text },
+        { kind: "note", text: NOT_CONNECTED },
+      ],
     }));
     setRightTab("agent");
   };
@@ -176,11 +131,11 @@ export function WorkspaceShell({
   return (
     <div className="flex h-dvh flex-col overflow-hidden">
       <WorkspaceHeader
-        project={template.project}
+        project={run.project}
         status={run.status}
         isRunning={isRunning}
         isDeployed={isDeployed}
-        onDeploy={play}
+        onDeploy={redeploy}
       />
 
       <div className="flex shrink-0 border-b border-line md:hidden">
@@ -211,11 +166,7 @@ export function WorkspaceShell({
             mobileView === "files" ? "block" : "hidden"
           }`}
         >
-          <Files
-            files={template.files}
-            entryFile={template.entryFile}
-            changed={run.changed}
-          />
+          <Files files={run.files} entryFile={run.entryFile} />
         </aside>
 
         <section
@@ -240,22 +191,20 @@ export function WorkspaceShell({
                 </button>
               ))}
             </div>
-            {centerTab === "code" && (
+            {centerTab === "code" && run.entryFile && (
               <span className="hidden truncate font-mono text-code-sm text-fg-3 lg:block">
-                {template.entryFile}
+                {run.entryFile}
               </span>
             )}
           </div>
 
           {centerTab === "code" ? (
-            <Editor revealed={run.code} source={run.source} added={run.added} />
+            <Editor source={run.source} />
           ) : (
             <div className="min-h-0 flex-1">
               <AppPreview
-                slug={template.slug}
-                url={`https://${template.project}.brik.app`}
-                isDeployed={isDeployed}
-                statusLine={STATUS_LINE[run.status]}
+                status={run.status}
+                detail={run.failure ?? STATUS_LINE[run.status]}
               />
             </div>
           )}
@@ -287,23 +236,16 @@ export function WorkspaceShell({
             {rightTab === "agent" ? (
               <>
                 <AgentPanel entries={run.entries} isRunning={isRunning} />
-                <Composer
-                  suggestion={
-                    isDeployed && !hasUsedSuggestion
-                      ? template.followUp.chip
-                      : undefined
-                  }
-                  disabled={isRunning}
-                  onSuggestion={runSuggestion}
-                  onMessage={sendMessage}
-                />
+                <Composer disabled={isRunning} onMessage={sendMessage} />
               </>
             ) : (
               <SolanaPanel
+                wallet={run.wallet}
                 program={run.program}
                 tx={run.tx}
                 balance={run.balance}
-                hasProgram={isAnchorProject(template)}
+                expiresAt={run.expiresAt}
+                ttlSeconds={run.ttlSeconds}
               />
             )}
           </div>
@@ -328,7 +270,11 @@ export function WorkspaceShell({
         </button>
         <div className="flex items-center gap-5">
           <span className="meta-label text-fg-3">Localnet</span>
-          <span className="meta-label text-fg-3">{run.balance.toFixed(2)} SOL</span>
+          {run.balance !== undefined && (
+            <span className="meta-label text-fg-3">
+              {run.balance.toFixed(2)} SOL
+            </span>
+          )}
         </div>
       </footer>
     </div>

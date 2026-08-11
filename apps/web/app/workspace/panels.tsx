@@ -1,142 +1,9 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { BrikLoader } from "../../components/logo";
 import { Meter } from "../../components/ui";
-import type { Entry, TerminalLine } from "./run-script";
-
-const KEYWORDS = new Set([
-  "use", "pub", "fn", "mod", "let", "mut", "super", "impl", "struct",
-  "import", "from", "export", "async", "const", "return", "function", "new",
-  "typeof", "await", "if",
-]);
-
-/** Monochrome highlighting: value, not hue. Keywords carry the emphasis. */
-function CodeLine({ line }: { line: string }) {
-  const trimmed = line.trim();
-  if (trimmed.startsWith("#[") || trimmed.startsWith("//")) {
-    return <span className="text-fg-3">{line}</span>;
-  }
-  const parts = line.split(/([A-Za-z_][A-Za-z0-9_]*|"[^"]*")/g);
-  return (
-    <>
-      {parts.map((part, i) => {
-        if (part.startsWith('"')) {
-          return (
-            <span key={i} className="text-cream/70">
-              {part}
-            </span>
-          );
-        }
-        if (KEYWORDS.has(part)) {
-          return (
-            <span key={i} className="font-medium text-cream">
-              {part}
-            </span>
-          );
-        }
-        if (/^[A-Za-z_]/.test(part)) {
-          return (
-            <span key={i} className="text-fg">
-              {part}
-            </span>
-          );
-        }
-        return (
-          <span key={i} className="text-fg-3">
-            {part}
-          </span>
-        );
-      })}
-    </>
-  );
-}
-
-function fileName(path: string) {
-  return path.split("/").pop() ?? path;
-}
-
-export function Editor({
-  revealed,
-  source,
-  added,
-}: {
-  revealed: number;
-  source: string[];
-  added: number[];
-}) {
-  const addedSet = new Set(added);
-  return (
-    <div className="min-h-0 flex-1 overflow-auto bg-canvas p-4 font-mono text-code leading-[1.7]">
-      <pre className="min-w-max">
-        {source.slice(0, revealed).map((line, i) => {
-          const isAdded = addedSet.has(i);
-          return (
-            <div
-              key={i}
-              className="flex"
-              style={isAdded ? { background: "var(--brik-ok-tint)" } : undefined}
-            >
-              <span className="w-9 shrink-0 select-none text-right text-fg-3">
-                {i + 1}
-              </span>
-              <span
-                className={`w-5 shrink-0 select-none text-center ${
-                  isAdded ? "text-ok" : "text-transparent"
-                }`}
-                aria-hidden
-              >
-                +
-              </span>
-              <span>
-                <CodeLine line={line} />
-              </span>
-            </div>
-          );
-        })}
-        {revealed > 0 && revealed < source.length && (
-          <div className="flex">
-            <span className="w-9 shrink-0 select-none text-right text-fg-3">
-              {revealed + 1}
-            </span>
-            <span className="w-5 shrink-0" aria-hidden />
-            <span className="inline-block h-[1.2em] w-[7px] translate-y-[3px] bg-cream" />
-          </div>
-        )}
-      </pre>
-    </div>
-  );
-}
-
-export function Files({
-  files,
-  entryFile,
-  changed,
-}: {
-  files: string[];
-  entryFile: string;
-  changed: string[];
-}) {
-  return (
-    <div className="overflow-auto p-3">
-      <div className="meta-label px-2 pb-3 text-fg-3">Files</div>
-      {files.map((path) => {
-        const isActive = path === entryFile;
-        return (
-          <div
-            key={path}
-            className={`flex items-center justify-between gap-2 rounded-control px-2 py-1.5 font-mono text-code-sm ${
-              isActive ? "bg-selected text-fg" : "text-fg-2"
-            }`}
-          >
-            <span className="truncate">{fileName(path)}</span>
-            {changed.includes(path) && <span className="text-warn">M</span>}
-          </div>
-        );
-      })}
-    </div>
-  );
-}
+import type { Entry, TerminalLine } from "../../lib/workspace/events";
 
 export function AgentPanel({
   entries,
@@ -193,33 +60,64 @@ export function AgentPanel({
   );
 }
 
+const TTL_TICK_MS = 30_000;
+
+function shortAddress(address: string): string {
+  return `${address.slice(0, 4)}…${address.slice(-4)}`;
+}
+
+/** Seconds left on the workspace lease, recomputed on a coarse tick. */
+function useSecondsLeft(expiresAt?: number): number | null {
+  const [now, setNow] = useState(() => Date.now());
+
+  useEffect(() => {
+    if (expiresAt === undefined) return;
+    setNow(Date.now());
+    const timer = setInterval(() => setNow(Date.now()), TTL_TICK_MS);
+    return () => clearInterval(timer);
+  }, [expiresAt]);
+
+  if (expiresAt === undefined) return null;
+  return Math.max(0, Math.round((expiresAt - now) / 1000));
+}
+
+function Row({ term, value }: { term: string; value: string }) {
+  return (
+    <div className="flex justify-between gap-4">
+      <dt className="text-fg-3">{term}</dt>
+      <dd className="text-fg">{value}</dd>
+    </div>
+  );
+}
+
 export function SolanaPanel({
+  wallet,
   program,
   tx,
   balance,
-  hasProgram,
+  expiresAt,
+  ttlSeconds,
 }: {
+  wallet?: string;
   program?: string;
   tx?: string;
-  balance: number;
-  hasProgram: boolean;
+  balance?: number;
+  expiresAt?: number;
+  ttlSeconds?: number;
 }) {
+  const secondsLeft = useSecondsLeft(expiresAt);
+  const hasLease = secondsLeft !== null && ttlSeconds !== undefined;
+
   return (
     <div className="flex min-h-0 flex-col">
       <div className="min-h-0 flex-1 space-y-6 overflow-auto p-4">
         <dl className="space-y-3 font-mono text-code-sm">
-          <div className="flex justify-between gap-4">
-            <dt className="text-fg-3">Cluster</dt>
-            <dd className="text-fg">localnet</dd>
-          </div>
-          <div className="flex justify-between gap-4">
-            <dt className="text-fg-3">Wallet</dt>
-            <dd className="text-fg">Bq4v…7Yhz</dd>
-          </div>
-          <div className="flex justify-between gap-4">
-            <dt className="text-fg-3">Balance</dt>
-            <dd className="text-fg">{balance.toFixed(2)} SOL</dd>
-          </div>
+          <Row term="Cluster" value="localnet" />
+          <Row term="Wallet" value={wallet ? shortAddress(wallet) : "not funded"} />
+          <Row
+            term="Balance"
+            value={balance === undefined ? "unknown" : `${balance.toFixed(2)} SOL`}
+          />
         </dl>
 
         <div>
@@ -229,9 +127,7 @@ export function SolanaPanel({
               {program}
             </p>
           ) : (
-            <p className="text-body text-fg-3">
-              {hasProgram ? "Not deployed yet." : "This project has no program."}
-            </p>
+            <p className="text-body text-fg-3">Not deployed yet.</p>
           )}
         </div>
 
@@ -249,7 +145,13 @@ export function SolanaPanel({
           )}
         </div>
 
-        <Meter filled={2} label="Workspace hours" value="0.4 / 5" />
+        {hasLease && (
+          <Meter
+            filled={Math.ceil((secondsLeft / ttlSeconds) * 10)}
+            label="Workspace time left"
+            value={`${Math.ceil(secondsLeft / 60)} min`}
+          />
+        )}
       </div>
     </div>
   );

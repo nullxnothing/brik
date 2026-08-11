@@ -38,6 +38,11 @@ export interface ExecOptions {
   cwd?: string;
   env?: Record<string, string>;
   timeoutMs?: number;
+  /**
+   * Terminates the command early. A workspace run is driven by a client that
+   * can disconnect mid-build, so every exec has to be interruptible.
+   */
+  signal?: AbortSignal;
   onStdout?: (chunk: string) => void;
   onStderr?: (chunk: string) => void;
 }

@@ -11,7 +11,8 @@ export function WorkspaceHeader({
   isDeployed,
   onDeploy,
 }: {
-  project: string;
+  /** The project inside the container, once the workspace has reported it. */
+  project?: string;
   status: Status;
   isRunning: boolean;
   isDeployed: boolean;
@@ -23,11 +24,14 @@ export function WorkspaceHeader({
         <Link href="/" aria-label="Brik home" className="shrink-0 text-fg">
           <BrikWordmark size={18} />
         </Link>
-        <span className="hidden h-4 w-px bg-line sm:block" />
-        <span className="hidden truncate font-mono text-code-sm text-fg sm:block">
-          {project}
-        </span>
-        <span className="hidden font-mono text-code-sm text-fg-3 md:block">main</span>
+        {project && (
+          <>
+            <span className="hidden h-4 w-px bg-line sm:block" />
+            <span className="hidden truncate font-mono text-code-sm text-fg sm:block">
+              {project}
+            </span>
+          </>
+        )}
       </div>
 
       <div className="flex shrink-0 items-center gap-3">

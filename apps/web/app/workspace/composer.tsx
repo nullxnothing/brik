@@ -3,14 +3,10 @@
 import { useState } from "react";
 
 export function Composer({
-  suggestion,
   disabled,
-  onSuggestion,
   onMessage,
 }: {
-  suggestion?: string;
   disabled: boolean;
-  onSuggestion: () => void;
   onMessage: (text: string) => void;
 }) {
   const [value, setValue] = useState("");
@@ -24,17 +20,6 @@ export function Composer({
 
   return (
     <div className="shrink-0 border-t border-line p-3">
-      {suggestion && (
-        <button
-          type="button"
-          onClick={onSuggestion}
-          disabled={disabled}
-          className="btn btn-secondary btn-compact mb-3 w-full justify-start text-left text-fg-2 disabled:opacity-50"
-        >
-          <span className="glyph text-fg-3">+</span>
-          {suggestion}
-        </button>
-      )}
       <div className="rounded-panel border border-line bg-sunken focus-within:border-cream">
         <label htmlFor="composer" className="sr-only">
           Ask the agent for a change

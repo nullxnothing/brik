@@ -1,5 +1,9 @@
 export * from "./types.js";
-export { DockerProvider } from "./docker.js";
+export {
+  DockerProvider,
+  WORKSPACE_LABEL,
+  reapExitedWorkspaces,
+} from "./docker.js";
 
 // Managed-provider adapters land after the bake-off
 // (docs/07_pre_build_research_agenda.md §2). Candidates:

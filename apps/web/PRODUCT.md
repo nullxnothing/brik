@@ -38,9 +38,12 @@ Landing → START BUILDING → `/new` ("What do you want to build?": describe ·
 GitHub · blank) → `/workspace` running immediately, anonymous and ephemeral → signup converts the
 sandbox into a saved project.
 
-Current build stage: front end only. The workspace is a scripted client-side demo of the real
-experience; control plane and sandbox integration land later. Nothing in the UI may claim a backend
-capability that does not exist yet (no fake login, no fake persistence promises).
+Current build stage: the workspace runs for real and nothing else does. Opening `/workspace` starts a
+container from the toolchain image, boots its own validator, builds the pre-built Anchor project, and
+deploys it to that validator, streaming real stdout. There is no agent, no auth, no database, no
+persistence, no template projects, and no preview URL, so the workspace builds the project the image
+ships with and says so. Landing-page CTAs stay gated until those land. Nothing in the UI may claim a
+backend capability that does not exist yet (no fake login, no fake persistence promises).
 
 ## Status vocabulary (fixed)
 

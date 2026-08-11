@@ -22,7 +22,7 @@ The working source of truth lives in [`docs/`](docs/):
 ## Repository structure
 
 ```
-apps/web              Next.js app — landing page + workspace UI shell
+apps/web              Next.js app — landing page, workspace UI, and the workspace control plane
 packages/sandbox      Sandbox provider abstraction (Docker baseline; managed adapters after bake-off)
 packages/agent        Agent harness skeleton (vendor-neutral: tools, routing, budgets, task state)
 infra/toolchain-image Pinned Solana toolchain image (Rust, Agave, Anchor, Node) with pre-warmed caches
@@ -41,10 +41,21 @@ pnpm build      # build all packages
 pnpm typecheck  # typecheck all packages
 ```
 
-To run the sandbox bake-off baseline (requires Docker):
+The workspace runs a real build in a real container, so `/workspace` needs
+Docker running and the toolchain image built:
 
 ```sh
 docker build -t brik/solana-toolchain:dev infra/toolchain-image
+```
+
+Opening `/workspace` then starts a container, boots its validator, and streams
+`anchor build` and `anchor deploy` into the terminal panel. Containers carry a
+`brik.workspace=1` label and a TTL (`BRIK_WORKSPACE_TTL_SECONDS`, default 900);
+leaving the page releases one immediately.
+
+To run the sandbox bake-off baseline:
+
+```sh
 pnpm bakeoff
 ```
 

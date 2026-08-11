@@ -15,6 +15,12 @@ import type {
  * beyond the container boundary, no hibernation (stop/start only).
  */
 
+/**
+ * Every container BRIK starts carries this label so a stray one can always be
+ * found again, including by a process that did not create it.
+ */
+export const WORKSPACE_LABEL = "brik.workspace=1";
+
 function run(
   command: string,
   args: string[],
@@ -22,7 +28,10 @@ function run(
 ): Promise<ExecResult> {
   return new Promise((resolve, reject) => {
     const started = Date.now();
-    const child = spawn(command, args, { env: { ...process.env, ...opts.env } });
+    const child = spawn(command, args, {
+      env: { ...process.env, ...opts.env },
+      signal: opts.signal,
+    });
     let stdout = "";
     let stderr = "";
     const timer = opts.timeoutMs
@@ -135,6 +144,8 @@ export class DockerProvider implements SandboxProvider {
       // sandbox must permit io_uring without dropping seccomp entirely.
       "--security-opt",
       "seccomp=unconfined",
+      "--label",
+      WORKSPACE_LABEL,
       "-P",
     ];
     if (spec.egress === "locked") {
@@ -157,4 +168,36 @@ export class DockerProvider implements SandboxProvider {
   async getWorkspace(id: string): Promise<Workspace | null> {
     return this.workspaces.get(id) ?? null;
   }
+
+  async forget(id: string): Promise<void> {
+    this.workspaces.delete(id);
+  }
+}
+
+/**
+ * Remove BRIK containers that are no longer running, whoever started them.
+ *
+ * A container outlives the process that created it: its `sleep` TTL makes it
+ * exit on its own, but nothing removes the stopped container, and a server that
+ * crashed mid-run leaves its own behind. Sweeping only non-running containers
+ * keeps this safe to call while another process still has live workspaces.
+ *
+ * Returns the ids removed.
+ */
+export async function reapExitedWorkspaces(): Promise<string[]> {
+  const list = await run("docker", [
+    "ps",
+    "-aq",
+    "--filter",
+    `label=${WORKSPACE_LABEL}`,
+    "--filter",
+    "status=exited",
+    "--filter",
+    "status=dead",
+    "--filter",
+    "status=created",
+  ]);
+  const ids = list.stdout.split("\n").map((s) => s.trim()).filter(Boolean);
+  if (ids.length > 0) await run("docker", ["rm", "-f", ...ids]);
+  return ids;
 }

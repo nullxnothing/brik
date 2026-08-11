@@ -50,17 +50,19 @@ blocks. Progress is four small marks (WRITE → TEST → BUILD → DEPLOY). Pane
   building-blocks grid with functional visualizations, workflow strip, template cards, tech proof,
   ascii-field final CTA, minimal footer.
 - `/new` — Operate. "What do you want to build?" Describe (primary) · templates · import · blank.
-- `/workspace` — Operate. Scripted client-side demo of the real loop. Center pane carries
-  `Preview | Code`: Code while the agent writes, auto-switching to Preview on first successful
-  deploy unless the visitor has picked a tab themselves. Preview renders the visitor's app in the
-  light token map inside browser chrome, because it is their artifact rather than Brik's chrome.
-  Right rail is Agent or Solana with a composer pinned below it. Reduced motion renders the
-  finished state instead of animating.
+- `/workspace` — Operate. A real container: every file, line of output, address, and balance on this
+  surface was read out of it. Center pane carries `Preview | Code`: Code while the run is in flight,
+  auto-switching to Preview on a successful deploy unless the visitor has picked a tab themselves.
+  Right rail is Agent or Solana with a composer pinned below it. There is no run animation, because
+  the pacing is the toolchain's.
 
   The agent stream stays a task runner, never chat bubbles: an objective with a cream left rule,
-  then checked steps. The composer's suggested change runs a real edit, shown as a diff, then a
-  rebuild, an added passing test, and a redeploy. Free text is answered honestly, because the
-  sandbox is not connected yet, and never with fabricated work.
+  then checked steps, each one a command the workspace actually ran. Free text is answered honestly,
+  because no agent is connected yet, and never with fabricated work.
+
+  Two elements wait on capabilities that do not exist yet, and say so rather than standing in for
+  them. Preview has no app to frame until deploys produce a URL; it names the state and points at
+  the program id. The composer has no suggested-change chip until an agent can make the edit.
 
 ## Touch-ups applied to the handoff (documented deltas)
 

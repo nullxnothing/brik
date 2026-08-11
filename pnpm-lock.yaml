@@ -10,6 +10,9 @@ importers:
 
   apps/web:
     dependencies:
+      '@brik/sandbox':
+        specifier: workspace:*
+        version: link:../../packages/sandbox
       '@tailwindcss/postcss':
         specifier: ^4.3.3
         version: 4.3.3
