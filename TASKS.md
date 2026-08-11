@@ -20,9 +20,21 @@
 
 1. **A managed sandbox provider.** The blocker for anything being live: the
    control plane shells out to the docker CLI and Vercel has no Docker daemon.
-   Desk research points at E2B, with Fly Machines as runner-up, and confirms the
-   io_uring requirement cannot be dropped (STATE.md). Settling it needs a paid
-   account, so it is the first thing that costs money.
+   Research points at E2B, whose Firecracker guest kernel is built with
+   `CONFIG_IO_URING=y`, with Fly Machines as runner-up; Railway is out because
+   its seccomp blocks io_uring. E2B's free tier is enough to settle it, but only
+   with a smaller image than the 10.1GB one shipped today.
+
+   Two decisions ride along with it, both with evidence already gathered and
+   neither taken:
+   - **Shrink the image.** A measured path from 10.1GB to about 5.2GB raw
+     (2.32GB to 1.33GB compressed) exists, the largest single win being to pin
+     `RUSTUP_TOOLCHAIN` so Anchor never auto-installs a 1.5GB nightly, plus a
+     minimal rustup profile. Worth doing regardless of provider: compressed pull
+     bytes are what the 5-minute activation target actually spends.
+   - **Swap the validator to Agave 3.0.14** to drop `seccomp=unconfined`
+     (STATE.md, verified). Only needed if the provider is container-based, and
+     it costs feature-set fidelity against devnet.
 2. **A lease store.** Forced by (1): leases live in one Node process today, and
    serverless gives every request a different one.
 3. **The agent.** `packages/agent` is types and a comment. This is what makes

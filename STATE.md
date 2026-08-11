@@ -104,10 +104,29 @@ After every test above, `docker ps -a --filter label=brik.workspace=1` was empty
 
 ## Known limits
 
-- `--security-opt seccomp=unconfined` is required locally, because Agave 3.x
-  asserts `io_uring_supported()` with no fallback. Fine for a development
-  baseline, **not** acceptable for untrusted code. A production sandbox has to
-  permit io_uring without dropping seccomp wholesale.
+- `--security-opt seccomp=unconfined` is still required by the shipped image,
+  because Agave 3.x asserts `io_uring_supported()` with no fallback. Fine for a
+  development baseline, **not** acceptable for untrusted code.
+
+  There is now a verified way out, measured on this machine and not taken yet.
+  The assert first ships in 3.1.1; Agave **3.0.14** still degrades gracefully.
+  Dropping its `solana-test-validator` binary into the image, changing nothing
+  else, runs the whole loop under Docker's **default** seccomp profile with no
+  `--security-opt` at all: validator up in 1s, wallet funded, `anchor deploy`
+  returning a real program id and signature, and `anchor test` passing with a
+  real transaction signature. Confirmed with `SecurityOpt: null` on the
+  container. The 3.1.9 validator, for comparison, never serves under the same
+  profile. The build toolchain is untouched: this swaps the runtime binary only,
+  and works because platform-tools v1.52 emits SBPF v0, which every validator
+  from 2.1 to 4.x executes, while the edition2024 blocker that forced 3.1.9 is
+  purely build-side.
+
+  Not adopted yet because it is a real trade. 3.0.14 runs feature set
+  3604001754 against live clusters' 4119855713, so a template passing locally
+  proves less about devnet than it does today. It is also only needed for
+  container-based providers: on a Firecracker provider with a real guest kernel,
+  io_uring is available and 3.1.9 runs unmodified. Decide it with the provider,
+  not before.
 - `exec` is request/response. Streaming it is enough for a build and a deploy;
   an interactive terminal needs a session primitive that does not exist.
 - Leases live in the Node process. A server restart forgets them, and the
