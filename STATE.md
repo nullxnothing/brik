@@ -12,7 +12,12 @@ terminal panel as it is produced. The program id, deploy signature, wallet
 address, SOL balance, and test results on screen are read out of that container.
 
 **Four templates, all real Anchor programs.** Verified together by
-`pnpm verify-templates`, which drives the same HTTP route the browser does:
+`pnpm verify-templates`, which drives the same HTTP route the browser does and
+runs each one **twice against the same workspace** — the request Redeploy
+makes. That second run is what catches a suite whose accounts collide with the
+ones the first run left behind, which a checker that gives every template a
+fresh sandbox cannot see. Confirmed against the old tip jar: *"passed once, then
+failed on a redeploy into the same workspace"*.
 
 | Template | Program | End to end | Tests |
 | --- | --- | --- | --- |
@@ -76,8 +81,8 @@ without a $150/mo commitment.
 
 ## What is deployed
 
-`www.brik.builders` serves `dpl_7TAX5rVmRJv9H5FRGmeML91PkMAu`, built from
-`0a50b00` on 2026-08-11. The apex 308s to www and resolves to the same
+`www.brik.builders` serves `dpl_F9GYgz5DMEGQRZT1SCiHUUrqXBNi`, built from
+`67d0883` on 2026-08-11. The apex 308s to www and resolves to the same
 deployment. Production carries five environment variables:
 
 | | Why |
@@ -87,6 +92,8 @@ deployment. Production carries five environment variables:
 | `E2B_TEMPLATE=brik-solana-toolchain` | Which sandbox to start |
 | `E2B_API_KEY` | Vercel has no Docker daemon, so this is the only provider |
 | `ANTHROPIC_API_KEY` | The agent. Without it the composer says so and stops |
+| `BRIK_AGENT_CENTS_PER_HOUR` | What one visitor's agent may spend in an hour |
+| `CRON_SECRET` | Gates the reaper. Vercel stores it write-only |
 
 Closing it again is `BRIK_WORKSPACE_ENABLED=0` and a redeploy. Both parts are
 needed: the page gate resolves at build time, so the variable alone changes
@@ -340,21 +347,31 @@ before removed, so the count can read one high for an instant but never one low.
 - **A client that disconnects does not release its sandbox on Vercel.** Locally
   a dropped connection aborts the exec and destroys the container, verified.
   In production it does not: six aborted run requests left all six sandboxes
-  running, and only an explicit DELETE cleared them. The page's own
-  `pagehide` DELETE works, so the ordinary "closed the tab" path is covered;
-  what leaks is a stream that dies without one, and it leaks until the 900s
-  TTL. The slot it holds expires on the same clock, so capacity heals itself.
-  The fix is a reconciler: E2B's API lists running sandboxes, and anything not
-  in the live set is an orphan.
+  running, and only an explicit DELETE cleared them. The page's own `pagehide`
+  DELETE covers the ordinary "closed the tab" path; what leaks is a stream that
+  dies without one.
+
+  **A cron now reaps those.** `/api/cron/reap` runs every five minutes, asks the
+  provider what is running and Redis what was claimed, and destroys the
+  difference once it is older than a three-minute grace period. It refuses to
+  act rather than guess: with no store there are no claims to compare against
+  and every sandbox would look like an orphan. `CRON_SECRET` gates it, and
+  Vercel stores that write-only, so it cannot be read back and invoked by hand.
+
+  Proven on the deployed site rather than by reading logs: an orphan planted
+  through the same provider the product uses, running and claimed by nobody,
+  was gone **282 seconds** later. Its own TTL was 900s, so the cron is what
+  removed it.
 - **No approval step.** `requiresApproval()` classifies write and run as needing
   one and nothing asks, so anything the agent decides to do it does. Survivable
   only because the sandbox has no egress and a TTL.
-- **The template suites are not idempotent**, which the agent found on the live
-  site rather than any test here. A jar PDA is derived from the wallet pubkey,
-  so running a suite twice against the same validator fails: `initialize` hits
-  `account already in use` and the tip assertion reads an accumulated balance.
-  `pnpm verify-templates` never sees it because every template gets a fresh
-  sandbox. Anyone who redeploys inside one workspace does.
+- ~~The template suites are not idempotent.~~ Fixed. Three of the four derived
+  their accounts from the provider's own wallet or a fixed order id, so a second
+  run against the same validator found the account already in use — which is
+  what a visitor got for pressing Redeploy. Tip jar and NFT mint now generate a
+  fresh owner and authority and fund it; USDC checkout takes a fresh order id,
+  which is what a real order has anyway. Token gate was already fine: its mint
+  is created per run, so everything derived from it was too.
 - Leases live in the Node process. A server restart forgets them, and the
   containers it forgot survive until their own TTL, then get swept. On E2B a
   miss is now recoverable: `E2BProvider.getWorkspace` reconnects to a live

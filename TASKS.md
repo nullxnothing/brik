@@ -46,6 +46,16 @@
   the route charges it at Opus 5 list price against a per-visitor hourly budget.
   A visitor who runs out is offered their own key, held in their tab and never
   stored here, rather than a wall. Driven in a browser at a one-cent budget.
+- **Redeploy does not break the tests** — three of the four suites derived their
+  accounts from the provider's own wallet or a fixed order id, so a visitor who
+  pressed Redeploy got two failing tests that were not their fault. Fixed, and
+  `pnpm verify-templates` now runs every template twice against the same
+  workspace so it can see this class of bug at all. Confirmed against the old
+  tip jar, which fails that second run.
+- **Nothing is left running that nobody is waiting on** — a cron reaps sandboxes
+  the provider is running and the store has no claim for. Proven on the deployed
+  site: a planted orphan was gone 282 seconds later, well inside its own 900s
+  TTL.
 - **The workspace is open to the internet** — https://www.brik.builders runs a
   real Anchor project in an E2B sandbox for anyone who presses Start building,
   and the agent changes it on request. Verified on the deployed site, including
@@ -54,34 +64,20 @@
 
 ## Next, in dependency order
 
-1. **Reap orphaned sandboxes.** A stream that dies without the page's DELETE
-   leaves its sandbox running until the 900s TTL, because a client disconnect
-   does not reach the cleanup path on Vercel the way it does locally
-   (STATE.md). It is bounded and it heals, but it is the remaining way to spend
-   money on nothing. E2B's API lists what is running and Redis holds what is
-   claimed; anything in the first and not the second is an orphan. A cron and a
-   set difference.
-
-2. **A lease store.** Reconnecting to an E2B sandbox by id covers the agent turn
+1. **A lease store.** Reconnecting to an E2B sandbox by id covers the agent turn
    and the release, and Redis now holds the counts, so what is left is the
    sweeper and an adopted lease's deadline being a ceiling rather than the
    sandbox's real one. Smaller than it was.
 
-3. **An approval step.** `requiresApproval()` already says write and run need
+2. **An approval step.** `requiresApproval()` already says write and run need
    one, and nothing asks. The agent writes files and runs commands unsupervised,
    which is survivable only because the sandbox has no egress and a TTL. A
    stranger can reach it now, so this has stopped being theoretical.
 
-4. **Make the template suites rerunnable.** Found by the agent on the live site:
-   a jar PDA derived from the wallet pubkey means running a suite twice against
-   the same validator fails, `initialize` on an account already in use and then
-   an accumulated balance. `pnpm verify-templates` cannot see it because every
-   template gets a fresh sandbox. Anyone who redeploys inside one workspace can.
-
-5. **Devnet deploy, preview URLs, fork.** The growth loop, and what the Preview
+3. **Devnet deploy, preview URLs, fork.** The growth loop, and what the Preview
    pane is waiting on. Needs a funded treasury; ~1.27 SOL of rent per deploy.
 
-6. **Auth and persistence.** Per docs/02 signup gates saving and never the first
+4. **Auth and persistence.** Per docs/02 signup gates saving and never the first
    success. Nothing survives a closed tab today, and the UI does not yet say so.
 
 ## Worth doing, not blocking
