@@ -10,6 +10,7 @@
     "build": "tsc --noEmit"
   },
   "dependencies": {
+    "@brik/sandbox": "workspace:*",
     "e2b": "^2.38.3"
   },
   "devDependencies": {

@@ -18,45 +18,39 @@
 
 ## Next, in dependency order
 
-1. **Put the toolchain image on E2B, then point the control plane at it.**
-   The provider is decided and `E2BProvider` is verified (STATE.md). Two things
-   remain before `/workspace` can run anywhere but a developer's own Docker:
+1. **The agent.** `packages/agent` is types and a comment. It is now the largest
+   thing between BRIK and its own MVP definition: the workspace runs a template
+   the visitor picked, but cannot act on what they asked for. This is what makes
+   the composer answer instead of declining, and what brings back the
+   suggested-change chip. Needs an LLM API key.
 
-   - **Publish the image as an E2B template.** Nothing else can happen first: a
-     sandbox can only start from a template that exists on their side. Watch the
-     documented one-hour build cap, and redirect `TMPDIR` to `/var/tmp`, since
-     `/tmp` is RAM-backed at about 3.9GB and the build writes more than that.
-   - **Choose the provider by config** rather than importing `DockerProvider`
-     into the registry. Docker stays the local default; E2B takes over when
-     `E2B_API_KEY` and a template are set.
+2. **A lease store.** Leases live in one Node process, so a restart forgets them
+   and a serverless deployment gives every request a different one. Forced as
+   soon as the control plane runs anywhere other than one long-lived process.
 
-   Then `pnpm bakeoff` gives the numbers that matter, which the base template
-   cannot: warm `anchor build` on a snapshot-restored sandbox, and whether the
-   pre-built cargo fingerprints survive a snapshot at all.
-
-   Two decisions ride along with it, both with evidence already gathered and
-   neither taken:
-   - **Shrink the image further.** Done so far: 7.65GB to 6.11GB extracted,
-     which already clears E2B's free 10GB ceiling. What is left is the risky
-     tier, roughly 600MB of Agave perf-libs, ledger-tool, and unused
-     platform-tools triples, plus about 690MB of rustup docs on the stable
-     toolchain that only a minimal profile or a flatten stage can reach. Neither
-     is needed to answer the provider question, so both can wait until there is
-     a reason.
-   - **Swap the validator to Agave 3.0.14** to drop `seccomp=unconfined`
-     (STATE.md, verified). Now demoted to insurance: E2B runs the 3.1.9
-     validator unmodified, so this is only worth doing if a container-based
-     provider ever comes back into scope, and it costs feature-set fidelity
-     against devnet.
-2. **A lease store.** Forced by (1): leases live in one Node process today, and
-   serverless gives every request a different one.
-3. **The agent.** `packages/agent` is types and a comment. This is what makes
-   the composer answer honestly instead of declining, and what brings back the
-   suggested-change chip.
-4. **Devnet deploy, preview URLs, fork.** The growth loop, and what the Preview
+3. **Devnet deploy, preview URLs, fork.** The growth loop, and what the Preview
    pane is waiting on. Needs a funded treasury; ~1.27 SOL of rent per deploy.
-5. **Auth, persistence, and abuse controls.** Per docs/02 the rate limits ship
-   in the same release as the anonymous flow, not after.
+
+4. **Auth, persistence, and abuse controls.** Per docs/02 the rate limits ship
+   in the same release as the anonymous flow, not after. The concurrency cap is
+   a host limit, not a per-visitor quota.
+
+## Worth doing, not blocking
+
+Three, each with the evidence already gathered and none taken:
+
+- **Shrink the image further.** 7.65GB to 6.11GB extracted so far, which already
+  clears E2B's free 10GB ceiling. What is left is the risky tier: roughly 600MB
+  of Agave perf-libs, ledger-tool, and unused platform-tools triples, plus about
+  690MB of rustup docs that only a minimal profile or a flatten stage reaches.
+- **Close the first-build gap on E2B.** 13.2s after a template overlay against
+  2.2s on Docker, because a snapshot hydrates its filesystem lazily and the
+  825MB target directory is read cold. Worth attention only if activation time
+  becomes the constraint, which at 40s per run it is not.
+- **Swap the validator to Agave 3.0.14** to drop `seccomp=unconfined`
+  (STATE.md, verified). Demoted to insurance: E2B runs the 3.1.9 validator
+  unmodified, so this only matters if a container-based provider returns, and it
+  costs feature-set fidelity against devnet.
 
 ## Not started
 

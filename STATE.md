@@ -152,6 +152,33 @@ were turned away with a plain sentence rather than a stack trace.
   3.1.14, 4.0.0, 4.1.2, 4.2.0, 4.3.0-alpha.3 and master, with no flag; there is
   no Agave 3.2 or 3.3, the train went 3.1.x to 4.x.
 
+## The workspace runs off this machine
+
+**All four templates build, deploy, and pass their tests on E2B**, driven
+through the same HTTP route the browser uses, with no Docker anywhere. Confirmed
+in a browser as well as by `pnpm verify-templates`.
+
+The toolchain image is published as the E2B template `brik-solana-toolchain`
+(`pnpm publish-template`, five minutes). Point a deployment at it by setting
+`E2B_TEMPLATE=brik-solana-toolchain` alongside `E2B_API_KEY`; without both, the
+control plane uses local Docker.
+
+| | Docker, local | E2B |
+| --- | --- | --- |
+| Whole run, per template | 13 to 16s | 39 to 41s |
+| Sandbox start | ~0.4s | ~1.2s |
+| Validator up, wallet funded | 1.9s | 3s |
+| First `anchor build` | ~1.3s | 9.4s |
+| `anchor build` after a template overlay | 2.2s | 13.2s |
+| `anchor build` warm, nothing changed | ~0.3s | 0.8s |
+| `anchor deploy` | 4.3s | 4.4s |
+
+The pre-built cargo cache **does** survive the snapshot, which was the open
+question: a genuinely cold compile is ~40s, and every number above is far below
+it. E2B is slower on first touch because a snapshot hydrates its filesystem
+lazily, so the first read of an 825MB target directory pays for itself. It is
+comfortably inside the five-minute activation target either way.
+
 ## The provider question is answered
 
 **E2B runs the workspace unmodified**, settled with the real binary rather than
@@ -171,6 +198,25 @@ exec round trip 127ms, streamed stdout and stderr, cwd, env, non-zero exit
 returned as a result rather than thrown, read, write, list, port forward, and
 destroy. Modal stays out, gVisor has no io_uring. Railway is out, its seccomp
 blocks it. Fly Machines remain the runner-up.
+
+The control plane picks the provider from config: E2B when `E2B_API_KEY` and
+`E2B_TEMPLATE` are both set, local Docker otherwise. A developer with Docker
+still needs no credentials.
+
+### What E2B's Dockerfile converter does to the image
+
+Three defects, each found by probe templates rather than documentation, and one
+of them contradicts what the vendor docs imply:
+
+| Behaviour | Consequence | Where it is handled |
+| --- | --- | --- |
+| `ENV` is dropped entirely, single or multi line, quoted or not. Not in the command's environment, not in pid 1's, not in any shell init file | Nothing the image puts on `PATH` exists: no cargo, anchor, rustup, or Solana CLI | The adapter supplies `PATH` and `HOME` on every exec |
+| A backslash-n inside a `RUN` becomes a literal `n`. `printf '#!/bin/sh\necho ok\n'` produced the single line `#!/bin/shnecho okn` | The pre-build's Cargo.toml edit collapsed into one corrupt line and failed the build | The step moved into `prepare-project.sh`; a COPYed file arrives byte for byte |
+| A Dockerfile with no `USER` gets `USER user` appended, uid 1000, `$HOME=/home/user` | That account cannot read `/root` or write `/workspace`, so the warm build is silently lost | The adapter runs everything as root |
+
+Two things that do survive, both checked: file **mtimes are preserved** through
+the build, which is the mechanism cargo fingerprints rely on, and a sandbox
+started in **492ms** with no ready-wait.
 
 ## Deliberate deviations from DESIGN.md
 

@@ -47,6 +47,9 @@ importers:
 
   infra/toolchain-image:
     dependencies:
+      '@brik/sandbox':
+        specifier: workspace:*
+        version: link:../../packages/sandbox
       e2b:
         specifier: ^2.38.3
         version: 2.38.3
