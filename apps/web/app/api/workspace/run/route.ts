@@ -34,7 +34,7 @@ interface RunRequest {
 }
 
 async function leaseFor(body: RunRequest) {
-  const existing = body.workspaceId ? getWorkspace(body.workspaceId) : null;
+  const existing = body.workspaceId ? await getWorkspace(body.workspaceId) : null;
   if (existing) return existing;
   const created = await createWorkspace();
   return { workspace: created.workspace, expiresAt: created.expiresAt };

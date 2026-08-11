@@ -186,8 +186,31 @@ export class E2BProvider implements SandboxProvider {
     return workspace;
   }
 
+  /**
+   * A sandbox outlives the process that started it, and the id is enough to
+   * reach it again. That matters wherever the control plane is not one
+   * long-lived process: a second request can land on an instance that has never
+   * heard of this workspace, and without this it would report a perfectly live
+   * sandbox as gone and leak it until its own timeout.
+   *
+   * A failed connect is the honest answer to "is this still there", so it
+   * returns null rather than throwing: the id may be expired, killed, or made
+   * up.
+   */
   async getWorkspace(id: string): Promise<Workspace | null> {
-    return this.workspaces.get(id) ?? null;
+    const known = this.workspaces.get(id);
+    if (known) return known;
+    if (!this.apiKey) return null;
+
+    try {
+      const sandbox = await Sandbox.connect(id, { apiKey: this.apiKey });
+      const workspace = new E2BWorkspace(id, this.name, sandbox);
+      workspace.status = "ready";
+      this.workspaces.set(id, workspace);
+      return workspace;
+    } catch {
+      return null;
+    }
   }
 
   async forget(id: string): Promise<void> {

@@ -65,7 +65,9 @@ export async function POST(request: Request): Promise<Response> {
       };
 
       try {
-        const lease = body.workspaceId ? getWorkspace(body.workspaceId) : null;
+        const lease = body.workspaceId
+          ? await getWorkspace(body.workspaceId)
+          : null;
         if (!lease) {
           send({ type: "note", text: NO_WORKSPACE });
           return;

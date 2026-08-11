@@ -137,15 +137,38 @@ export async function createWorkspace(): Promise<{
   }
 }
 
-export function getWorkspace(id: string): Lease | null {
+/**
+ * Take over a workspace this process never created.
+ *
+ * The leases above live in one Node process, so on anything with more than one
+ * instance a second request lands somewhere that has never heard of the
+ * workspace the first request made. A managed provider can still reach the
+ * sandbox by id, which is enough for the agent to act on it and for the page
+ * to release it. Docker cannot, and returns null.
+ *
+ * This is not the lease store. The concurrency cap and the sweeper are still
+ * per-process, and the deadline below is a ceiling rather than the sandbox's
+ * real one, which only the provider knows. It stops a live workspace reading as
+ * gone, and stops one leaking to its own timeout because the tab that owned it
+ * closed against a different instance.
+ */
+async function adopt(id: string): Promise<Lease | null> {
+  const workspace = await provider.getWorkspace(id);
+  if (!workspace) return null;
+  const lease = { workspace, expiresAt: Date.now() + TTL_SECONDS * 1000 };
+  leases.set(id, lease);
+  return lease;
+}
+
+export async function getWorkspace(id: string): Promise<Lease | null> {
   const lease = leases.get(id);
-  if (!lease) return null;
+  if (!lease) return adopt(id);
   if (lease.expiresAt <= Date.now()) return null;
   return lease;
 }
 
 export async function destroyWorkspace(id: string): Promise<boolean> {
-  const lease = leases.get(id);
+  const lease = leases.get(id) ?? (await adopt(id));
   if (!lease) return false;
   leases.delete(id);
   await provider.forget(id);
