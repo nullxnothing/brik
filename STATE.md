@@ -60,11 +60,21 @@ without a $150/mo commitment.
 
 ## What is deployed
 
-`www.brik.builders` serves `dpl_9iMtcnyxdBLRoJDuzDDDZhTUaSRg`, built from
-`8e1a375` on 2026-08-11. The apex 308s to www and resolves to the same
+`www.brik.builders` serves `dpl_9nS16mUv7iiDDs92uAMYFthfdA2x`, built from
+`02c4896` on 2026-08-11. The apex 308s to www and resolves to the same
 deployment. Production carries one environment variable,
 `NEXT_PUBLIC_SITE_URL`; `BRIK_WORKSPACE_ENABLED` is absent, which is what closes
-the workspace routes.
+the workspace routes. A closed route renders `app/not-found.tsx` in the site's
+own type and reports its title as "Not found", rather than Next's unstyled
+default under a tab that still said "Workspace".
+
+**Every number on the landing page is measured, so changing what it describes
+changes the page.** The hero animation is a tip-jar run at the step timings
+above, the toolchain card is read out of `brik/solana-toolchain:dev` (rustc
+1.85.0, solana-cli 3.1.9, anchor-cli 0.31.1, node 22.23.2), and the validator
+card is `brik-localnet` funding a wallet in 1.9s. The fabricated program id is
+gone from the site entirely: `7xKX` appears zero times across `/`, `/workspace`,
+`/new`, and `/brand`. Rebuilding the image moves the four versions.
 
 Deploying is `vercel deploy --prod` from the repo root, and it has to be the
 repo root. The Vercel project's Root Directory is `apps/web`, set on 2026-08-11,

@@ -21,6 +21,12 @@
   404 in production, open only where `BRIK_WORKSPACE_ENABLED` or a development
   build says otherwise. Deployed and verified against the live domain; the
   deployment and the Vercel change it needed are in STATE.md.
+- **The landing page says only what is true** — the hero animation ran a
+  fabricated build, the toolchain card had four wrong versions, and the devnet
+  card claimed a preview URL and a fork count that were invented. All of it is
+  measured now, and a closed route lands on a real page instead of Next's
+  default 404. What remains on that page is intent rather than fabrication, and
+  it is listed below.
 
 ## Next, in dependency order
 
@@ -65,6 +71,14 @@ Three, each with the evidence already gathered and none taken:
   2.2s on Docker, because a snapshot hydrates its filesystem lazily and the
   825MB target directory is read cold. Worth attention only if activation time
   becomes the constraint, which at 40s per run it is not.
+- **Decide what the landing page is allowed to promise.** No invented numbers
+  are left on it, but three cards describe capabilities the product does not
+  have yet, and each is a different distance away. The agent card is closest:
+  the loop is verified and only the wiring is missing (slice 1). "Push to devnet
+  when you want a URL to share" is slice 6. "Git is wired in from the first
+  commit. Push to your own repo" has nothing behind it at all — GitHub push is
+  in Not started. Pre-launch copy with a "Coming soon" CTA can describe intent,
+  but the git card is the one that reads as a shipped feature.
 - **Swap the validator to Agave 3.0.14** to drop `seccomp=unconfined`
   (STATE.md, verified). Demoted to insurance: E2B runs the 3.1.9 validator
   unmodified, so this only matters if a container-based provider returns, and it
