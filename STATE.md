@@ -240,12 +240,49 @@ Four independent mechanisms, each observed:
 
 After every test above, `docker ps -a --filter label=brik.workspace=1` was empty.
 
-**Concurrency is capped** at `BRIK_MAX_WORKSPACES`, default 4, because each
-workspace is a container off a 6.11GB image and a few open tabs would otherwise
-take the host down. The slot is claimed before the first await, so a burst
-cannot slip past the check. Verified with six simultaneous requests against a
-cap of two: peak container count was exactly two, two runs deployed, and four
-were turned away with a plain sentence rather than a stack trace.
+## What a visitor is allowed to spend
+
+Three counts live in Upstash Redis (`upstash-kv-byzantine-mirror`, provisioned
+through Vercel's marketplace), so they hold across function instances and
+survive a restart:
+
+| Limit | Default | Scope |
+| --- | --- | --- |
+| `BRIK_MAX_WORKSPACES` | 4 | Live workspaces, whole deployment |
+| `BRIK_RUNS_PER_HOUR` | 5 | Workspace starts, per visitor |
+| `BRIK_MESSAGES_PER_HOUR` | 30 | Agent turns, per visitor |
+
+Both refusals were driven against the deployed site, not locally:
+
+- Six run requests in a row filled the deployment and the fifth was told *"All 4
+  workspace slots are busy"*.
+- A seventh crossed the hourly limit and was told *"That is 5 workspaces in an
+  hour"*. E2B reported zero sandboxes started by it, so the refusal happens
+  before anything is allocated.
+
+Four decisions worth keeping:
+
+- **A visitor is a salted hash of the client address, never the address.** The
+  store holds 24 hex characters and `BRIK_VISITOR_SALT`.
+- **Keys carry the environment.** One Upstash database serves production,
+  previews, and every developer, because they all read the same integration
+  variables. Without a namespace a local `pnpm verify-templates` occupies
+  production's slots, which is a very confusing way to take the site down.
+- **A production build with no store refuses to start a workspace.** A route
+  that cannot count cannot say no, and failing shut is the honest answer.
+- **A run is charged where a sandbox is created**, not at the top of the
+  request, or a made-up workspace id would buy one for free. A capacity refusal
+  refunds it, because the deployment being full is not the visitor's doing.
+
+The window is a fixed clock hour rather than a sliding one, which is visible at
+the boundary: a burst of six split three and three across two buckets during
+testing. Coarser than a sliding window and enough to stop a stranger looping on
+the endpoint.
+
+The slot is claimed before the first await, so a burst cannot slip past the
+check. Because a sandbox id does not exist until the sandbox does, it is taken
+under a placeholder with a 120s deadline and swapped for the real id, added
+before removed, so the count can read one high for an instant but never one low.
 
 ## Known limits
 
@@ -274,11 +311,15 @@ were turned away with a plain sentence rather than a stack trace.
   not before.
 - `exec` is request/response. Streaming it is enough for a build and a deploy;
   an interactive terminal needs a session primitive that does not exist.
-- **Nothing limits a visitor.** `BRIK_MAX_WORKSPACES` is a per-process capacity
-  limit, and on a serverless deployment each instance counts its own. A stranger
-  can start sandboxes and spend model tokens on the deployed site with no quota
-  in front of either. This is the largest open risk now that the route is
-  public, and it is the next slice.
+- **A client that disconnects does not release its sandbox on Vercel.** Locally
+  a dropped connection aborts the exec and destroys the container, verified.
+  In production it does not: six aborted run requests left all six sandboxes
+  running, and only an explicit DELETE cleared them. The page's own
+  `pagehide` DELETE works, so the ordinary "closed the tab" path is covered;
+  what leaks is a stream that dies without one, and it leaks until the 900s
+  TTL. The slot it holds expires on the same clock, so capacity heals itself.
+  The fix is a reconciler: E2B's API lists running sandboxes, and anything not
+  in the live set is an orphan.
 - **No approval step.** `requiresApproval()` classifies write and run as needing
   one and nothing asks, so anything the agent decides to do it does. Survivable
   only because the sandbox has no egress and a TTL.

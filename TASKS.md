@@ -36,6 +36,11 @@
   the container's copy, and an impossible request ends in a refusal backed by a
   command rather than a fabricated success. STATE.md has both transcripts and
   the two bugs driving it turned up.
+- **A visitor cannot exhaust the budget** — Upstash Redis holds the workspace
+  count for the whole deployment and, per visitor per hour, workspace starts and
+  agent messages. Both refusals driven against the deployed site; the per-visitor
+  one turns a request away before any sandbox is allocated. Details and the four
+  decisions behind it are in STATE.md.
 - **The workspace is open to the internet** — https://www.brik.builders runs a
   real Anchor project in an E2B sandbox for anyone who presses Start building,
   and the agent changes it on request. Verified on the deployed site, including
@@ -44,17 +49,18 @@
 
 ## Next, in dependency order
 
-1. **Anonymous limits.** This is now urgent rather than scheduled, because the
-   route is public. Nothing stops a stranger starting sandboxes and spending
-   model tokens: `BRIK_MAX_WORKSPACES` counts per process, and on serverless
-   each instance counts its own. Every message is two meters at once, a sandbox
-   and a model. Depends on a shared store, which is what makes the lease store
-   below its dependency rather than the other way round.
+1. **Reap orphaned sandboxes.** A stream that dies without the page's DELETE
+   leaves its sandbox running until the 900s TTL, because a client disconnect
+   does not reach the cleanup path on Vercel the way it does locally
+   (STATE.md). It is bounded and it heals, but it is the remaining way to spend
+   money on nothing. E2B's API lists what is running and Redis holds what is
+   claimed; anything in the first and not the second is an orphan. A cron and a
+   set difference.
 
 2. **A lease store.** Reconnecting to an E2B sandbox by id covers the agent turn
-   and the release, so the deployment works, but the cap and the sweeper are
-   still per-process and an adopted lease's deadline is a guess. A shared store
-   is what the limits above need to count against.
+   and the release, and Redis now holds the counts, so what is left is the
+   sweeper and an adopted lease's deadline being a ceiling rather than the
+   sandbox's real one. Smaller than it was.
 
 3. **An approval step.** `requiresApproval()` already says write and run need
    one, and nothing asks. The agent writes files and runs commands unsupervised,
