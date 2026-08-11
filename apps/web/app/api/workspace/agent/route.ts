@@ -1,6 +1,12 @@
 import type { RunEvent } from "../../../../lib/workspace/events";
 import { MAX_MESSAGE_LENGTH, runAgentTurn } from "../../../../lib/workspace/agent";
 import { isWorkspaceOpen } from "../../../../lib/workspace/gate";
+import {
+  assertLimitsAvailable,
+  LimitError,
+  spendMessage,
+  visitorOf,
+} from "../../../../lib/workspace/limits";
 import { getWorkspace } from "../../../../lib/workspace/registry";
 
 /**
@@ -30,6 +36,9 @@ const NO_WORKSPACE =
   "That workspace is gone, so there is nothing to act on. Deploy again to start a new one.";
 
 function messageFor(error: unknown): string {
+  // Already a sentence written for a visitor.
+  if (error instanceof LimitError) return error.message;
+
   const text = error instanceof Error ? error.message : String(error);
   if (/api[_ ]?key|authentication|401/i.test(text)) {
     return "The model rejected this server's credentials, so the agent could not run.";
@@ -65,6 +74,7 @@ export async function POST(request: Request): Promise<Response> {
       };
 
       try {
+        assertLimitsAvailable();
         const lease = body.workspaceId
           ? await getWorkspace(body.workspaceId)
           : null;
@@ -72,6 +82,9 @@ export async function POST(request: Request): Promise<Response> {
           send({ type: "note", text: NO_WORKSPACE });
           return;
         }
+        // After the workspace is known, so a request that was never going to
+        // run does not count against the visitor.
+        await spendMessage(visitorOf(request));
         await runAgentTurn({
           workspace: lease.workspace,
           objective,

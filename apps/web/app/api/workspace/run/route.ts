@@ -2,6 +2,12 @@ import { DEFAULT_TEMPLATE, findTemplate } from "../../../../lib/templates";
 import type { RunEvent } from "../../../../lib/workspace/events";
 import { isWorkspaceOpen } from "../../../../lib/workspace/gate";
 import {
+  assertLimitsAvailable,
+  LimitError,
+  spendRun,
+  visitorOf,
+} from "../../../../lib/workspace/limits";
+import {
   CapacityError,
   createWorkspace,
   destroyWorkspace,
@@ -33,16 +39,24 @@ interface RunRequest {
   template?: string;
 }
 
-async function leaseFor(body: RunRequest) {
+async function leaseFor(body: RunRequest, visitor: string) {
   const existing = body.workspaceId ? await getWorkspace(body.workspaceId) : null;
   if (existing) return existing;
+
+  // Charged here rather than at the top of the request, because a new sandbox
+  // is the thing that costs. A redeploy into a warm workspace is free, and an
+  // unknown id falls through to a create, so charging on "no id was sent"
+  // would let a made-up one buy a workspace for nothing.
+  await spendRun(visitor);
   const created = await createWorkspace();
   return { workspace: created.workspace, expiresAt: created.expiresAt };
 }
 
 function messageFor(error: unknown): string {
   // Already a sentence written for a visitor, so it goes through untouched.
-  if (error instanceof CapacityError) return error.message;
+  if (error instanceof CapacityError || error instanceof LimitError) {
+    return error.message;
+  }
 
   const text = error instanceof Error ? error.message : String(error);
   if (/ENOENT/.test(text)) {
@@ -84,7 +98,8 @@ export async function POST(request: Request): Promise<Response> {
       let workspaceId: string | null = null;
       let keepWorkspace = false;
       try {
-        const lease = await leaseFor(body);
+        assertLimitsAvailable();
+        const lease = await leaseFor(body, visitorOf(request));
         workspaceId = lease.workspace.id;
         send({
           type: "workspace",

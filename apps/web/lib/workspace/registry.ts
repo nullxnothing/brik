@@ -5,6 +5,12 @@ import {
   type SandboxProvider,
   type Workspace,
 } from "@brik/sandbox";
+import {
+  claimSlot,
+  limitsConfigured,
+  releaseSlot,
+  swapSlot,
+} from "./limits";
 
 /**
  * Workspace leases for the local control plane. Server only.
@@ -47,6 +53,11 @@ const SWEEP_INTERVAL_MS = 30_000;
  * from what the host can actually carry.
  */
 const MAX_WORKSPACES = Number(process.env.BRIK_MAX_WORKSPACES ?? 4);
+
+/** How long a slot may be held for a sandbox that is still starting. Long
+ *  enough for a cold create, short enough that a crashed request does not cost
+ *  capacity for the whole workspace lifetime. */
+const RESERVATION_SECONDS = 120;
 
 /** Thrown when the host is full. The route turns it into an honest message. */
 export class CapacityError extends Error {
@@ -111,7 +122,17 @@ export async function createWorkspace(): Promise<{
   for (const [id, lease] of leases) {
     if (lease.expiresAt <= now) await destroyWorkspace(id);
   }
-  if (leases.size + starting.count >= MAX_WORKSPACES) {
+  // A sandbox id does not exist until the sandbox does, so the slot is taken
+  // under a placeholder first. Its short deadline is what stops a create that
+  // dies mid-flight holding capacity until the workspace TTL.
+  const reservation = `pending-${crypto.randomUUID()}`;
+  if (!(await claimSlot(reservation, RESERVATION_SECONDS))) {
+    throw new CapacityError(MAX_WORKSPACES);
+  }
+  // With no shared store there is one process, and what it has started is the
+  // whole truth.
+  if (!limitsConfigured() && leases.size + starting.count >= MAX_WORKSPACES) {
+    await releaseSlot(reservation);
     throw new CapacityError(MAX_WORKSPACES);
   }
 
@@ -129,9 +150,14 @@ export async function createWorkspace(): Promise<{
       egress: "locked",
       ttlSeconds: TTL_SECONDS,
     });
+    await swapSlot(reservation, workspace.id, TTL_SECONDS);
     const expiresAt = Date.now() + TTL_SECONDS * 1000;
     leases.set(workspace.id, { workspace, expiresAt });
     return { workspace, expiresAt };
+  } catch (error) {
+    // Nothing was started, so nothing should keep occupying a slot.
+    await releaseSlot(reservation);
+    throw error;
   } finally {
     starting.count -= 1;
   }
@@ -171,6 +197,7 @@ export async function destroyWorkspace(id: string): Promise<boolean> {
   const lease = leases.get(id) ?? (await adopt(id));
   if (!lease) return false;
   leases.delete(id);
+  await releaseSlot(id);
   await provider.forget(id);
   await lease.workspace.destroy().catch(() => {});
   return true;

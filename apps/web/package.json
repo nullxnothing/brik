@@ -12,6 +12,7 @@
     "@brik/agent": "workspace:*",
     "@brik/sandbox": "workspace:*",
     "@tailwindcss/postcss": "^4.3.3",
+    "@upstash/redis": "^1.38.2",
     "next": "^15.3.0",
     "postcss": "^8.5.26",
     "react": "^19.1.0",

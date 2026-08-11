@@ -13,3 +13,5 @@ bakeoff-results/
 
 .playwright-mcp/
 .vercel/
+
+.env*
