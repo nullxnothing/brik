@@ -42,9 +42,14 @@ export function streamRun(
   return post("/api/workspace/run", request, signal, onEvent);
 }
 
-/** One agent turn against the workspace this page already holds. */
+/**
+ * One agent turn against the workspace this page already holds.
+ *
+ * `apiKey`, when the visitor has supplied one, is sent for this request and is
+ * never persisted anywhere but their own tab.
+ */
 export function streamAgent(
-  request: { workspaceId: string; message: string },
+  request: { workspaceId: string; message: string; apiKey?: string },
   signal: AbortSignal,
   onEvent: (event: RunEvent) => void,
 ): Promise<void> {

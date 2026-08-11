@@ -21,9 +21,52 @@ import { Redis } from "@upstash/redis";
 
 /** Workspace starts per visitor per hour. */
 const RUNS_PER_HOUR = Number(process.env.BRIK_RUNS_PER_HOUR ?? 5);
-/** Agent turns per visitor per hour. Higher, because a conversation is the
- *  product and one message is far cheaper than one sandbox. */
+/**
+ * Agent turns per visitor per hour.
+ *
+ * A flood guard, not the cost control: it bounds how many requests one visitor
+ * can open, while the budget below bounds what those requests may spend. A turn
+ * is not a fixed price, so counting turns never was a spending limit.
+ */
 const MESSAGES_PER_HOUR = Number(process.env.BRIK_MESSAGES_PER_HOUR ?? 30);
+
+/**
+ * What one visitor's agent may spend on model tokens per hour, in US cents.
+ *
+ * `docs/07` sets a $2 to $5 planning ceiling per anonymous session and says the
+ * COGS spreadsheet comes before free-tier limits. This is the top of that range
+ * and is a placeholder for a measured number, not a measured one.
+ */
+const CENTS_PER_HOUR = Number(process.env.BRIK_AGENT_CENTS_PER_HOUR ?? 500);
+
+/**
+ * Claude Opus 5 list price, $5 per million input tokens and $25 per million
+ * output. Held in thousandths of a cent so the arithmetic stays in integers:
+ * $5 per 1M is 0.5 thousandths of a cent per token, $25 per 1M is 2.5.
+ *
+ * A tier or model change in `packages/agent` moves these. Nothing here reads
+ * the model the loop chose, so this is the one place the two can drift.
+ */
+const MILS_PER_INPUT_TOKEN = 0.5;
+const MILS_PER_OUTPUT_TOKEN = 2.5;
+const MILS_PER_CENT = 1000;
+
+export interface TokenSpend {
+  inputTokens: number;
+  outputTokens: number;
+}
+
+/** What a turn cost, in thousandths of a cent. */
+export function costOf(usage: TokenSpend): number {
+  return Math.ceil(
+    usage.inputTokens * MILS_PER_INPUT_TOKEN +
+      usage.outputTokens * MILS_PER_OUTPUT_TOKEN,
+  );
+}
+
+export function centsOf(mils: number): string {
+  return `$${(mils / MILS_PER_CENT / 100).toFixed(2)}`;
+}
 /** Live workspaces across the whole deployment. */
 const MAX_WORKSPACES = Number(process.env.BRIK_MAX_WORKSPACES ?? 4);
 
@@ -127,6 +170,49 @@ export async function spendRun(visitor: string): Promise<void> {
     RUNS_PER_HOUR,
     `That is ${plural(RUNS_PER_HOUR, "workspace")} in an hour, which is the limit for now. It resets on the hour, and the one you have is still yours until then.`,
   );
+}
+
+/**
+ * Charge a turn's tokens against the visitor's hour, and say whether there is
+ * anything left.
+ *
+ * Charged after the fact, because a turn's cost is only known once it has run.
+ * The overshoot that allows is bounded by one turn's `max_tokens`, and the
+ * alternative — estimating before the call — would be a guess enforced as if it
+ * were a measurement.
+ */
+export async function spendTokens(
+  visitor: string,
+  usage: TokenSpend,
+): Promise<{ exhausted: boolean; spent: number; budget: number }> {
+  const budget = CENTS_PER_HOUR * MILS_PER_CENT;
+  const redis = store();
+  if (!redis) return { exhausted: false, spent: 0, budget };
+
+  const bucket = Math.floor(Date.now() / HOUR_MS);
+  const key = `brik:${NAMESPACE}:tokens:${visitor}:${bucket}`;
+  const spent = await redis.incrby(key, costOf(usage));
+  if (spent === costOf(usage)) await redis.expire(key, 3600);
+  return { exhausted: spent >= budget, spent, budget };
+}
+
+/** Whether the visitor has anything left before a turn is started at all. */
+export async function tokenBudgetLeft(
+  visitor: string,
+): Promise<{ exhausted: boolean; budget: number }> {
+  const budget = CENTS_PER_HOUR * MILS_PER_CENT;
+  const redis = store();
+  if (!redis) return { exhausted: false, budget };
+
+  const bucket = Math.floor(Date.now() / HOUR_MS);
+  const spent = Number(
+    (await redis.get(`brik:${NAMESPACE}:tokens:${visitor}:${bucket}`)) ?? 0,
+  );
+  return { exhausted: spent >= budget, budget };
+}
+
+export function budgetRefusal(budget: number): string {
+  return `That is ${centsOf(budget)} of model time in an hour, which is the limit for now. It resets on the hour. You can keep going straight away with your own Anthropic API key, which is used for the request and never stored.`;
 }
 
 /**

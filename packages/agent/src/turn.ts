@@ -34,6 +34,13 @@ export interface AgentMessage {
   content: unknown;
 }
 
+/** What one model call cost. The two are priced differently, so they never
+ *  collapse into a single number. */
+export interface TokenUsage {
+  inputTokens: number;
+  outputTokens: number;
+}
+
 /** What one model call produced. */
 export interface AgentTurnResult {
   /** Concatenated text blocks. */
@@ -50,7 +57,7 @@ export interface AgentTurnResult {
    */
   raw: unknown;
   /** For budget accounting. */
-  usage?: { inputTokens: number; outputTokens: number };
+  usage?: TokenUsage;
 }
 
 export interface TurnRequest {

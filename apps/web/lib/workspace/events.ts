@@ -26,6 +26,10 @@ export type Entry =
   | { kind: "step"; text: string; id?: string; state?: StepState }
   | { kind: "note"; text: string };
 
+/** Whether the visitor has been offered the option of their own model key,
+ *  which happens only when their hour of metered model time is spent. */
+export type KeyOffer = boolean;
+
 export type RunEvent =
   /** Always first: the container exists from here on. */
   | {
@@ -44,8 +48,12 @@ export type RunEvent =
    */
   | { type: "step"; text: string; id?: string; state?: StepState }
   | { type: "term"; lines: TerminalLine[] }
-  /** The workspace or the agent talking, in prose. */
-  | { type: "note"; text: string }
+  /**
+   * The workspace or the agent talking, in prose. `offerKey` marks the one
+   * note the visitor can act on: their hour of model time is spent, and their
+   * own key would carry on.
+   */
+  | { type: "note"; text: string; offerKey?: boolean }
   /** The project as it actually exists in the container. */
   | { type: "project"; name: string; entryFile: string; files: string[]; source: string[] }
   | { type: "wallet"; address: string; balance: number }

@@ -27,6 +27,9 @@ export interface RunState {
   expiresAt?: number;
   ttlSeconds?: number;
   failure?: string;
+  /** The server said this visitor's metered model time is spent, and their own
+   *  key would carry on. Sticky: the offer stays until a turn succeeds. */
+  offerKey?: boolean;
 }
 
 export function initialRun(task: string): RunState {
@@ -76,6 +79,7 @@ export function applyEvent(state: RunState, event: RunEvent): RunState {
       return {
         ...state,
         entries: [...state.entries, { kind: "note", text: event.text }],
+        offerKey: event.offerKey ?? state.offerKey,
       };
     case "term":
       return {

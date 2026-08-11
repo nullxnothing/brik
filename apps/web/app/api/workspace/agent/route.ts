@@ -30,18 +30,29 @@ export const maxDuration = 800;
 interface AgentRequest {
   workspaceId?: string;
   message?: string;
+  /** The visitor's own Anthropic key, when they have chosen to use one. It is
+   *  read out of this request and nothing else: not stored, not logged. */
+  apiKey?: string;
 }
+
+/** Anthropic keys carry this prefix. Checked so a typo is refused here rather
+ *  than spending a round trip to find out. */
+const KEY_PREFIX = "sk-ant-";
 
 const NO_WORKSPACE =
   "That workspace is gone, so there is nothing to act on. Deploy again to start a new one.";
 
-function messageFor(error: unknown): string {
+function messageFor(error: unknown, ownKey: boolean): string {
   // Already a sentence written for a visitor.
   if (error instanceof LimitError) return error.message;
 
   const text = error instanceof Error ? error.message : String(error);
   if (/api[_ ]?key|authentication|401/i.test(text)) {
-    return "The model rejected this server's credentials, so the agent could not run.";
+    // Whose credentials failed decides who can fix it, so the message has to
+    // say which. Told the wrong one, a visitor debugs the wrong key.
+    return ownKey
+      ? "The model rejected that API key, so the agent could not run. Check the key, or remove it to go back to the included allowance."
+      : "The model rejected this server's credentials, so the agent could not run.";
   }
   return `The agent stopped: ${text}`;
 }
@@ -54,6 +65,11 @@ export async function POST(request: Request): Promise<Response> {
     .trim()
     .slice(0, MAX_MESSAGE_LENGTH);
   if (!objective) return new Response(null, { status: 400 });
+
+  const suppliedKey = String(body.apiKey ?? "").trim();
+  if (suppliedKey && !suppliedKey.startsWith(KEY_PREFIX)) {
+    return new Response(null, { status: 400 });
+  }
 
   const encoder = new TextEncoder();
   const gone = new AbortController();
@@ -83,17 +99,21 @@ export async function POST(request: Request): Promise<Response> {
           return;
         }
         // After the workspace is known, so a request that was never going to
-        // run does not count against the visitor.
-        await spendMessage(visitorOf(request));
+        // run does not count against the visitor. The flood guard applies on
+        // the visitor's own key too: it bounds requests, not spend.
+        const visitor = visitorOf(request);
+        await spendMessage(visitor);
         await runAgentTurn({
           workspace: lease.workspace,
           objective,
           send,
           signal: gone.signal,
+          visitor,
+          apiKey: suppliedKey || undefined,
         });
       } catch (error) {
         if (!gone.signal.aborted) {
-          send({ type: "note", text: messageFor(error) });
+          send({ type: "note", text: messageFor(error, Boolean(suppliedKey)) });
         }
       } finally {
         open = false;

@@ -1,5 +1,12 @@
 import { AnthropicProvider, runAgent, type TaskStep } from "@brik/agent";
 import type { Workspace } from "@brik/sandbox";
+import {
+  budgetRefusal,
+  centsOf,
+  costOf,
+  spendTokens,
+  tokenBudgetLeft,
+} from "./limits";
 import { LineBuffer, PROJECT_DIR, sendProject, type Send } from "./run";
 
 /**
@@ -28,14 +35,32 @@ interface TurnOptions {
   objective: string;
   send: Send;
   signal: AbortSignal;
+  /** Who to charge. Absent when the visitor brought their own key. */
+  visitor?: string;
+  /**
+   * The visitor's own Anthropic key. Used for this request and nothing else:
+   * never written to disk, never logged, never sent anywhere but Anthropic.
+   * A turn on the visitor's key is not metered, because it is not our spend.
+   */
+  apiKey?: string;
 }
 
 export async function runAgentTurn(opts: TurnOptions): Promise<void> {
-  const { workspace, objective, send, signal } = opts;
+  const { workspace, objective, send, signal, visitor, apiKey } = opts;
 
-  if (!process.env.ANTHROPIC_API_KEY) {
+  if (!apiKey && !process.env.ANTHROPIC_API_KEY) {
     send({ type: "note", text: NO_KEY });
     return;
+  }
+
+  // Checked before the model is called at all, so an exhausted visitor is told
+  // rather than charged for the turn that discovers it.
+  if (!apiKey && visitor) {
+    const { exhausted, budget } = await tokenBudgetLeft(visitor);
+    if (exhausted) {
+      send({ type: "note", text: budgetRefusal(budget), offerKey: true });
+      return;
+    }
   }
 
   const terminal = new LineBuffer(send);
@@ -50,12 +75,15 @@ export async function runAgentTurn(opts: TurnOptions): Promise<void> {
    *  out of budget has already said its summary, and repeating it reads as the
    *  agent saying the same thing twice. */
   let lastText = "";
+  /** Set when the budget ran out mid-turn, so the note that follows can offer
+   *  the way to carry on. */
+  let ranOut = false;
 
   const task = await runAgent({
     objective,
     workspace,
     projectDir: PROJECT_DIR,
-    provider: new AnthropicProvider(),
+    provider: new AnthropicProvider(apiKey),
     signal,
     onStep: (step) => {
       let id = ids.get(step);
@@ -77,6 +105,16 @@ export async function runAgentTurn(opts: TurnOptions): Promise<void> {
       send({ type: "note", text });
     },
     onOutput: (chunk) => terminal.write(chunk),
+    onUsage: async (usage) => {
+      if (apiKey || !visitor) return;
+      const { exhausted, budget } = await spendTokens(visitor, usage);
+      // Thrown rather than returned, because the loop's contract is that a
+      // throw here stops it cleanly and this message becomes the summary.
+      if (exhausted) {
+        ranOut = true;
+        throw new Error(budgetRefusal(budget));
+      }
+    },
   });
 
   terminal.flush();
@@ -94,6 +132,16 @@ export async function runAgentTurn(opts: TurnOptions): Promise<void> {
   }
 
   if (task.summary && task.summary !== lastText) {
-    send({ type: "note", text: task.summary });
+    send({ type: "note", text: task.summary, offerKey: ranOut || undefined });
+  }
+
+  // What the turn cost, from the model's own usage rather than an estimate.
+  // Shown for a metered turn only: on the visitor's own key it is their bill
+  // and their provider's to report.
+  if (!apiKey && (task.usage.inputTokens || task.usage.outputTokens)) {
+    send({
+      type: "note",
+      text: `That turn used ${task.usage.inputTokens.toLocaleString()} input and ${task.usage.outputTokens.toLocaleString()} output tokens, about ${centsOf(costOf(task.usage))}.`,
+    });
   }
 }

@@ -11,6 +11,7 @@ import {
   type AgentToolUse,
   type ModelProvider,
   type ModelTier,
+  type TokenUsage,
 } from "./turn.js";
 
 /**
@@ -60,6 +61,8 @@ export interface AgentTask {
   summary: string;
   toolCalls: number;
   model: string;
+  /** What the run spent, summed across every model call it made. */
+  usage: TokenUsage;
 }
 
 export interface RunAgentOptions {
@@ -76,6 +79,14 @@ export interface RunAgentOptions {
   onText?: (text: string) => void;
   /** Raw command output as it is produced, for a caller showing a terminal. */
   onOutput?: (chunk: string) => void;
+  /**
+   * What the turn that just finished cost, before the next one starts.
+   *
+   * Throwing from here stops the loop and the thrown message becomes the run's
+   * summary, which is how a caller enforces a budget: a turn already paid for
+   * is never discarded, and the next one never begins.
+   */
+  onUsage?: (usage: TokenUsage) => Promise<void>;
 }
 
 function systemPrompt(projectDir: string, tools: Tool[]): string {
@@ -173,6 +184,7 @@ export async function runAgent(opts: RunAgentOptions): Promise<AgentTask> {
     summary: "",
     toolCalls: 0,
     model: opts.provider.modelFor(tier),
+    usage: { inputTokens: 0, outputTokens: 0 },
   };
 
   const ctx: ToolContext = {
@@ -203,6 +215,20 @@ export async function runAgent(opts: RunAgentOptions): Promise<AgentTask> {
       { system, messages, tools: modelTools, maxTokens: MAX_TOKENS },
       tier,
     );
+
+    if (turn.usage) {
+      task.usage.inputTokens += turn.usage.inputTokens;
+      task.usage.outputTokens += turn.usage.outputTokens;
+      // Reported before the turn's own output, so a caller enforcing a budget
+      // stops on what was actually spent rather than on an estimate.
+      try {
+        await opts.onUsage?.(turn.usage);
+      } catch (error) {
+        task.summary =
+          error instanceof Error ? error.message : "The run stopped.";
+        return task;
+      }
+    }
 
     if (turn.text.trim()) opts.onText?.(turn.text.trim());
 

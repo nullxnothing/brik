@@ -19,6 +19,7 @@ export {
   type AgentTurnResult,
   type ModelProvider,
   type ModelTier,
+  type TokenUsage,
   type TurnRequest,
 } from "./turn.js";
 

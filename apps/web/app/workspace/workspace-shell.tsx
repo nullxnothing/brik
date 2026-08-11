@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AppPreview } from "../../components/app-preview";
 import type { Status } from "../../components/ui";
-import { Composer } from "./composer";
+import { Composer, readStoredKey, storeKey } from "./composer";
 import { Editor, Files } from "./editor";
 import { WorkspaceHeader } from "./header";
 import { AgentPanel, SolanaPanel, Terminal } from "./panels";
@@ -48,6 +48,14 @@ export function WorkspaceShell({
   const [isAgentRunning, setIsAgentRunning] = useState(false);
   /** The turn in flight, so a redeploy or a closed tab can call it off. */
   const agentRef = useRef<AbortController | null>(null);
+  /** The visitor's own model key, if they gave one. Read from their tab after
+   *  mount so the server and the client render the same first pass. */
+  const [modelKey, setModelKey] = useState("");
+  useEffect(() => setModelKey(readStoredKey()), []);
+  const rememberKey = useCallback((key: string) => {
+    storeKey(key);
+    setModelKey(key);
+  }, []);
   const [centerTab, setCenterTab] = useState<CenterTab>("code");
   const isTabPinned = useRef(false);
   const [rightTab, setRightTab] = useState<RightTab>("agent");
@@ -157,10 +165,14 @@ export function WorkspaceShell({
     agentRef.current = controller;
     setIsAgentRunning(true);
 
-    streamAgent({ workspaceId, message: text }, controller.signal, (event) => {
-      if (controller.signal.aborted) return;
-      setRun((prev) => applyEvent(prev, event));
-    })
+    streamAgent(
+      { workspaceId, message: text, apiKey: modelKey || undefined },
+      controller.signal,
+      (event) => {
+        if (controller.signal.aborted) return;
+        setRun((prev) => applyEvent(prev, event));
+      },
+    )
       .catch((error: unknown) => {
         if (controller.signal.aborted) return;
         setRun((prev) =>
@@ -293,6 +305,9 @@ export function WorkspaceShell({
                 />
                 <Composer
                   disabled={isRunning || isAgentRunning}
+                  offerKey={run.offerKey ?? false}
+                  hasKey={modelKey.length > 0}
+                  onKey={rememberKey}
                   onMessage={sendMessage}
                 />
               </>

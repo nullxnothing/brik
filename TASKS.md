@@ -41,6 +41,11 @@
   agent messages. Both refusals driven against the deployed site; the per-visitor
   one turns a request away before any sandbox is allocated. Details and the four
   decisions behind it are in STATE.md.
+- **The agent is metered in money** — a turn is not a fixed price, so counting
+  turns was never a spending limit. The loop reports each model call's usage and
+  the route charges it at Opus 5 list price against a per-visitor hourly budget.
+  A visitor who runs out is offered their own key, held in their tab and never
+  stored here, rather than a wall. Driven in a browser at a one-cent budget.
 - **The workspace is open to the internet** — https://www.brik.builders runs a
   real Anchor project in an E2B sandbox for anyone who presses Start building,
   and the agent changes it on request. Verified on the deployed site, including
@@ -81,7 +86,16 @@
 
 ## Worth doing, not blocking
 
-Three, each with the evidence already gathered and none taken:
+- **Replace the planning ceiling with a measured one.** `BRIK_AGENT_CENTS_PER_HOUR`
+  is 500 because `docs/07` says $2 to $5 per anonymous session, and that doc also
+  says the COGS spreadsheet comes before free-tier limits. It has not been built.
+  The meter now emits the number that would fill it in: every turn reports its
+  own cost, so a week of real traffic replaces the guess with a distribution.
+- **Keep the price table and the model in step.** `limits.ts` prices tokens at
+  Opus 5's $5/$25 and `packages/agent` picks the model. Nothing checks that the
+  two agree, so a tier change silently mis-charges until someone notices.
+
+Three more, each with the evidence already gathered and none taken:
 
 - **Shrink the image further.** 7.65GB to 6.11GB extracted so far, which already
   clears E2B's free 10GB ceiling. What is left is the risky tier: roughly 600MB

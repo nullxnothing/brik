@@ -250,9 +250,35 @@ survive a restart:
 | --- | --- | --- |
 | `BRIK_MAX_WORKSPACES` | 4 | Live workspaces, whole deployment |
 | `BRIK_RUNS_PER_HOUR` | 5 | Workspace starts, per visitor |
-| `BRIK_MESSAGES_PER_HOUR` | 30 | Agent turns, per visitor |
+| `BRIK_MESSAGES_PER_HOUR` | 30 | Agent requests, per visitor. A flood guard |
+| `BRIK_AGENT_CENTS_PER_HOUR` | 500 | Model spend, per visitor. The cost control |
 
-Both refusals were driven against the deployed site, not locally:
+**The agent is metered in money, not requests.** A turn is not a fixed price:
+the two measured in a browser ran 3 and 7 minutes and made 6 and 20 tool calls,
+so counting turns never bounded what one could spend. The loop now reports each
+model call's usage and the route charges it at Claude Opus 5 list price, $5 per
+million input tokens and $25 per million output, held in thousandths of a cent
+so the arithmetic stays in integers. `docs/07` sets a $2 to $5 planning ceiling
+per anonymous session; 500 cents is the top of that range and is a placeholder
+for a measured number, not a measured one.
+
+Driven in a browser against a real container with the budget set to one cent:
+the turn read a file, spent 2,361 input and 305 output tokens, was stopped
+before the next model call, and the panel reported *"That turn used 2,361 input
+and 305 output tokens, about $0.02"*. The charge lands after each call rather
+than before, because a turn's cost is only known once it has run — so the
+overshoot is bounded by one turn's `max_tokens` rather than by an estimate.
+
+**A visitor who runs out is offered their own key, not a wall.** The refusal
+carries an `offerKey` flag and the composer grows a field for an Anthropic key,
+held in that tab's `sessionStorage` and sent with each request. It is never
+written to this server, never logged, and a turn on it is not metered, because
+it is not our spend. Verified with a deliberately invalid key: the turn failed
+on *that* key rather than silently falling back to the server's, which is the
+whole point of the feature. A valid visitor key completing a turn is the one
+step not driven end to end, to keep a real key out of a session transcript.
+
+The two workspace refusals were driven against the deployed site, not locally:
 
 - Six run requests in a row filled the deployment and the fifth was told *"All 4
   workspace slots are busy"*.
