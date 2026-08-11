@@ -18,11 +18,18 @@
 
 ## Next, in dependency order
 
-1. **The agent.** `packages/agent` is types and a comment. It is now the largest
-   thing between BRIK and its own MVP definition: the workspace runs a template
-   the visitor picked, but cannot act on what they asked for. This is what makes
-   the composer answer instead of declining, and what brings back the
-   suggested-change chip. Needs an LLM API key.
+1. **The agent.** The loop exists and is verified; what remains is a key and the
+   wiring. `packages/agent` has the bounded tool-calling loop, four sandbox
+   tools, risk classification, and the Anthropic provider. `pnpm verify-agent`
+   runs it against a real container with a scripted model: 11 checks, including
+   that the file the agent wrote is on disk and the compiler accepted it.
+
+   Two things are left, and the first needs `ANTHROPIC_API_KEY`:
+   - **Prove a live model drives it.** Everything but the model call is
+     verified; the model call itself has never run.
+   - **Wire it to the workspace.** The composer still declines every request.
+     The run emits `RunEvent`s and the loop emits `TaskStep`s, so this is a
+     mapping between two existing shapes plus a route that takes a message.
 
 2. **A lease store.** Leases live in one Node process, so a restart forgets them
    and a serverless deployment gives every request a different one. Forced as

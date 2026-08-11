@@ -10,7 +10,8 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@brik/sandbox": "workspace:*"
+    "@brik/sandbox": "workspace:*",
+    "@anthropic-ai/sdk": "^0.116.0"
   },
   "devDependencies": {
     "@types/node": "^22.15.0",
