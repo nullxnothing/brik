@@ -4,6 +4,7 @@ import { isWorkspaceOpen } from "../../../../lib/workspace/gate";
 import {
   assertLimitsAvailable,
   LimitError,
+  refundRun,
   spendRun,
   visitorOf,
 } from "../../../../lib/workspace/limits";
@@ -48,8 +49,15 @@ async function leaseFor(body: RunRequest, visitor: string) {
   // unknown id falls through to a create, so charging on "no id was sent"
   // would let a made-up one buy a workspace for nothing.
   await spendRun(visitor);
-  const created = await createWorkspace();
-  return { workspace: created.workspace, expiresAt: created.expiresAt };
+  try {
+    const created = await createWorkspace();
+    return { workspace: created.workspace, expiresAt: created.expiresAt };
+  } catch (error) {
+    // Turned away because the deployment is full, which is not this visitor's
+    // doing and should not cost them an hour of their own allowance.
+    if (error instanceof CapacityError) await refundRun(visitor);
+    throw error;
+  }
 }
 
 function messageFor(error: unknown): string {

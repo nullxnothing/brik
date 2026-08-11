@@ -129,6 +129,22 @@ export async function spendRun(visitor: string): Promise<void> {
   );
 }
 
+/**
+ * Give a run back.
+ *
+ * A visitor is charged before the sandbox is created, so a burst from one
+ * person cannot all pass the check at once. That means a request the
+ * deployment turned away for being full has already been charged, and someone
+ * else's traffic would be eating this visitor's hour. Refunding keeps the
+ * ordering and the fairness.
+ */
+export async function refundRun(visitor: string): Promise<void> {
+  const redis = store();
+  if (!redis) return;
+  const bucket = Math.floor(Date.now() / HOUR_MS);
+  await redis.decr(`brik:${NAMESPACE}:runs:${visitor}:${bucket}`);
+}
+
 export async function spendMessage(visitor: string): Promise<void> {
   const redis = store();
   if (!redis) return;
