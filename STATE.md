@@ -81,8 +81,8 @@ without a $150/mo commitment.
 
 ## What is deployed
 
-`www.brik.builders` serves `dpl_6yqSiU4gUjAK2DHtcht5qDc2qDDg`, built from
-`f1e4c38` on 2026-08-11. The apex 308s to www and resolves to the same
+`www.brik.builders` serves `dpl_69vUabBp1dfnMy2AJbrR3fFJRFva`, built from
+`4fd7893` on 2026-08-11. The apex 308s to www and resolves to the same
 deployment. Production carries five environment variables:
 
 | | Why |
