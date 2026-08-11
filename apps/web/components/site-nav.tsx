@@ -1,10 +1,11 @@
 import Link from "next/link";
 import { BrikWordmark } from "./logo";
-import { ComingSoon } from "./ui";
+import { ButtonLink } from "./ui";
 
 const LINKS = [
   { label: "Build", href: "/#build" },
   { label: "Templates", href: "/#templates" },
+  { label: "About", href: "/#about" },
 ];
 
 export function SiteNav() {
@@ -40,7 +41,9 @@ export function SiteNav() {
           >
             GitHub <span className="glyph">↗</span>
           </a>
-          <ComingSoon compact />
+          <ButtonLink href="/new" variant="primary" compact>
+            Start building
+          </ButtonLink>
         </div>
       </div>
     </nav>

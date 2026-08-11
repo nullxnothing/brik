@@ -8,7 +8,10 @@
 - **Local validator per workspace** — `brik-localnet`, boots in ~2s, funds 1000
   SOL, works with egress off. No faucet anywhere in the flow.
 - **Provider bake-off harness** — `pnpm bakeoff`, Docker baseline measured.
-- **Landing page** — live, app-entry CTAs gated as "Coming soon".
+- **Landing page** — live, and it names the company: the closing band says Brik
+  is a product of Brik Builders LLC, a Colorado software company, at display
+  size above the footer, with an About link in the nav. The "Coming soon"
+  buttons are gone and every CTA points at `/new`.
 - **Real workspace run** — browser to a real `anchor build` and `anchor deploy`
   in a container that did not exist before the request, streamed live. Failure
   and cleanup paths verified (see STATE.md).
@@ -35,6 +38,26 @@
   the two bugs driving it turned up.
 
 ## Next, in dependency order
+
+0. **Open the workspace on the live site.** The landing CTAs point at `/new`
+   now, so the page and the deployment disagree until this lands. Four things,
+   and only the first is a flag:
+   - `BRIK_WORKSPACE_ENABLED=1` in Vercel production, and a rebuild, because
+     the page gate resolves at build time.
+   - `E2B_API_KEY` and `E2B_TEMPLATE=brik-solana-toolchain` in Vercel. Neither
+     is there. Vercel has no Docker daemon, so without both there is no sandbox
+     provider at all.
+   - `maxDuration` on `/api/workspace/run` and `/api/workspace/agent`. A run is
+     39 to 41s on E2B and an agent turn is minutes; the platform default cuts
+     both off. App Router allows up to 1800s.
+   - The lease store below. Without it `getWorkspace` misses across instances,
+     so the agent turn cannot find the workspace the run created, the unload
+     DELETE cannot release it, and the cap does not hold. Every visitor would
+     leave a sandbox running for its full 900s TTL, uncapped, on the E2B
+     account.
+
+   The last one is why this is not a config change. Costs real money the moment
+   it is exposed.
 
 1. **An approval step.** `requiresApproval()` already says write and run need
    one, and nothing asks. The agent writes files and runs commands unsupervised,
@@ -74,8 +97,9 @@ Three, each with the evidence already gathered and none taken:
   the loop is verified and only the wiring is missing (slice 1). "Push to devnet
   when you want a URL to share" is slice 6. "Git is wired in from the first
   commit. Push to your own repo" has nothing behind it at all — GitHub push is
-  in Not started. Pre-launch copy with a "Coming soon" CTA can describe intent,
-  but the git card is the one that reads as a shipped feature.
+  in Not started. The git card is the one that reads as a shipped feature, and
+  it matters more now that the CTAs promise a working app rather than a
+  waiting list.
 - **Swap the validator to Agave 3.0.14** to drop `seccomp=unconfined`
   (STATE.md, verified). Demoted to insurance: E2B runs the 3.1.9 validator
   unmodified, so this only matters if a container-based provider returns, and it

@@ -2,7 +2,7 @@ import { DemoFrame } from "../components/demo-frame";
 import { BrikMark } from "../components/logo";
 import { SiteFooter } from "../components/site-footer";
 import { SiteNav } from "../components/site-nav";
-import { ButtonLink, ComingSoon } from "../components/ui";
+import { ButtonLink } from "../components/ui";
 import { TEMPLATES } from "../lib/templates";
 
 function Hero() {
@@ -18,7 +18,9 @@ function Hero() {
           while you watch. No Rust, Anchor, or Solana setup required.
         </p>
         <div className="mt-9 flex flex-wrap gap-3">
-          <ComingSoon />
+          <ButtonLink href="/new" variant="primary">
+            Start building <span className="glyph">→</span>
+          </ButtonLink>
           <ButtonLink href="https://x.com/brikbuilders" variant="secondary" external>
             Follow on X <span className="glyph">↗</span>
           </ButtonLink>
@@ -181,9 +183,14 @@ function Templates() {
   );
 }
 
-function FinalCta() {
+/** Who makes this. The last full band before the footer, and the only place on
+ *  the site that names the company at display size. */
+function About() {
   return (
-    <section className="relative overflow-hidden border-b border-hairline bg-sunken">
+    <section
+      id="about"
+      className="relative overflow-hidden border-b border-hairline bg-sunken"
+    >
       <div
         className="pointer-events-none absolute inset-0 bg-cover bg-center"
         style={{
@@ -195,15 +202,21 @@ function FinalCta() {
       />
       <div className="shell relative py-28 text-center md:py-36">
         <BrikMark size={40} className="mx-auto text-cream" />
-        <h2 className="font-display mt-8 text-display-md font-semibold">
-          Almost open.
+        <h2 className="font-display mt-8 text-display-md font-semibold text-balance">
+          Brik is a product of Brik Builders LLC.
         </h2>
-        <p className="mx-auto mt-4 max-w-[42ch] text-body-lg text-fg-2">
+        <p className="mx-auto mt-4 max-w-[46ch] text-body-lg text-fg-2">
+          A Colorado software company building browser-native development
+          infrastructure for Solana.
+        </p>
+        <p className="mx-auto mt-6 max-w-[42ch] text-body text-fg-3">
           No signup, no local setup, and a working app about five minutes after
           you start.
         </p>
         <div className="mt-9 flex justify-center">
-          <ComingSoon />
+          <ButtonLink href="/new" variant="primary">
+            Start building <span className="glyph">→</span>
+          </ButtonLink>
         </div>
       </div>
     </section>
@@ -219,7 +232,7 @@ export default function Home() {
         <Capabilities />
         <Workflow />
         <Templates />
-        <FinalCta />
+        <About />
       </main>
       <SiteFooter />
     </>

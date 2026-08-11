@@ -32,14 +32,18 @@ Step timings inside a run:
 | `anchor test --skip-build --skip-deploy` | 0.5s to 4s |
 | Deploy rent | 1.266 SOL |
 
-**The landing page** is live at https://brik.builders with every app-entry CTA
-deliberately disabled as "Coming soon", and since 2026-08-11 the routes behind
-those CTAs are closed as well. Until then `/workspace` was reachable by typing
-the URL and served the old scripted demo: a hardcoded program id and a
-fabricated "Deploy success". `/workspace`, `/new`, and both `/api/workspace`
-routes now answer 404 in production. Verified after the deploy:
-`curl -sL https://www.brik.builders/workspace` returns 404 and that program id
-appears zero times, on the apex and on www.
+**The landing page** is live at https://brik.builders. Until 2026-08-11
+`/workspace` was reachable by typing the URL and served the old scripted demo:
+a hardcoded program id and a fabricated "Deploy success". `/workspace`, `/new`,
+and both `/api/workspace` routes answer 404 in production. Verified after the
+deploy: `curl -sL https://www.brik.builders/workspace` returns 404 and that
+program id appears zero times, on the apex and on www.
+
+**The page's CTAs now point at `/new`**, and the disabled "Coming soon" button
+is gone from the nav, the hero, and the closing band. That is a deliberate
+mismatch with the paragraph above and it is not deployed: on the live site those
+buttons would land on a 404. What it takes to make them true is in TASKS.md
+under the deployment item, and it is more than flipping the flag.
 
 The switch is `isWorkspaceOpen()` in `apps/web/lib/workspace/gate.ts`: open in
 development, closed in production unless `BRIK_WORKSPACE_ENABLED` is `1`, so a
