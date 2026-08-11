@@ -24,12 +24,15 @@
    runs it against a real container with a scripted model: 11 checks, including
    that the file the agent wrote is on disk and the compiler accepted it.
 
-   Two things are left, and the first needs `ANTHROPIC_API_KEY`:
-   - **Prove a live model drives it.** Everything but the model call is
-     verified; the model call itself has never run.
-   - **Wire it to the workspace.** The composer still declines every request.
-     The run emits `RunEvent`s and the loop emits `TaskStep`s, so this is a
-     mapping between two existing shapes plus a route that takes a message.
+   `pnpm verify-agent --live` swaps in a real model: Claude Opus 5 took
+   "add a ping instruction and build it", made the edit, compiled it, and
+   checked the generated IDL to confirm the instruction was dispatchable rather
+   than merely compiling. Seven checks, all passing.
+
+   One thing is left: **wire it to the workspace.** The composer still declines
+   every request. The run emits `RunEvent`s and the loop emits `TaskStep`s, so
+   this is a mapping between two existing shapes plus a route that takes a
+   message.
 
 2. **A lease store.** Leases live in one Node process, so a restart forgets them
    and a serverless deployment gives every request a different one. Forced as

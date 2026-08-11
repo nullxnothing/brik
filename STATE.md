@@ -65,11 +65,28 @@ The image now carries the union: `anchor-lang` with `init-if-needed`,
   calls `anchor keys sync` after writing the template, which is why the source
   shown in the editor is read back from the container afterwards.
 
+## The agent runs, and is not wired up yet
+
+`packages/agent` is a bounded tool-calling loop over four tools that act on the
+sandbox: list, read, write, and run a command. The vendor sits behind a
+`ModelProvider`, so the mechanics can be checked without a key.
+
+- `pnpm verify-agent` runs it against a real container with a **scripted**
+  model. Twelve checks, including that the Rust the agent wrote is on disk in
+  the container, that `anchor` compiled it, and that history never leaves a
+  `tool_result` without its `tool_use`.
+- `pnpm verify-agent --live` swaps in a real model. Claude Opus 5 took "add a
+  ping instruction and build it", made the edit in the existing code's style,
+  built it, and then read the generated IDL to confirm `ping` was dispatchable
+  rather than merely compiling. Six tool calls, seven checks.
+
+**Nothing in the product calls it.** The composer still declines every request,
+which remains honest until the wiring lands.
+
 ## What does not exist
 
-No agent and no LLM call. No auth, database, or persistence. No preview URLs, no
-devnet deploy, no billing, no GitHub import. The composer says so rather than
-implying otherwise.
+No auth, database, or persistence. No preview URLs, no devnet deploy, no
+billing, no GitHub import.
 
 ## How the control plane works
 

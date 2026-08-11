@@ -1,4 +1,7 @@
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 import {
+  AnthropicProvider,
   runAgent,
   type AgentTurnResult,
   type ModelProvider,
@@ -100,12 +103,31 @@ function chooseProvider(): { provider: SandboxProvider; image: string } {
   };
 }
 
+/**
+ * `--live` swaps the scripted model for a real one. The scripted run proves the
+ * mechanics deterministically; the live run proves a model can actually drive
+ * them, which no amount of scripting can.
+ */
+const isLive = process.argv.includes("--live");
+
+function apiKey(): string {
+  if (process.env.ANTHROPIC_API_KEY) return process.env.ANTHROPIC_API_KEY;
+  const repoRoot = new URL("../../../", import.meta.url);
+  const local = readFileSync(
+    fileURLToPath(new URL("apps/web/.env.local", repoRoot)),
+    "utf8",
+  );
+  const found = local.match(/^ANTHROPIC_API_KEY=(.*)$/m)?.[1].trim();
+  if (!found) throw new Error("ANTHROPIC_API_KEY is not set");
+  return found;
+}
+
 const results: string[] = [];
 const check = (name: string, pass: boolean, detail = "") =>
   results.push(`${pass ? "ok  " : "FAIL"} ${name}${detail ? ` (${detail})` : ""}`);
 
 const { provider, image } = chooseProvider();
-console.log(`sandbox: ${provider.name} (${image})\n`);
+console.log(`sandbox: ${provider.name} (${image})  model: ${isLive ? "live" : "scripted"}\n`);
 
 const workspace = await provider.createWorkspace({
   image,
@@ -116,12 +138,18 @@ const workspace = await provider.createWorkspace({
   ttlSeconds: 900,
 });
 
-const model = new ScriptedProvider(SCRIPT);
+const scripted = new ScriptedProvider(SCRIPT);
+const model: ModelProvider = isLive
+  ? new AnthropicProvider(apiKey())
+  : scripted;
 const steps: TaskStep[] = [];
 
 try {
   const task = await runAgent({
-    objective: "Add a ping instruction and build it.",
+    objective: isLive
+      ? "Add an instruction called ping to the program. It should log a message and return Ok. " +
+        "Then build the project and make sure it compiles."
+      : "Add a ping instruction and build it.",
     workspace,
     projectDir: PROJECT_DIR,
     provider: model,
@@ -135,34 +163,44 @@ try {
   console.log();
 
   check("the run succeeded", task.status === "succeeded", task.summary);
-  check("every tool call was dispatched", task.toolCalls === 4, `${task.toolCalls}`);
-  check("the written file is tracked as changed", task.changedFiles.includes(ENTRY));
   check("no step failed", steps.every((s) => s.status !== "failed"));
+  check("the agent edited a file", task.changedFiles.length > 0, task.changedFiles.join(","));
 
   // onStep fires twice per tool, once on start and once on settle, so the
   // last snapshot is the one carrying the outcome.
   const build = steps.filter((s) => s.kind === "exec").at(-1);
-  check("the build actually ran in the sandbox", build?.status === "done", build?.detail);
-  check(
-    "each tool reported running before it settled",
-    steps.filter((s) => s.status === "running").length === 4,
-  );
+  check("a command ran in the sandbox", build?.status === "done", build?.detail);
 
-  // The point of the whole package: the file the agent wrote is on disk in the
-  // container, and the compiler agreed with it.
+  // The point of the whole package: the source the agent wrote is on disk in
+  // the container, and the compiler agreed with it.
   const onDisk = await workspace.readFile(`${PROJECT_DIR}/${ENTRY}`);
-  check("the sandbox holds what the agent wrote", onDisk.includes("written by the agent loop"));
+  check("the sandbox holds what the agent wrote", onDisk.includes("ping"));
 
-  const built = await workspace.exec("ls target/deploy/project.so", { cwd: PROJECT_DIR });
-  check("the program binary exists", built.exitCode === 0);
+  const built = await workspace.exec(
+    "ls -la target/deploy/project.so && anchor build 2>&1 | tail -1",
+    { cwd: PROJECT_DIR, timeoutMs: 10 * 60_000 },
+  );
+  check("the program compiles as left", built.exitCode === 0, built.stdout.trim().split("\n").at(-1));
 
-  // History shape: the API rejects a tool_result with no matching tool_use, so
-  // the loop must push the assistant turn before the results.
-  const last = model.seen.at(-1)!;
-  const roles = last.messages.map((m) => m.role).join(",");
-  check("history alternates user and assistant", /^user(,assistant,user)+$/.test(roles), roles);
-  check("the tools were offered every turn", model.seen.every((r) => r.tools.length === 4));
-  check("the system prompt names the project", last.system.includes(PROJECT_DIR));
+  if (isLive) {
+    check("the model called tools rather than only talking", task.toolCalls > 0, `${task.toolCalls}`);
+    console.log(`\nlive run used ${task.toolCalls} tool calls on ${task.model}`);
+  } else {
+    check("every tool call was dispatched", task.toolCalls === 4, `${task.toolCalls}`);
+    check("the written file is tracked as changed", task.changedFiles.includes(ENTRY));
+    check(
+      "each tool reported running before it settled",
+      steps.filter((s) => s.status === "running").length === 4,
+    );
+
+    // History shape: the API rejects a tool_result with no matching tool_use,
+    // so the loop must push the assistant turn before the results.
+    const last = scripted.seen.at(-1)!;
+    const roles = last.messages.map((m) => m.role).join(",");
+    check("history alternates user and assistant", /^user(,assistant,user)+$/.test(roles), roles);
+    check("the tools were offered every turn", scripted.seen.every((r) => r.tools.length === 4));
+    check("the system prompt names the project", last.system.includes(PROJECT_DIR));
+  }
 } finally {
   await workspace.destroy();
 }
