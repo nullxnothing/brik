@@ -18,12 +18,21 @@
 
 ## Next, in dependency order
 
-1. **A managed sandbox provider.** The blocker for anything being live: the
-   control plane shells out to the docker CLI and Vercel has no Docker daemon.
-   Research points at E2B, whose Firecracker guest kernel is built with
-   `CONFIG_IO_URING=y`, with Fly Machines as runner-up; Railway is out because
-   its seccomp blocks io_uring. E2B's free tier is enough to settle it, but only
-   with a smaller image than the 10.1GB one shipped today.
+1. **Put the toolchain image on E2B, then point the control plane at it.**
+   The provider is decided and `E2BProvider` is verified (STATE.md). Two things
+   remain before `/workspace` can run anywhere but a developer's own Docker:
+
+   - **Publish the image as an E2B template.** Nothing else can happen first: a
+     sandbox can only start from a template that exists on their side. Watch the
+     documented one-hour build cap, and redirect `TMPDIR` to `/var/tmp`, since
+     `/tmp` is RAM-backed at about 3.9GB and the build writes more than that.
+   - **Choose the provider by config** rather than importing `DockerProvider`
+     into the registry. Docker stays the local default; E2B takes over when
+     `E2B_API_KEY` and a template are set.
+
+   Then `pnpm bakeoff` gives the numbers that matter, which the base template
+   cannot: warm `anchor build` on a snapshot-restored sandbox, and whether the
+   pre-built cargo fingerprints survive a snapshot at all.
 
    Two decisions ride along with it, both with evidence already gathered and
    neither taken:
@@ -35,8 +44,10 @@
      is needed to answer the provider question, so both can wait until there is
      a reason.
    - **Swap the validator to Agave 3.0.14** to drop `seccomp=unconfined`
-     (STATE.md, verified). Only needed if the provider is container-based, and
-     it costs feature-set fidelity against devnet.
+     (STATE.md, verified). Now demoted to insurance: E2B runs the 3.1.9
+     validator unmodified, so this is only worth doing if a container-based
+     provider ever comes back into scope, and it costs feature-set fidelity
+     against devnet.
 2. **A lease store.** Forced by (1): leases live in one Node process today, and
    serverless gives every request a different one.
 3. **The agent.** `packages/agent` is types and a comment. This is what makes

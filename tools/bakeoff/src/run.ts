@@ -1,5 +1,9 @@
 import { mkdirSync, writeFileSync } from "node:fs";
-import { DockerProvider, type SandboxProvider } from "@brik/sandbox";
+import {
+  DockerProvider,
+  E2BProvider,
+  type SandboxProvider,
+} from "@brik/sandbox";
 
 /**
  * Sandbox provider bake-off harness (docs/07_pre_build_research_agenda.md §2).
@@ -19,15 +23,33 @@ import { DockerProvider, type SandboxProvider } from "@brik/sandbox";
  * its API key in the environment. Results land in bakeoff-results/.
  */
 
-const IMAGE = process.env.BAKEOFF_IMAGE ?? "brik/solana-toolchain:dev";
+/**
+ * Each provider names its own workspace image: Docker takes a local tag, E2B
+ * takes a template id. They are not interchangeable, so they travel together.
+ */
+interface Candidate {
+  provider: SandboxProvider;
+  image: string;
+}
 
-const PROVIDERS: SandboxProvider[] = [
-  new DockerProvider(),
-  // new E2BProvider(),      // needs E2B_API_KEY
-  // new ModalProvider(),    // needs MODAL_TOKEN_ID/SECRET
-  // new DaytonaProvider(),  // needs DAYTONA_API_KEY
-  // new FlyProvider(),      // needs FLY_API_TOKEN
+const CANDIDATES: Candidate[] = [
+  {
+    provider: new DockerProvider(),
+    image: process.env.BAKEOFF_IMAGE ?? "brik/solana-toolchain:dev",
+  },
 ];
+
+// E2B is the chosen managed provider, but a sandbox can only be built from a
+// template that exists on their side. Until the toolchain image is published as
+// one, E2B_TEMPLATE points at whatever is available: "base" measures start and
+// exec latency honestly and reports the anchor timings as failures, because a
+// stock template has no Anchor in it.
+if (process.env.E2B_API_KEY) {
+  CANDIDATES.push({
+    provider: new E2BProvider(),
+    image: process.env.E2B_TEMPLATE ?? "base",
+  });
+}
 
 interface Result {
   provider: string;
@@ -38,7 +60,7 @@ interface Result {
   error?: string;
 }
 
-async function measure(provider: SandboxProvider): Promise<Result> {
+async function measure({ provider, image }: Candidate): Promise<Result> {
   const result: Result = {
     provider: provider.name,
     coldStartMs: -1,
@@ -49,7 +71,7 @@ async function measure(provider: SandboxProvider): Promise<Result> {
 
   const t0 = Date.now();
   const ws = await provider.createWorkspace({
-    image: IMAGE,
+    image,
     cpu: 4,
     memoryMib: 8192,
     diskMib: 16384,
@@ -93,10 +115,11 @@ async function measure(provider: SandboxProvider): Promise<Result> {
 }
 
 const results: Result[] = [];
-for (const provider of PROVIDERS) {
-  console.log(`\n=== ${provider.name} ===`);
+for (const candidate of CANDIDATES) {
+  const { provider, image } = candidate;
+  console.log(`\n=== ${provider.name} (${image}) ===`);
   try {
-    const r = await measure(provider);
+    const r = await measure(candidate);
     results.push(r);
     console.table([r]);
   } catch (err) {

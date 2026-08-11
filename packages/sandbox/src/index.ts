@@ -4,11 +4,13 @@ export {
   WORKSPACE_LABEL,
   reapExitedWorkspaces,
 } from "./docker.js";
+export { E2BProvider } from "./e2b.js";
 
-// Managed-provider adapters land after the bake-off
-// (docs/07_pre_build_research_agenda.md §2). Candidates:
-//   - E2B
-//   - Modal
-//   - Daytona
-//   - Fly Machines
-// Each becomes a class implementing SandboxProvider in its own module.
+// E2B is the managed provider (docs/07 §2). It was picked on the one thing that
+// eliminates most candidates: a sandbox is a real Firecracker microVM whose own
+// kernel supports io_uring, so the Agave validator runs unmodified and with the
+// host's seccomp profile left alone. Verified with the real binary, not a
+// kernel config; see e2b.ts.
+//
+// Modal is out, gVisor does not implement io_uring. Railway is out, its seccomp
+// blocks it. Fly Machines remain the runner-up on a real guest kernel.

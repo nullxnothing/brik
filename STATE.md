@@ -143,18 +143,34 @@ were turned away with a plain sentence rather than a stack trace.
 - Leases live in the Node process. A server restart forgets them, and the
   containers it forgot survive until their own TTL, then get swept.
 - **The control plane cannot run where the site runs.** It shells out to the
-  docker CLI, and Vercel functions have no Docker daemon. Getting `/workspace`
-  live means a managed-provider adapter behind `SandboxProvider`, which is the
-  next slice and the one that blocks the rest.
-- Provider research (desk research only, no account touched yet): the io_uring
-  requirement **cannot** be dropped. `assert!(io_uring_supported())` is verbatim
-  in `fs/src/dirs.rs` in 3.1.9, 3.1.14, 4.0.0, 4.1.2, 4.2.0, 4.3.0-alpha.3 and
-  master, with no flag; there is no Agave 3.2 or 3.3, the train went 3.1.x to
-  4.x. E2B looks strongest: real Firecracker microVMs whose guest kernel is
-  built with `CONFIG_IO_URING=y`, confirmed from E2B's published kernel config.
-  Fly Machines are the runner-up on a 6.12.x guest kernel. Railway is out, its
-  seccomp blocks io_uring. Neither candidate is proven until a paid account runs
-  this image.
+  docker CLI, and Vercel functions have no Docker daemon. `E2BProvider` now
+  exists behind `SandboxProvider` and is verified, but the control plane still
+  instantiates `DockerProvider` directly, and the toolchain image is not
+  published as an E2B template yet. Those two are what remain.
+- The io_uring requirement **cannot** be dropped from Agave.
+  `assert!(io_uring_supported())` is verbatim in `fs/src/dirs.rs` in 3.1.9,
+  3.1.14, 4.0.0, 4.1.2, 4.2.0, 4.3.0-alpha.3 and master, with no flag; there is
+  no Agave 3.2 or 3.3, the train went 3.1.x to 4.x.
+
+## The provider question is answered
+
+**E2B runs the workspace unmodified**, settled with the real binary rather than
+a kernel config. In a stock E2B sandbox, the Agave 3.1.9
+`solana-test-validator` — the binary that asserts `io_uring_supported()` and
+panics without it — booted in **2 seconds** and answered JSON-RPC. Kernel
+6.1.158+, and `Seccomp: 0` on the process, because a sandbox is a real
+Firecracker microVM whose guest syscalls never meet a host seccomp profile.
+
+That makes the Agave 3.0.14 downgrade above insurance rather than a dependency,
+and retires `seccomp=unconfined` as a production concern: it is a Docker
+baseline problem, not a workspace problem.
+
+`E2BProvider` is written and verified against a real sandbox, all twelve
+Workspace behaviours the product uses: create in **262ms** (Docker is ~400ms),
+exec round trip 127ms, streamed stdout and stderr, cwd, env, non-zero exit
+returned as a result rather than thrown, read, write, list, port forward, and
+destroy. Modal stays out, gVisor has no io_uring. Railway is out, its seccomp
+blocks it. Fly Machines remain the runner-up.
 
 ## Deliberate deviations from DESIGN.md
 
