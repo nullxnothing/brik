@@ -33,8 +33,23 @@ Step timings inside a run:
 | Deploy rent | 1.266 SOL |
 
 **The landing page** is live at https://brik.builders with every app-entry CTA
-deliberately disabled as "Coming soon". That gate is unchanged: `/workspace`
-needs local Docker, so it is not something a visitor can be sent to yet.
+deliberately disabled as "Coming soon", and since 2026-08-11 the routes behind
+those CTAs are closed as well. Until then `/workspace` was reachable by typing
+the URL and served the old scripted demo: a hardcoded program id and a
+fabricated "Deploy success". `/workspace`, `/new`, and both `/api/workspace`
+routes now answer 404 in production. Verified after the deploy:
+`curl -sL https://www.brik.builders/workspace` returns 404 and that program id
+appears zero times, on the apex and on www.
+
+The switch is `isWorkspaceOpen()` in `apps/web/lib/workspace/gate.ts`: open in
+development, closed in production unless `BRIK_WORKSPACE_ENABLED` is `1`, so a
+deployment that loses its environment fails shut. It resolves at two different
+times, which is worth knowing before the route is opened again. The pages carry
+it into the build, because `notFound()` runs before anything dynamic and
+`next build` prerenders both as static 404s; the API routes read it per request.
+Measured against `next start` with the flag set: `DELETE /api/workspace/{id}`
+answered 200 while `/workspace` still answered 404. Opening the pages is a
+rebuild, not a variable.
 
 **The toolchain image** `brik/solana-toolchain:dev` is built and verified:
 Agave 3.1.9, Anchor 0.31.1, Rust 1.85.0, Node 22. **6.11GB extracted**, 8.93GB
@@ -42,6 +57,24 @@ as Docker reports it, down from 7.65GB / 10.1GB. That matters because a sandbox
 provider's disk quota measures the extracted size, and E2B's free tier caps it
 at 10GB, so the image now fits the tier that can answer the provider question
 without a $150/mo commitment.
+
+## What is deployed
+
+`www.brik.builders` serves `dpl_9iMtcnyxdBLRoJDuzDDDZhTUaSRg`, built from
+`8e1a375` on 2026-08-11. The apex 308s to www and resolves to the same
+deployment. Production carries one environment variable,
+`NEXT_PUBLIC_SITE_URL`; `BRIK_WORKSPACE_ENABLED` is absent, which is what closes
+the workspace routes.
+
+Deploying is `vercel deploy --prod` from the repo root, and it has to be the
+repo root. The Vercel project's Root Directory is `apps/web`, set on 2026-08-11,
+because the CLI link used to sit in `apps/web` and a deploy from there uploaded
+that directory alone, where `npm install` cannot resolve
+`"@brik/sandbox": "workspace:*"`. Measured: that deploy failed at install. With
+the root directory set and the link moved to the repo root, pnpm installs all
+eight workspace projects and Next builds `apps/web` in 31s. Setting `framework`
+and `outputDirectory` in a repo-root `vercel.json` instead does not work — the
+Next builder wants the app at the root directory and says so.
 
 ## The constraint that shapes templates
 

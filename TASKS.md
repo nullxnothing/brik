@@ -15,6 +15,12 @@
 - **Real templates** — four Anchor programs with test suites, written into the
   workspace and proven by `pnpm verify-templates`: 12 tests passing across four
   templates, each built, deployed, and tested in 12 to 14 seconds.
+- **The fabricated demo is off the internet** — `/workspace` was publicly
+  reachable and served the old scripted demo, with a hardcoded program id and a
+  fake deploy. `/workspace`, `/new`, and both `/api/workspace` routes now answer
+  404 in production, open only where `BRIK_WORKSPACE_ENABLED` or a development
+  build says otherwise. Deployed and verified against the live domain; the
+  deployment and the Vercel change it needed are in STATE.md.
 
 ## Next, in dependency order
 
@@ -43,7 +49,9 @@
 
 4. **Auth, persistence, and abuse controls.** Per docs/02 the rate limits ship
    in the same release as the anonymous flow, not after. The concurrency cap is
-   a host limit, not a per-visitor quota.
+   a host limit, not a per-visitor quota. The workspace routes stay closed in
+   production until this lands, which is the only thing keeping an anonymous
+   visitor from starting sandboxes on someone else's budget.
 
 ## Worth doing, not blocking
 

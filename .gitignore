@@ -12,3 +12,4 @@ test-ledger/
 bakeoff-results/
 
 .playwright-mcp/
+.vercel/
