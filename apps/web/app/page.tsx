@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { DemoFrame } from "../components/demo-frame";
 import { BrikMark } from "../components/logo";
 import { SiteFooter } from "../components/site-footer";
@@ -5,10 +6,20 @@ import { SiteNav } from "../components/site-nav";
 import { ButtonLink } from "../components/ui";
 import { TEMPLATES } from "../lib/templates";
 
+const SITE_URL = "https://www.brik.builders/";
+export const metadata: Metadata = {
+  alternates: {
+    canonical: SITE_URL,
+  },
+};
+
 function Hero() {
   return (
     <header className="border-b border-hairline">
       <div className="shell pt-20 pb-16 md:pt-28">
+        <p className="meta-label mb-6 text-fg-3">
+          Brik Builders LLC · Solana development infrastructure
+        </p>
         <h1 className="font-display text-display-xl font-semibold">
           From idea to a live Solana app.
           <span className="block text-fg-2">In one tab.</span>

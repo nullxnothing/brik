@@ -24,8 +24,23 @@ const jbMono = JetBrains_Mono({
   display: "swap",
 });
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+const SITE_URL =
+  process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.brik.builders/";
 const OG_DESCRIPTION = "Build anything on Solana, in your browser.";
+const ORGANIZATION_JSON_LD = {
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  "@id": "https://www.brik.builders/#organization",
+  name: "Brik Builders LLC",
+  legalName: "Brik Builders LLC",
+  alternateName: "Brik",
+  url: "https://www.brik.builders/",
+  logo: "https://www.brik.builders/icon-512.png",
+  email: "mailto:dylan@brik.builders",
+  description:
+    "A Colorado software company building browser-native development infrastructure for Solana.",
+  sameAs: ["https://x.com/brikbuilders"],
+};
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
@@ -64,6 +79,9 @@ export const metadata: Metadata = {
     description: OG_DESCRIPTION,
     images: ["/og.png"],
   },
+  other: {
+    "twitter:site": "@brikbuilders",
+  },
 };
 
 export const viewport: Viewport = {
@@ -78,7 +96,18 @@ export default function RootLayout({
       lang="en"
       className={`${fredoka.variable} ${grotesk.variable} ${jbMono.variable}`}
     >
-      <body>{children}</body>
+      <body>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(ORGANIZATION_JSON_LD).replace(
+              /</g,
+              "\\u003c",
+            ),
+          }}
+        />
+        {children}
+      </body>
     </html>
   );
 }
