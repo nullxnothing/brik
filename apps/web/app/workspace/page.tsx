@@ -12,6 +12,9 @@ export function generateMetadata(): Metadata {
     title: "Workspace",
     description:
       "A running Solana workspace: a container with the toolchain, a local validator, and a live build.",
+    // Every task, template, and repo arrives here as a query string, and each
+    // one was being indexed as its own page under the same title.
+    alternates: { canonical: "/workspace" },
   };
 }
 
