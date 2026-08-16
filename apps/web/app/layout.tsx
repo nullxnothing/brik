@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { JetBrains_Mono, Space_Grotesk } from "next/font/google";
 import localFont from "next/font/local";
+import { SITE_URL } from "../lib/site";
 import "./globals.css";
 
 const fredoka = localFont({
@@ -24,8 +25,6 @@ const jbMono = JetBrains_Mono({
   display: "swap",
 });
 
-const SITE_URL =
-  process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.brik.builders/";
 const OG_DESCRIPTION = "Build anything on Solana, in your browser.";
 const ORGANIZATION_JSON_LD = {
   "@context": "https://schema.org",

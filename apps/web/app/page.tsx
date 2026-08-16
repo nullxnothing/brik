@@ -4,12 +4,12 @@ import { BrikMark } from "../components/logo";
 import { SiteFooter } from "../components/site-footer";
 import { SiteNav } from "../components/site-nav";
 import { ButtonLink } from "../components/ui";
+import { SITE_URL } from "../lib/site";
 import { TEMPLATES } from "../lib/templates";
 
-const SITE_URL = "https://www.brik.builders/";
 export const metadata: Metadata = {
   alternates: {
-    canonical: SITE_URL,
+    canonical: `${SITE_URL}/`,
   },
 };
 
