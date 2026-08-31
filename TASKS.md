@@ -22,16 +22,16 @@
   compiler type error, then proves the build at 7.9s. Hover pause, replay, and a reduced-motion final
   state are included; the old four-column explanation is gone. The frame remains readable at large
   desktop widths, continues below the opening viewport, and the full story stacks without horizontal
-  overflow at 390px. Verified locally; deployment pending.
+  overflow at 390px. Deployed from `714679e` on 2026-08-31.
 - **Evidence-driven landing motion** — the workflow now advances through real queued, running,
   failed, retried, verified, and deployed states as it crosses the viewport. A live evidence strip
   replaces the oversized return loop, the page edge carries a restrained run-position meter on large
-  screens, and reduced motion resolves directly to the verified state. Verified locally; not deployed.
+  screens, and reduced motion resolves directly to the verified state. Deployed from `714679e`.
 - **Unified landing frame and controls** — the landing navbar, 55/35 masthead, and workspace share
   one frame with measured 24px, 28px, and 48px vertical relationships. `/new` shares the halftone
   field without the spotlight, start-building arrows are removed, button feedback is bounded, the
   footer credit links to `@brikbuilders`, and `$brik` is present as a dormant lowercase nav tab.
-  Verified locally; not deployed.
+  Deployed from `714679e`.
 - **Real workspace run** — browser to a real `anchor build` and `anchor deploy`
   in a container that did not exist before the request, streamed live. Failure
   and cleanup paths verified (see STATE.md).

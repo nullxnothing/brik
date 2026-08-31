@@ -134,8 +134,7 @@ retain the landing width: environment facts run as one connected Localnet → To
 and the workflow is one full-width return rail instead of a split composition. At 390px the editor,
 agent steps, terminal, deployment state, autonomous run, and workflow stack at readable size with no
 desktop shrink. Verified locally in Chromium at 390×844, 1440×900, and 2048×1152 with no horizontal
-overflow or console errors; typecheck, the Impeccable detector, and the production build pass. This
-change is not deployed.
+overflow or console errors; typecheck, the Impeccable detector, and the production build pass.
 
 The environment section is now an autonomous 7.9s GSAP product demonstration rather than a static
 feature table. It begins with workspace creation, sends one activity signal through Localnet,
@@ -143,7 +142,7 @@ Toolchain, and Agent, resolves the measured versions, exposes `expected u64, fou
 value, retries, and lands on `Build passed`. The completed state holds for four seconds before replay;
 hover pauses, the replay control resets the run, offscreen work pauses, and reduced motion renders the
 completed state immediately. The four explanatory columns were removed. Verified in Chromium at
-1440px and 390px with no horizontal overflow; deployment pending.
+1440px and 390px with no horizontal overflow.
 
 The landing workflow is now a scroll-controlled workspace run instead of a static rail. Write, Test,
 Build, and Deploy each expose queued, running, failed, verified, and completed states as applicable;
@@ -152,7 +151,7 @@ success. The old oversized dashed return path is gone. Large screens also show a
 run meter for page position, while reduced-motion users receive the complete verified state without
 the sequence. Verified at 390×844 and 1440×900 with no horizontal overflow or console errors. The
 Impeccable detector, typecheck, and production build pass. Brik is running locally on port 3001 because
-port 3000 is currently occupied by another local project. This change is not deployed.
+port 3000 is currently occupied by another local project.
 
 The landing masthead, navbar, and workspace now share one 1760px frame. At 1440px they align at
 x=36px; the desktop masthead is exactly 55% copy, 10% gap, and 35% telemetry. The headline starts at
@@ -161,7 +160,14 @@ actions, and workspace. The workflow completes while its full 310px sequence rem
 desktop state labels no longer intersect the rail. `/new` reuses the landing halftone field without
 the spotlight. Start-building arrows were removed, buttons gained bounded hover/press feedback, the
 footer credit now links to `@brikbuilders`, and a dormant lowercase `$brik` nav tab appears at medium
-widths and above. Verified locally; not deployed.
+widths and above.
+
+The landing redesign was deployed to production from source commit `714679e` on 2026-08-31. Vercel
+deployment `dpl_3mkcQgcVHgc5b6S55gkqDq9mVCS2` reached Ready and owns `www.brik.builders`,
+`brik.builders`, and `brik-liard.vercel.app`; its immutable URL is
+`brik-ltkzfu7o4-officialspexx-gmailcoms-projects.vercel.app`. Production Playwright at 1440×900 loaded
+the correct hero, reached `READY · 7.9s`, showed `u64` and `Build passed`, had zero horizontal overflow,
+and emitted no console errors.
 
 Deploying is `vercel deploy --prod` from the repo root, and it has to be the
 repo root. The Vercel project's Root Directory is `apps/web`, set on 2026-08-11,
