@@ -38,7 +38,7 @@ export function StartForm({ initialSource }: { initialSource?: string }) {
   };
 
   return (
-    <div className="space-y-16">
+    <div className="space-y-12 md:space-y-16">
       <section>
         {isImport ? (
           <form onSubmit={startImport}>
@@ -101,7 +101,7 @@ export function StartForm({ initialSource }: { initialSource?: string }) {
             />
             <div className="mt-4 flex flex-wrap items-center gap-3">
               <button type="submit" className="btn btn-primary" disabled={!idea.trim()}>
-                Start building <span className="glyph">→</span>
+                Start building
               </button>
               <span className="meta-label text-fg-3">
                 <span className="glyph">⌘</span>
@@ -110,7 +110,7 @@ export function StartForm({ initialSource }: { initialSource?: string }) {
               <button
                 type="button"
                 onClick={() => setIsImport(true)}
-                className="btn btn-ghost ml-auto px-0"
+                className="btn btn-ghost w-full justify-start px-0 sm:ml-auto sm:w-auto"
               >
                 Import from GitHub
               </button>
@@ -121,7 +121,7 @@ export function StartForm({ initialSource }: { initialSource?: string }) {
                   key={suggestion}
                   type="button"
                   onClick={() => setIdea(suggestion)}
-                  className="btn btn-secondary btn-compact text-fg-2"
+                  className="btn btn-secondary btn-compact h-auto min-h-8 w-full justify-start whitespace-normal py-1.5 text-left leading-5 text-fg-2 sm:w-auto"
                 >
                   {suggestion}
                 </button>
@@ -138,7 +138,7 @@ export function StartForm({ initialSource }: { initialSource?: string }) {
             <a
               key={template.slug}
               href={`/workspace?template=${template.slug}`}
-              className="group flex items-start gap-4 p-6 transition-colors duration-150 hover:bg-selected"
+              className="group flex items-start gap-4 p-5 transition-colors duration-150 hover:bg-selected sm:p-6"
             >
               <span className="min-w-0">
                 <span className="block text-body font-medium">{template.name}</span>
@@ -157,7 +157,7 @@ export function StartForm({ initialSource }: { initialSource?: string }) {
         </div>
       </section>
 
-      <section className="flex flex-wrap items-center justify-between gap-4 border-t border-hairline pt-8">
+      <section className="flex flex-wrap items-center justify-between gap-4 border-t border-hairline pt-6 md:pt-8">
         <p className="text-body text-fg-2">
           Prefer to start from nothing? An empty workspace has the same toolchain.
         </p>

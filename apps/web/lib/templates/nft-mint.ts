@@ -11,6 +11,7 @@ export const NFT_MINT: Template = {
   name: "NFT mint",
   tagline: "Mint from a capped collection, with Metaplex metadata and a master edition.",
   stack: "ANCHOR · METAPLEX",
+  verified: { seconds: 12.0, tests: 2 },
   task: "Build an NFT mint for a 1,000 piece collection",
 
   program: `use anchor_lang::prelude::*;

@@ -31,9 +31,9 @@
   --brik-hairline: #1f1f1f;
 
   /* Text */
-  --brik-fg: #f1f0eb;
-  --brik-fg-2: #929292;
-  --brik-fg-3: #7e7d78;
+  --brik-fg: #f4f3ee;
+  --brik-fg-2: #adaca6;
+  --brik-fg-3: #8b8a84;
   --brik-fg-off: #5c5c58;
 
   /* Motion */
@@ -67,7 +67,7 @@
   --brik-err: #b3362c;
 }
 
-@media (max-width: 720px) {
+@media (max-width: 767px) {
   :root {
     --brik-gutter: 24px;
   }
@@ -99,25 +99,28 @@
   --color-transparent: transparent;
   --color-current: currentColor;
 
-  --font-display: var(--font-fredoka), "Fredoka", ui-rounded, system-ui, sans-serif;
-  --font-sans: var(--font-grotesk), "Space Grotesk", system-ui, sans-serif;
+  --font-display: var(--font-grotesk), "Space Grotesk", system-ui, sans-serif;
+  --font-sans: var(--font-text), "Inter Tight", system-ui, sans-serif;
   --font-mono: var(--font-jbmono), "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
 
-  --text-display-xl: clamp(40px, 5.2vw, 60px);
-  --text-display-xl--line-height: 1.06;
-  --text-display-xl--letter-spacing: -0.02em;
-  --text-display-lg: 56px;
-  --text-display-lg--line-height: 1.03;
-  --text-display-lg--letter-spacing: -0.02em;
-  --text-display-md: 34px;
-  --text-display-md--line-height: 1.1;
-  --text-display-md--letter-spacing: -0.015em;
-  --text-heading: 24px;
-  --text-heading--line-height: 1.25;
-  --text-body-lg: 19px;
-  --text-body-lg--line-height: 1.55;
-  --text-body: 14px;
-  --text-body--line-height: 1.5;
+  --text-display-xl: clamp(38px, 4.4vw, 52px);
+  --text-display-xl--line-height: 1.08;
+  --text-display-xl--letter-spacing: -0.032em;
+  --text-display-lg: 44px;
+  --text-display-lg--line-height: 1.08;
+  --text-display-lg--letter-spacing: -0.03em;
+  --text-display-md: 29px;
+  --text-display-md--line-height: 1.18;
+  --text-display-md--letter-spacing: -0.025em;
+  --text-heading: 21px;
+  --text-heading--line-height: 1.3;
+  --text-heading--letter-spacing: -0.018em;
+  --text-body-lg: 17px;
+  --text-body-lg--line-height: 1.6;
+  --text-body-lg--letter-spacing: -0.008em;
+  --text-body: 15px;
+  --text-body--line-height: 1.6;
+  --text-body--letter-spacing: -0.005em;
   --text-code: 13px;
   --text-code--line-height: 1.7;
   --text-code-sm: 12px;
@@ -126,11 +129,11 @@
   --text-meta--line-height: 1.4;
   --text-meta--letter-spacing: 0.12em;
 
-  --radius-control: 6px;
-  --radius-button: 8px;
-  --radius-panel: 10px;
-  --radius-card: 12px;
-  --radius-brand: 16px;
+  --radius-control: 4px;
+  --radius-button: 6px;
+  --radius-panel: 8px;
+  --radius-card: 10px;
+  --radius-brand: 14px;
 
   --ease-brik: var(--brik-ease);
   --container-shell: 1240px;
@@ -178,6 +181,7 @@
     font-family: var(--font-sans);
     font-size: 14px;
     line-height: 1.5;
+    overflow-x: clip;
     -webkit-font-smoothing: antialiased;
   }
 
@@ -214,6 +218,8 @@
 
   /* Buttons — components.md. One primary per view. No uppercase, no pills. */
   .btn {
+    position: relative;
+    isolation: isolate;
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -224,9 +230,45 @@
     font-family: var(--font-sans);
     font-size: 14px;
     white-space: nowrap;
+    overflow: clip;
     cursor: pointer;
-    transition: background var(--brik-fast, 150ms) ease-out, color 150ms ease-out,
-      border-color 150ms ease-out;
+    transform: translateY(0) scale(1);
+    transition:
+      background 180ms ease-out,
+      color 150ms ease-out,
+      border-color 150ms ease-out,
+      box-shadow 220ms var(--brik-ease),
+      transform 180ms var(--brik-ease);
+  }
+
+  .btn::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background: rgba(245, 239, 224, 0.055);
+    transform: translateX(-102%);
+    transition: transform 240ms var(--brik-ease);
+  }
+
+  .btn-primary::before {
+    background: rgba(5, 5, 5, 0.055);
+  }
+
+  @media (hover: hover) {
+    .btn:not(:disabled):hover {
+      transform: translateY(-1px);
+    }
+
+    .btn:not(:disabled):hover::before {
+      transform: translateX(0);
+    }
+  }
+
+  .btn:not(:disabled):active {
+    transform: translateY(0) scale(0.985);
+    transition-duration: 80ms;
   }
 
   .btn-compact {
@@ -243,6 +285,7 @@
 
   .btn-primary:hover {
     background: #ede5d1;
+    box-shadow: 0 10px 24px rgba(245, 239, 224, 0.08);
   }
 
   .btn-secondary {
@@ -269,6 +312,24 @@
     color: var(--brik-fg-off);
     border: none;
     cursor: default;
+    transform: none;
+  }
+
+  @media (pointer: coarse) {
+    .btn {
+      min-height: 44px;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .btn:not(:disabled):hover,
+    .btn:not(:disabled):active {
+      transform: none;
+    }
+
+    .btn::before {
+      display: none;
+    }
   }
 
   .glyph {
@@ -331,5 +392,1139 @@
 
   html {
     scroll-behavior: auto;
+  }
+}
+
+/* ---- Halftone field ---------------------------------------------------- */
+
+/* The dot field is texture on the page ground. It never takes the pointer and
+   never sits above content; the accent is the brand cream unless a band
+   overrides it. */
+:root {
+  --brik-field-accent: 245, 239, 224;
+}
+
+.brik-field {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.brik-field canvas {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+  image-rendering: pixelated;
+}
+
+/* The page ground. Fixed, so it is one continuous field the content scrolls
+   over rather than a texture that restarts per section. */
+.brik-field-page {
+  position: fixed;
+  z-index: 0;
+  mask-image: radial-gradient(ellipse 86% 76% at 50% 46%, #000, transparent 96%);
+}
+
+/* The beam. Top centre, over the ground and under every band of content, and
+   only as tall as the opening screen so it reads as light entering the page. */
+.brik-rays {
+  position: absolute;
+  inset: 0 0 auto 0;
+  z-index: 0;
+  height: 105vh;
+  pointer-events: none;
+  opacity: 0.72;
+  mask-image: linear-gradient(180deg, #000 0%, rgba(0, 0, 0, 0.55) 52%, transparent 88%);
+}
+
+@media (max-width: 720px) {
+  .brik-rays {
+    opacity: 0.38;
+  }
+}
+
+/* ---- One reveal for the whole page ------------------------------------ */
+
+.brik-reveal {
+  transition:
+    opacity 520ms var(--brik-ease),
+    transform 520ms var(--brik-ease);
+}
+
+/* Hidden only once the client has armed it, so a reveal that never fires
+   leaves its content on screen. */
+.brik-reveal[data-armed="true"][data-shown="false"] {
+  opacity: 0;
+  transform: translateY(10px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .brik-reveal,
+  .brik-reveal[data-armed="true"][data-shown="false"] {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+}
+
+/* ---- Section rhythm ---------------------------------------------------- */
+
+/* ---- Product-led hero ------------------------------------------------- */
+
+.brik-hero {
+  --hero-field-shift: 0px;
+  --hero-glow-shift: 0px;
+  --hero-product-shift: 0px;
+  position: relative;
+  isolation: isolate;
+  overflow: clip;
+  min-height: calc(100svh - 56px);
+}
+
+.brik-landing-frame {
+  width: min(100%, 1760px);
+  margin-inline: auto;
+  padding-inline: clamp(24px, 2.5vw, 48px);
+}
+
+.brik-hero-shell {
+  position: relative;
+  z-index: 2;
+  padding-top: 40px;
+  padding-bottom: 32px;
+}
+
+.brik-hero-intro {
+  display: grid;
+  gap: 36px;
+}
+
+.brik-hero-copy {
+  width: 100%;
+}
+
+.brik-hero-telemetry {
+  min-width: 0;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--brik-hairline);
+}
+
+.brik-hero-readings {
+  display: grid;
+  gap: 18px;
+  margin-top: 18px;
+}
+
+.brik-hero-readings > div {
+  min-width: 0;
+}
+
+.brik-hero-stages {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid var(--brik-hairline);
+}
+
+.brik-hero-stages li {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 7px;
+  color: var(--brik-fg-3);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.brik-hero-product-reveal {
+  margin-top: 48px;
+}
+
+.brik-hero-product {
+  position: relative;
+  width: 100%;
+  transform: translate3d(0, var(--hero-product-shift), 0);
+  filter: drop-shadow(0 24px 34px rgba(0, 0, 0, 0.48));
+  will-change: transform;
+}
+
+.brik-hero-product::before {
+  content: "";
+  position: absolute;
+  right: 8%;
+  bottom: -24px;
+  left: 8%;
+  z-index: -1;
+  height: 96px;
+  border-radius: 50%;
+  background: radial-gradient(ellipse, rgba(111, 169, 122, 0.18), transparent 70%);
+  filter: blur(20px);
+  opacity: 0.72;
+  transform: translate3d(0, var(--hero-glow-shift), 0);
+}
+
+.brik-hero-product .brik-chassis {
+  box-shadow:
+    0 0 0 1px var(--brik-chassis-edge),
+    0 2px 0 #050505,
+    0 24px 56px rgba(0, 0, 0, 0.56),
+    0 14px 44px rgba(111, 169, 122, 0.045);
+}
+
+.brik-demo-work {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.brik-demo-work > * {
+  min-width: 0;
+}
+
+@media (min-width: 768px) {
+  .brik-demo-work {
+    grid-template-columns: 168px 3px minmax(0, 1fr) 3px 246px;
+  }
+
+  .brik-hero-readings {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1024px) {
+  .brik-hero-intro {
+    grid-template-columns: minmax(0, 11fr) minmax(0, 7fr);
+    align-items: start;
+    gap: 10%;
+  }
+}
+
+.brik-hero-field,
+.brik-hero-glow {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.brik-hero-field {
+  z-index: 0;
+  background:
+    linear-gradient(90deg, rgba(245, 239, 224, 0.025), transparent 18%, transparent 82%, rgba(245, 239, 224, 0.025)),
+    linear-gradient(180deg, transparent 56%, rgba(245, 239, 224, 0.018));
+  transform: translate3d(0, var(--hero-field-shift), 0);
+}
+
+.brik-hero-glow {
+  z-index: 1;
+  background:
+    radial-gradient(ellipse 62% 40% at 52% 70%, rgba(111, 169, 122, 0.075), transparent 68%),
+    radial-gradient(ellipse 70% 68% at 50% 48%, rgba(245, 239, 224, 0.065), transparent 72%),
+    radial-gradient(ellipse 100% 90% at 50% 46%, transparent 54%, rgba(5, 5, 5, 0.7) 100%);
+  transform: translate3d(0, var(--hero-glow-shift), 0);
+}
+
+.brik-hero-axis {
+  position: absolute;
+  z-index: 1;
+  pointer-events: none;
+  background: linear-gradient(90deg, transparent, rgba(245, 239, 224, 0.07), transparent);
+}
+
+.brik-hero-axis-x {
+  top: 58%;
+  right: 3vw;
+  left: 3vw;
+  height: 1px;
+}
+
+.brik-hero-axis-y {
+  top: 22%;
+  bottom: 5%;
+  left: 50%;
+  width: 1px;
+  background: linear-gradient(180deg, transparent, rgba(245, 239, 224, 0.05), transparent);
+}
+
+@media (min-width: 1280px) {
+  .brik-hero-product .brik-demo-work {
+    min-height: 390px;
+  }
+}
+
+@media (max-width: 767px) {
+  .brik-hero-shell {
+    padding-top: 44px;
+    padding-bottom: 28px;
+  }
+
+  .brik-hero-product-reveal {
+    margin-top: 40px;
+  }
+
+  .brik-hero-product {
+    filter: drop-shadow(0 18px 24px rgba(0, 0, 0, 0.42));
+  }
+
+  .brik-hero-axis-y {
+    display: none;
+  }
+
+  .brik-hero-readings {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .brik-hero-stages {
+    gap: 8px;
+  }
+
+  .brik-hero-stages li {
+    gap: 5px;
+    font-size: 9px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .brik-hero-product,
+  .brik-hero-field,
+  .brik-hero-glow,
+  .brik-hero-product::before {
+    transform: none;
+    will-change: auto;
+  }
+}
+
+/* One vertical measure for every band, so the page keeps a beat as it scrolls
+   without needing a rule between sections to mark where one ends. */
+.band {
+  padding-block: 48px;
+}
+
+@media (min-width: 768px) {
+  .band {
+    padding-block: 64px;
+  }
+}
+
+/* The page opens and closes wider than it runs. */
+.band-open {
+  padding-block: 56px 32px;
+}
+
+@media (min-width: 768px) {
+  .band-open {
+    padding-block: 72px 40px;
+  }
+}
+
+/* The proof and workflow keep the hero's breadth. Copy stays narrow inside
+   the wide measure, while evidence gets the room it needs to remain legible. */
+.brik-landing-wide {
+  width: min(100%, 1680px);
+  margin-inline: auto;
+  padding-inline: clamp(24px, 3vw, 56px);
+}
+
+.brik-proof-band {
+  padding-block: 64px;
+}
+
+.brik-workflow-band {
+  padding-block: 72px;
+}
+
+.brik-section-head {
+  display: grid;
+  gap: 18px 48px;
+}
+
+.brik-boot {
+  --brik-activity: #78a9cf;
+  --brik-activity-tint: rgba(120, 169, 207, 0.12);
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--brik-line);
+  border-radius: var(--radius-card);
+  background: var(--brik-surface-alt);
+  box-shadow: 0 18px 52px rgba(0, 0, 0, 0.16);
+}
+
+.brik-boot-pulse {
+  position: absolute;
+  inset: 0 auto 0 0;
+  z-index: 0;
+  width: 34%;
+  pointer-events: none;
+  background: linear-gradient(90deg, transparent, rgba(120, 169, 207, 0.2), transparent);
+  will-change: transform, opacity;
+}
+
+.brik-boot-header {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px 24px;
+  padding: 10px clamp(18px, 2vw, 28px);
+  border-bottom: 1px solid var(--brik-line);
+  color: var(--brik-fg-3);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.brik-boot-header-actions,
+.brik-boot-status {
+  display: flex;
+  align-items: center;
+}
+
+.brik-boot-header-actions {
+  gap: 18px;
+}
+
+.brik-boot-status {
+  gap: 8px;
+  transition: color 160ms linear;
+}
+
+.brik-boot-status > i,
+.brik-boot-route > i {
+  display: block;
+  width: 6px;
+  height: 6px;
+  border-radius: 2px;
+  background: var(--brik-fg-off);
+  transition: background 160ms linear, box-shadow 220ms var(--brik-ease);
+}
+
+.brik-boot-status[data-tone="active"] {
+  color: var(--brik-activity);
+}
+
+.brik-boot-status[data-tone="active"] > i,
+.brik-boot-route > i[data-state="active"] {
+  background: var(--brik-activity);
+}
+
+.brik-boot-status[data-tone="error"] {
+  color: var(--brik-err);
+}
+
+.brik-boot-status[data-tone="error"] > i {
+  background: var(--brik-err);
+}
+
+.brik-boot-status[data-tone="ready"] {
+  color: var(--brik-ok);
+}
+
+.brik-boot-status[data-tone="ready"] > i,
+.brik-boot-route > i[data-state="ready"] {
+  background: var(--brik-ok);
+}
+
+.brik-boot-status[data-tone="ready"] > i {
+  box-shadow: 0 0 14px rgba(111, 169, 122, 0.36);
+}
+
+.brik-boot-replay {
+  height: 30px;
+  padding-inline: 10px;
+  border: 1px solid var(--brik-line);
+  border-radius: var(--radius-control);
+  color: var(--brik-fg-3);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  text-transform: none;
+  transition: border-color 150ms linear, color 150ms linear, background 150ms linear;
+}
+
+.brik-boot-replay:hover {
+  border-color: var(--brik-fg-3);
+  background: var(--brik-selected);
+  color: var(--brik-fg);
+}
+
+.brik-boot-route {
+  display: grid;
+  grid-template-columns: 6px minmax(0, 1fr) 6px minmax(0, 1fr) 6px;
+  align-items: center;
+  gap: 10px;
+  padding: 18px clamp(28px, 3vw, 46px) 0;
+}
+
+.brik-boot-route > span {
+  height: 1px;
+  overflow: hidden;
+  background: var(--brik-line);
+}
+
+.brik-boot-route > span > b {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: var(--brik-activity);
+  transform: scaleX(0);
+  transform-origin: left;
+  will-change: transform;
+}
+
+.brik-boot[data-ready="true"] .brik-boot-route > span > b {
+  background: var(--brik-ok);
+}
+
+.brik-boot-grid {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  padding-block: 20px 26px;
+}
+
+.brik-boot-stage {
+  min-width: 0;
+  padding: 20px clamp(24px, 3vw, 44px);
+}
+
+.brik-boot-stage + .brik-boot-stage {
+  border-top: 1px solid var(--brik-hairline);
+}
+
+.brik-boot-stage h3 {
+  color: var(--brik-fg-3);
+  transition: color 160ms linear;
+}
+
+.brik-boot-stage[data-state="active"] h3 {
+  color: var(--brik-activity);
+}
+
+.brik-boot-stage[data-state="ready"] h3 {
+  color: var(--brik-ok);
+}
+
+.brik-boot-stage dl {
+  display: grid;
+  gap: 11px;
+  margin-top: 18px;
+}
+
+.brik-boot-stage dl > div {
+  display: grid;
+  grid-template-columns: minmax(72px, 0.72fr) minmax(0, 1.5fr);
+  gap: 16px;
+  align-items: baseline;
+}
+
+.brik-boot-stage dt,
+.brik-boot-stage dd {
+  min-width: 0;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 1.65;
+}
+
+.brik-boot-stage dt {
+  color: var(--brik-fg-3);
+}
+
+.brik-boot-stage dd {
+  overflow-wrap: anywhere;
+  color: var(--brik-fg);
+  text-align: right;
+}
+
+.brik-boot-terminal > i {
+  display: inline-block;
+  width: 5px;
+  height: 1em;
+  margin-left: 3px;
+  vertical-align: -0.12em;
+  background: var(--brik-activity);
+  animation: brik-boot-cursor 0.82s step-end infinite;
+}
+
+@keyframes brik-boot-cursor {
+  0%,
+  45% {
+    opacity: 1;
+  }
+  46%,
+  100% {
+    opacity: 0;
+  }
+}
+
+.brik-boot-code-row mark {
+  display: inline-block;
+  padding-inline: 4px;
+  border-radius: 2px;
+  background: transparent;
+  color: var(--brik-fg-2);
+  font: inherit;
+  transition: color 160ms linear, background 160ms linear;
+  will-change: transform, opacity;
+}
+
+.brik-boot-code-row mark[data-state="error"] {
+  background: var(--brik-err-tint);
+  color: var(--brik-err);
+}
+
+.brik-boot-code-row mark[data-state="fixed"] {
+  background: var(--brik-activity-tint);
+  color: var(--brik-activity);
+}
+
+.brik-boot-result-row dd {
+  display: grid;
+  min-height: 1.65em;
+}
+
+.brik-boot-result-row dd > span {
+  grid-area: 1 / 1;
+  will-change: transform, opacity;
+}
+
+.brik-boot-result-row [data-error] {
+  color: var(--brik-err);
+}
+
+.brik-boot[data-ready="true"] [data-result],
+.brik-boot[data-ready="true"] [data-type-value] {
+  color: var(--brik-ok);
+}
+
+@media (min-width: 768px) {
+  .brik-proof-band {
+    padding-block: 80px;
+  }
+
+  .brik-workflow-band {
+    padding-block: 96px;
+  }
+
+  .brik-section-head {
+    grid-template-columns: minmax(0, 1fr) minmax(340px, 0.72fr);
+    align-items: end;
+    gap: clamp(48px, 7vw, 128px);
+  }
+
+  .brik-boot-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .brik-boot-stage {
+    padding-top: 12px;
+    padding-bottom: 12px;
+  }
+
+  .brik-boot-stage + .brik-boot-stage {
+    border-top: 0;
+    border-left: 1px solid var(--brik-hairline);
+  }
+}
+
+@media (max-width: 767px) {
+  .brik-boot-header-actions {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .brik-boot-route {
+    padding-inline: 24px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .brik-boot-terminal > i,
+  .brik-boot-pulse {
+    display: none;
+  }
+}
+
+/* ---- Navigation -------------------------------------------------------- */
+
+.brik-nav {
+  background: color-mix(in srgb, var(--brik-bg) 82%, transparent);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid transparent;
+  transition: border-color 200ms var(--brik-ease), background 200ms var(--brik-ease);
+}
+
+.brik-nav[data-lifted="true"] {
+  border-bottom-color: var(--brik-hairline);
+  background: color-mix(in srgb, var(--brik-bg) 92%, transparent);
+}
+
+/* The tick, not a colour swap: the current section is marked by a mark. */
+.brik-nav-link {
+  position: relative;
+  border-radius: var(--radius-control);
+  transition: color 150ms var(--brik-ease);
+}
+
+.brik-nav-link:hover {
+  color: var(--brik-fg);
+}
+
+.brik-nav-link::after {
+  content: "";
+  position: absolute;
+  bottom: 2px;
+  left: 50%;
+  width: 3px;
+  height: 3px;
+  border-radius: 1px;
+  background: var(--brik-cream);
+  opacity: 0;
+  transform: translate(-50%, 3px);
+  transition: opacity 180ms var(--brik-ease), transform 180ms var(--brik-ease);
+}
+
+.brik-nav-link[aria-current="true"] {
+  color: var(--brik-fg);
+}
+
+.brik-nav-link[aria-current="true"]::after {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
+/* ---- The agent evidence sequence --------------------------------------- */
+
+.brik-sequence {
+  border-block: 1px solid var(--brik-line);
+}
+
+.brik-sequence-header,
+.brik-sequence-evidence {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 24px;
+  padding-block: 11px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.brik-sequence-header {
+  border-bottom: 1px solid var(--brik-line);
+  color: var(--brik-fg-3);
+}
+
+.brik-sequence-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--brik-fg-3);
+  transition: color 180ms var(--brik-ease);
+}
+
+.brik-sequence-status > span {
+  width: 6px;
+  height: 6px;
+  border-radius: 2px;
+  background: currentColor;
+  box-shadow: 0 0 0 rgba(0, 0, 0, 0);
+  transition: background 180ms linear, box-shadow 240ms var(--brik-ease);
+}
+
+.brik-sequence-status[data-tone="active"] {
+  color: var(--brik-cream);
+}
+
+.brik-sequence-status[data-tone="error"] {
+  color: var(--brik-err);
+}
+
+.brik-sequence-status[data-tone="ok"] {
+  color: var(--brik-ok);
+}
+
+.brik-sequence-status[data-tone="ok"] > span {
+  box-shadow: 0 0 16px rgba(111, 169, 122, 0.42);
+}
+
+.brik-sequence-rail {
+  display: grid;
+  padding-block: clamp(26px, 2.4vw, 34px);
+}
+
+.brik-sequence-step {
+  position: relative;
+  min-width: 0;
+  padding: 0 0 34px 44px;
+}
+
+.brik-sequence-step:last-child {
+  padding-bottom: 0;
+}
+
+.brik-sequence-step:not(:last-child)::before,
+.brik-sequence-step:not(:last-child)::after {
+  content: "";
+  position: absolute;
+  top: 27px;
+  bottom: -13px;
+  left: 13px;
+  width: 1px;
+  transform-origin: top;
+}
+
+.brik-sequence-step:not(:last-child)::before {
+  background: var(--brik-line);
+}
+
+.brik-sequence-step:not(:last-child)::after {
+  background: var(--brik-ok);
+  transform: scaleY(0);
+  transition: transform 420ms var(--brik-ease), background 180ms linear;
+}
+
+.brik-sequence-step[data-state="complete"]:not(:last-child)::after {
+  transform: scaleY(1);
+}
+
+.brik-sequence[data-phase="retry"] .brik-sequence-step:first-child::after {
+  background: var(--brik-err);
+  transform: scaleY(1);
+  transform-origin: bottom;
+}
+
+.brik-sequence-node-row {
+  display: flex;
+  min-height: 27px;
+  align-items: center;
+  gap: 10px;
+}
+
+.brik-sequence-node {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: grid;
+  width: 27px;
+  height: 27px;
+  place-items: center;
+  border: 1px solid var(--brik-line);
+  border-radius: var(--radius-control);
+  background: var(--brik-control);
+  color: var(--brik-fg-off);
+  transition:
+    color 180ms linear,
+    border-color 180ms linear,
+    background 220ms var(--brik-ease),
+    box-shadow 240ms var(--brik-ease),
+    transform 240ms var(--brik-ease);
+}
+
+.brik-sequence-step-state {
+  color: var(--brik-fg-off);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  transition: color 180ms linear;
+}
+
+.brik-sequence-step h3 {
+  margin-top: 18px;
+}
+
+.brik-sequence-step p {
+  max-width: 32ch;
+  margin-top: 9px;
+}
+
+.brik-sequence-step[data-state="active"] .brik-sequence-node {
+  border-color: var(--brik-cream);
+  background: var(--brik-cream);
+  color: var(--brik-black);
+  box-shadow: 0 10px 26px rgba(245, 239, 224, 0.09);
+  transform: translateY(-2px);
+}
+
+.brik-sequence-step[data-state="active"] .brik-sequence-step-state {
+  color: var(--brik-cream);
+}
+
+.brik-sequence-step[data-state="complete"] .brik-sequence-node {
+  border-color: color-mix(in srgb, var(--brik-ok) 62%, var(--brik-line));
+  background: var(--brik-ok-tint);
+  color: var(--brik-ok);
+}
+
+.brik-sequence-step[data-state="complete"] .brik-sequence-step-state {
+  color: var(--brik-ok);
+}
+
+.brik-sequence-step[data-state="error"] .brik-sequence-node {
+  border-color: color-mix(in srgb, var(--brik-err) 66%, var(--brik-line));
+  background: var(--brik-err-tint);
+  color: var(--brik-err);
+}
+
+.brik-sequence-step[data-state="error"] .brik-sequence-step-state {
+  color: var(--brik-err);
+}
+
+.brik-sequence-evidence {
+  justify-content: flex-start;
+  border-top: 1px solid var(--brik-line);
+  text-transform: none;
+}
+
+.brik-sequence-evidence code {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  color: var(--brik-fg-2);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0;
+  transition: color 180ms linear;
+}
+
+.brik-sequence-evidence[data-tone="error"] code {
+  color: var(--brik-err);
+}
+
+.brik-sequence-evidence[data-tone="ok"] code {
+  color: var(--brik-ok);
+}
+
+@media (min-width: 1024px) {
+  .brik-sequence-rail {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .brik-sequence-step {
+    padding: 0 clamp(28px, 3vw, 52px) 0 0;
+  }
+
+  .brik-sequence-step:not(:last-child)::before,
+  .brik-sequence-step:not(:last-child)::after {
+    top: 13px;
+    right: -13px;
+    bottom: auto;
+    left: 27px;
+    width: auto;
+    height: 1px;
+    transform-origin: left;
+  }
+
+  .brik-sequence-step:not(:last-child)::after {
+    transform: scaleX(0);
+  }
+
+  .brik-sequence-step[data-state="complete"]:not(:last-child)::after {
+    transform: scaleX(1);
+  }
+
+  .brik-sequence[data-phase="retry"] .brik-sequence-step:first-child::after {
+    transform: scaleX(1);
+    transform-origin: right;
+  }
+
+  .brik-sequence-node {
+    position: relative;
+    flex: 0 0 auto;
+  }
+
+  .brik-sequence-step-state {
+    display: none;
+  }
+}
+
+/* Page position is shown as a measured run, not a decorative scrollbar. */
+.brik-scroll-meter {
+  display: none;
+}
+
+@media (min-width: 1280px) {
+  .brik-scroll-meter {
+    position: fixed;
+    top: 50%;
+    right: clamp(12px, 1.2vw, 22px);
+    z-index: 4;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 9px;
+    color: var(--brik-fg-off);
+    transform: translateY(-50%);
+  }
+
+  .brik-scroll-meter-label {
+    font-family: var(--font-mono);
+    font-size: 8px;
+    letter-spacing: 0.14em;
+  }
+
+  .brik-scroll-meter-track {
+    position: relative;
+    width: 7px;
+    height: 88px;
+  }
+
+  .brik-scroll-meter-track::before,
+  .brik-scroll-meter-fill {
+    content: "";
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 3px;
+    width: 1px;
+  }
+
+  .brik-scroll-meter-track::before {
+    background: var(--brik-line);
+  }
+
+  .brik-scroll-meter-fill {
+    background: var(--brik-cream);
+    transform: scaleY(0);
+    transform-origin: top;
+    transition: transform 80ms linear;
+  }
+
+  .brik-scroll-meter-ticks {
+    position: absolute;
+    inset: -2px 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+
+  .brik-scroll-meter-ticks i {
+    display: block;
+    width: 7px;
+    height: 4px;
+    border: 1px solid var(--brik-line-strong);
+    border-radius: 1px;
+    background: var(--brik-bg);
+    transition: border-color 160ms linear, background 160ms linear;
+  }
+
+  .brik-scroll-meter[data-chapter="0"] .brik-scroll-meter-ticks i:nth-child(1),
+  .brik-scroll-meter[data-chapter="1"] .brik-scroll-meter-ticks i:nth-child(2),
+  .brik-scroll-meter[data-chapter="2"] .brik-scroll-meter-ticks i:nth-child(3),
+  .brik-scroll-meter[data-chapter="3"] .brik-scroll-meter-ticks i:nth-child(4),
+  .brik-scroll-meter[data-chapter="4"] .brik-scroll-meter-ticks i:nth-child(5) {
+    border-color: var(--brik-cream);
+    background: var(--brik-cream);
+  }
+}
+
+/* ---- Verification table ------------------------------------------------ */
+
+/* One grid for the head and every row, so the columns cannot drift. The last
+   track holds the affordance, which only appears on hover or focus. */
+.brik-row {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 6px 24px;
+  padding-block: 18px;
+  align-items: baseline;
+}
+
+@media (min-width: 1024px) {
+  .brik-row {
+    grid-template-columns: 148px minmax(0, 1fr) 190px 104px 108px 28px;
+    gap: 24px;
+    padding-block: 20px;
+  }
+}
+
+.brik-row-link {
+  position: relative;
+  isolation: isolate;
+  transition: background 160ms var(--brik-ease);
+}
+
+/* The tint runs past the gutter so a hovered row reads as a full-width band
+   rather than a box drawn inside the column. */
+.brik-row-link::before {
+  content: "";
+  position: absolute;
+  inset: 0 calc(var(--brik-gutter) * -0.5);
+  z-index: -1;
+  border-radius: var(--radius-control);
+  background: var(--brik-selected);
+  opacity: 0;
+  transition: opacity 160ms var(--brik-ease);
+}
+
+.brik-row-link:hover::before,
+.brik-row-link:focus-visible::before {
+  opacity: 1;
+}
+
+.brik-row-go {
+  justify-self: start;
+  opacity: 0;
+  transform: translateX(-4px);
+  transition: opacity 160ms var(--brik-ease), transform 160ms var(--brik-ease);
+}
+
+@media (min-width: 1024px) {
+  .brik-row-go {
+    justify-self: end;
+  }
+}
+
+.brik-row-link:hover .brik-row-go,
+.brik-row-link:focus-visible .brik-row-go {
+  opacity: 1;
+  transform: none;
+  color: var(--brik-fg);
+}
+
+@media (hover: none) {
+  .brik-row-go {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* A rule that runs the full window, used once, to mark the turn into the
+   close. Every other band is separated by space alone. */
+.brik-bleed-rule {
+  height: 1px;
+  margin-inline: calc(50% - 50vw);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--brik-line) 22%,
+    var(--brik-line) 78%,
+    transparent
+  );
+}
+
+/* Below the table's breakpoint the column heads are gone, so each measured
+   cell carries its own label. */
+.brik-cell::before {
+  content: attr(data-label);
+  margin-right: 8px;
+  color: var(--brik-fg-off);
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+@media (min-width: 1024px) {
+  .brik-cell::before {
+    content: none;
   }
 }

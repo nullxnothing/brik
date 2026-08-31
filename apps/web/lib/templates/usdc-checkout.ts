@@ -11,6 +11,7 @@ export const USDC_CHECKOUT: Template = {
   name: "USDC checkout",
   tagline: "Take USDC payments where the order account is the receipt.",
   stack: "ANCHOR · SPL TOKEN",
+  verified: { seconds: 13.8, tests: 3 },
   task: "Build a USDC checkout with payment confirmation",
 
   program: `use anchor_lang::prelude::*;

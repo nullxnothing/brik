@@ -11,6 +11,7 @@ export const TOKEN_GATE: Template = {
   name: "Token gate",
   tagline: "Prove an SPL balance on chain and issue a pass a server can read back.",
   stack: "ANCHOR · SPL TOKEN",
+  verified: { seconds: 14.2, tests: 3 },
   task: "Build a gate that checks an SPL token balance",
 
   program: `use anchor_lang::prelude::*;

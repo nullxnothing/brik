@@ -8,9 +8,9 @@
 
 :root {
   /* Chassis — the case. Holds things, sits proud, carries the grain. */
-  --brik-chassis-top: #1a1a1a;
-  --brik-chassis-bot: #0d0d0d;
-  --brik-chassis-edge: #212121;
+  --brik-chassis-top: #232323;
+  --brik-chassis-bot: #131313;
+  --brik-chassis-edge: #2e2e2e;
 
   /* Well — cut into the chassis. Holds content. Never textured. */
   --brik-well: #070707;
@@ -18,10 +18,10 @@
   --brik-well-edge: #171717;
 
   /* Key — sits above the chassis. The only thing that moves. */
-  --brik-key-top: #1e1e1e;
-  --brik-key-bot: #171717;
-  --brik-key-edge: #272727;
-  --brik-key-fg: #a9a9a4;
+  --brik-key-top: #2a2a2a;
+  --brik-key-bot: #202020;
+  --brik-key-edge: #363636;
+  --brik-key-fg: #b6b5af;
   --brik-key-cream-top: #fcf8ee;
   --brik-key-cream-bot: #ede4d0;
   --brik-key-cream-edge: #c9bfa6;
@@ -39,9 +39,9 @@
   --brik-sink-deep: inset 0 3px 12px rgba(0, 0, 0, 0.95);
 
   /* Etch — chassis markings, silkscreened not printed */
-  --brik-etch: #5c5c57;
-  --brik-etch-dim: #454542;
-  --brik-etch-faint: #4e4e4a;
+  --brik-etch: #7a7973;
+  --brik-etch-dim: #63625d;
+  --brik-etch-faint: #6c6b66;
   --brik-etch-shadow: 0 1px 0 rgba(0, 0, 0, 0.9);
 
   /* Lamps — emitters, brighter than the base state colours */
@@ -79,7 +79,7 @@
 /* The grain and the sheen live on the shell root only, so they run continuously
    across every part and the shell reads as one machined slab. */
 .brik-chassis {
-  background-color: #141414;
+  background-color: #1c1c1c;
   background-image:
     var(--brik-grain),
     radial-gradient(
@@ -88,10 +88,12 @@
       rgba(255, 255, 255, 0.012) 40%,
       transparent 66%
     ),
-    linear-gradient(var(--brik-chassis-top) 0%, #141414 55%, var(--brik-chassis-bot) 100%);
+    linear-gradient(var(--brik-chassis-top) 0%, #1c1c1c 55%, var(--brik-chassis-bot) 100%);
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.07),
-    inset 0 -2px 0 rgba(0, 0, 0, 0.9);
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    inset 0 -2px 0 rgba(0, 0, 0, 0.9),
+    0 0 0 1px var(--brik-chassis-edge),
+    0 18px 40px -24px rgba(0, 0, 0, 0.95);
 }
 
 /* Bars inside the chassis are translucent tints, never opaque fills. */
@@ -374,11 +376,31 @@
   outline-offset: 1px;
 }
 
-/* Below md the parts stack instead of sitting side by side, so the vertical
-   joints do not exist and there is nothing there to grip. */
-@media (max-width: 767px) {
-  .brik-seam-v {
+/* Below lg the parts stack instead of sitting side by side, so the joints that
+   drag do not exist. A fixed seam is a divider and stays. */
+@media (max-width: 1023px) {
+  .brik-seam-v,
+  .brik-seam-h:not(.brik-seam-fixed) {
     display: none;
+  }
+}
+
+/* A key keeps its drawn size and grows only what a finger has to hit. */
+@media (pointer: coarse) {
+  .brik-touch {
+    position: relative;
+  }
+
+  .brik-touch::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 100%;
+    height: 100%;
+    min-width: 44px;
+    min-height: 44px;
+    transform: translate(-50%, -50%);
   }
 }
 
@@ -409,7 +431,7 @@
 
 /* ---- Assembly --------------------------------------------------------- */
 
-/* Three moulded parts, two seams. Below md the parts stack and the visitor
+/* Three moulded parts, two seams. Below lg the parts stack and the visitor
    switches between them, so there is nothing to drag and no seam to grip. */
 .brik-work {
   display: flex;
@@ -418,7 +440,7 @@
   min-height: 0;
 }
 
-@media (min-width: 768px) {
+@media (min-width: 1024px) {
   .brik-work {
     display: grid;
     grid-template-columns:
@@ -506,5 +528,66 @@
   56%,
   100% {
     opacity: 0;
+  }
+}
+
+/* ---- The demo frame's narration --------------------------------------- */
+
+/* The picture of the machine walks its own regions once as the run reaches
+   them. A region that is not working steps back; it never disappears, and
+   nothing dims once the whole machine is live. Depth only, no glow: an unlit
+   region loses contrast the way a part out of the light does. */
+.brik-demo-region {
+  position: relative;
+  transition:
+    opacity 220ms var(--brik-ease, cubic-bezier(0.22, 1, 0.36, 1)),
+    filter 220ms var(--brik-ease, cubic-bezier(0.22, 1, 0.36, 1));
+}
+
+.brik-demo-region-off {
+  opacity: 0.46;
+  filter: saturate(0.7);
+}
+
+/* One caption for the whole picture. It sits on the page ground under the
+   chassis, not on a well, so it never fights the machine for room. The height
+   is reserved: the line empties out rather than collapsing. */
+.brik-demo-caption {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  min-height: 17px;
+  margin-top: 14px;
+  padding-left: 2px;
+  color: var(--brik-fg-3);
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  opacity: 0;
+  transition: opacity 200ms var(--brik-ease, cubic-bezier(0.22, 1, 0.36, 1));
+}
+
+.brik-demo-caption[data-on="true"] {
+  opacity: 1;
+}
+
+/* The region's own name, in the same etched type as its marking on the case. */
+.brik-demo-caption-region {
+  color: var(--brik-etch);
+  font-size: 10.5px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .brik-demo-region,
+  .brik-demo-region-off {
+    opacity: 1;
+    filter: none;
+    transition: none;
+  }
+
+  .brik-demo-caption {
+    opacity: 0;
+    transition: none;
   }
 }

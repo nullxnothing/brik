@@ -85,10 +85,16 @@ export function SegmentMeter({
   const pct = Math.round((lit / SEGMENTS) * 100);
   return (
     <>
+      {/* A real measurement of completed steps, so it announces as one and
+          updates rather than reading as a static picture. */}
       <span
         className="brik-meter"
-        role="img"
-        aria-label={`${label}: ${pct}% complete`}
+        role="progressbar"
+        aria-label={label}
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-valuenow={pct}
+        aria-valuetext={`${pct} percent`}
       >
         {Array.from({ length: SEGMENTS }, (_, i) => (
           <span key={i} data-lit={i < lit ? tone : undefined} />

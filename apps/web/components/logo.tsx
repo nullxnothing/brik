@@ -54,14 +54,18 @@ export function BrikBlock({ size = 20, className }: MarkProps) {
 }
 
 /**
- * Live-type wordmark: Fredoka 600 with the mark covering the tittle of the i.
- * Offsets per the handoff: left 1.055em, bottom 0.665em, width 0.21em.
+ * Live-type wordmark: the display face with the mark covering the tittle of
+ * the i. The offsets are measured from the face rather than carried over, so
+ * they move when the face does. Space Grotesk 500: "Br" advances 1.05em, the
+ * dotless i advances 0.256em (centre 1.178em), x-height is 0.50em, and with
+ * line-height 1 the baseline sits 0.155em above the box, putting the stem top
+ * at 0.655em. The mark is 0.21em wide and clears the stem by 0.075em.
  */
 export function BrikWordmark({ size = 24 }: { size?: number }) {
   const tittlePath = size * 0.21 < 32 ? MARK_SMALL_PATH : MARK_PATH;
   return (
     <span
-      className="font-display relative inline-block font-semibold"
+      className="font-display relative inline-block font-medium"
       style={{ fontSize: size, lineHeight: 1 }}
       aria-label="Brik"
     >
@@ -72,8 +76,8 @@ export function BrikWordmark({ size = 24 }: { size?: number }) {
         aria-hidden
         style={{
           position: "absolute",
-          left: "1.055em",
-          bottom: "0.665em",
+          left: "1.073em",
+          bottom: "0.73em",
           width: "0.21em",
           height: "0.21em",
         }}

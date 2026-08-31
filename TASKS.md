@@ -2,6 +2,10 @@
 
 ## Done
 
+- **Social launch library** — 15 publish-ready X posts paired one-to-one with
+  15 verified 1200 × 675 Brik cards. The set uses generated text-free plates,
+  live UI captures, official brand geometry, and a deterministic renderer. It
+  names unshipped boundaries instead of implying devnet deploys or persistence.
 - **Toolchain image** — `brik/solana-toolchain:dev`, pinned and pre-warmed, now
   carrying the union of template dependencies so a workspace with egress off can
   still build and test what it is given.
@@ -12,6 +16,22 @@
   is a product of Brik Builders LLC, a Colorado software company, at display
   size above the footer, with an About link in the nav. The "Coming soon"
   buttons are gone and every CTA points at `/new`.
+- **Product-led landing composition** — the promise and actions now share a shallow masthead with
+  measured run telemetry before leading into the animated workspace. Environment proof is one
+  autonomous Localnet → Toolchain → Agent run: it boots, resolves versions, exposes and repairs a
+  compiler type error, then proves the build at 7.9s. Hover pause, replay, and a reduced-motion final
+  state are included; the old four-column explanation is gone. The frame remains readable at large
+  desktop widths, continues below the opening viewport, and the full story stacks without horizontal
+  overflow at 390px. Verified locally; deployment pending.
+- **Evidence-driven landing motion** — the workflow now advances through real queued, running,
+  failed, retried, verified, and deployed states as it crosses the viewport. A live evidence strip
+  replaces the oversized return loop, the page edge carries a restrained run-position meter on large
+  screens, and reduced motion resolves directly to the verified state. Verified locally; not deployed.
+- **Unified landing frame and controls** — the landing navbar, 55/35 masthead, and workspace share
+  one frame with measured 24px, 28px, and 48px vertical relationships. `/new` shares the halftone
+  field without the spotlight, start-building arrows are removed, button feedback is bounded, the
+  footer credit links to `@brikbuilders`, and `$brik` is present as a dormant lowercase nav tab.
+  Verified locally; not deployed.
 - **Real workspace run** — browser to a real `anchor build` and `anchor deploy`
   in a container that did not exist before the request, streamed live. Failure
   and cleanup paths verified (see STATE.md).

@@ -39,7 +39,7 @@ export default function Brand() {
       </div>
 
       <div className="grid gap-4">
-        <div className="flex flex-col gap-11 rounded-card border border-line bg-ink p-12 text-cream">
+        <div className="flex flex-col gap-11 rounded-card border border-line bg-ink p-8 text-cream sm:p-12">
           <BrikWordmark size={120} />
           <div className="flex flex-wrap items-center gap-10">
             <BrikWordmark size={56} />
@@ -56,7 +56,7 @@ export default function Brand() {
         </div>
 
         <div
-          className="flex flex-col gap-11 rounded-card border border-line p-12"
+          className="flex flex-col gap-11 rounded-card border border-line p-8 sm:p-12"
           style={{ background: "var(--brik-cream)", color: "var(--brik-black)" }}
         >
           <BrikWordmark size={120} />

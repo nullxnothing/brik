@@ -14,17 +14,23 @@ import type { Status } from "./ui";
 export function AppPreview({
   status,
   detail,
+  action,
 }: {
   status: Status;
   detail: string;
+  /** Where the thing this pane is pointing at actually lives. A state that
+   *  names another panel should be able to open it. */
+  action?: { label: string; onClick: () => void };
 }) {
   const isSettled = status === "deployed" || status === "failed";
+  // Never "your app will appear here": a deploy produces no URL yet, so the
+  // empty state would promise exactly what the deployed state has to retract.
   const headline =
     status === "deployed"
       ? "Deployed to the workspace validator"
       : status === "failed"
         ? "The run stopped"
-        : "Your app will appear here";
+        : "Nothing to preview yet";
 
   return (
     <div className="flex h-full flex-col items-center justify-center gap-5 p-8 text-center">
@@ -33,6 +39,15 @@ export function AppPreview({
         <p className="text-body-lg text-fg">{headline}</p>
         <p className="mt-2 text-body text-fg-2">{detail}</p>
       </div>
+      {action && (
+        <button
+          type="button"
+          onClick={action.onClick}
+          className="brik-key brik-touch px-4 py-2 text-body"
+        >
+          {action.label}
+        </button>
+      )}
     </div>
   );
 }

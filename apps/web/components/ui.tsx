@@ -30,7 +30,7 @@ export function ButtonLink({
     );
   }
   return (
-    <Link href={href} className={classes}>
+    <Link href={href} prefetch={false} className={classes}>
       {children}
     </Link>
   );

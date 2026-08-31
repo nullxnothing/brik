@@ -140,11 +140,10 @@ export function SolanaPanel({
           term="BALANCE"
           value={balance === undefined ? "--" : `${balance.toFixed(2)} SOL`}
         />
+        {/* "Lease" is what the server calls it. A visitor is being told how
+            long this workspace has left. */}
         {hasLease && (
-          <Row
-            term="LEASE"
-            value={`${Math.ceil(secondsLeft / 60)} min left`}
-          />
+          <Row term="TIME LEFT" value={`${Math.ceil(secondsLeft / 60)} min`} />
         )}
       </dl>
 
@@ -225,10 +224,15 @@ export function Terminal({
             TERMINAL · anchor
           </Etch>
         </div>
+        {/* A program id or a cargo path has nowhere to break, so without
+            `anywhere` a narrow screen wraps the prose and scrolls sideways for
+            the token, which is the worst of both. */}
         {lines.map((line, i) => (
           <div
             key={i}
-            className={`whitespace-pre-wrap ${TERMINAL_TONE[line.tone ?? "muted"]}`}
+            className={`whitespace-pre-wrap [overflow-wrap:anywhere] ${
+              TERMINAL_TONE[line.tone ?? "muted"]
+            }`}
           >
             {line.text}
           </div>

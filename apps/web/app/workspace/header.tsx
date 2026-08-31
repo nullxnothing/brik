@@ -60,6 +60,7 @@ export function WorkspaceHeader({
           disabled={isBusy}
           className="brik-key brik-key-primary h-[38px] px-4 text-[14.5px] sm:px-[22px]"
           aria-label={isDeployed ? "Redeploy the program" : "Deploy the program"}
+          aria-keyshortcuts="Meta+Enter Control+Enter"
         >
           {isDeployed ? "Redeploy" : "Deploy"}
         </button>

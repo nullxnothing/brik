@@ -2,6 +2,19 @@
 
 Last verified 2026-08-10 on branch `claude/brick-project-review-dn5i7x`.
 
+## Social launch library
+
+Added 2026-08-31 from the live site and current repository state: `tweets.md`
+contains 15 claim-checked X posts, each paired with an exact 1200 × 675 card in
+`social/image-cards/`. Five text-free plates were generated with OpenAI; live
+Brik UI captures, official mark geometry, product tokens, and deterministic
+HTML/SVG supply the rest. The renderer and dimension verifier pass all 15.
+
+The library explicitly holds the current boundary: no public devnet deploy,
+preview URL, persistence, GitHub import/push, billing, or mainnet claim. Recheck
+toolchain versions and the 39 to 41 second E2B measurement before publishing
+those two posts.
+
 ## What runs
 
 **The workspace runs a real template in a real container.** Opening `/workspace`
@@ -111,6 +124,44 @@ above, the toolchain card is read out of `brik/solana-toolchain:dev` (rustc
 card is `brik-localnet` funding a wallet in 1.9s. The fabricated program id is
 gone from the site entirely: `7xKX` appears zero times across `/`, `/workspace`,
 `/new`, and `/brand`. Rebuilding the image moves the four versions.
+
+The landing hero is now product-led rather than split into two constrained columns. Copy and actions
+share a shallow masthead with measured run telemetry, removing the dead upper-right quadrant before
+both lead into the animated workspace proof. The frame renders at 1,368px on a 1440px viewport and
+1,664px at large desktop widths, and extends below the opening viewport while its agent checklist
+exposes the read → write → build → test → deploy path. The following proof and workflow bands now
+retain the landing width: environment facts run as one connected Localnet → Toolchain → Agent system,
+and the workflow is one full-width return rail instead of a split composition. At 390px the editor,
+agent steps, terminal, deployment state, autonomous run, and workflow stack at readable size with no
+desktop shrink. Verified locally in Chromium at 390×844, 1440×900, and 2048×1152 with no horizontal
+overflow or console errors; typecheck, the Impeccable detector, and the production build pass. This
+change is not deployed.
+
+The environment section is now an autonomous 7.9s GSAP product demonstration rather than a static
+feature table. It begins with workspace creation, sends one activity signal through Localnet,
+Toolchain, and Agent, resolves the measured versions, exposes `expected u64, found u32`, changes the
+value, retries, and lands on `Build passed`. The completed state holds for four seconds before replay;
+hover pauses, the replay control resets the run, offscreen work pauses, and reduced motion renders the
+completed state immediately. The four explanatory columns were removed. Verified in Chromium at
+1440px and 390px with no horizontal overflow; deployment pending.
+
+The landing workflow is now a scroll-controlled workspace run instead of a static rail. Write, Test,
+Build, and Deploy each expose queued, running, failed, verified, and completed states as applicable;
+the evidence strip moves from the compiler failure through the file retry to passing tests and deploy
+success. The old oversized dashed return path is gone. Large screens also show a restrained five-stop
+run meter for page position, while reduced-motion users receive the complete verified state without
+the sequence. Verified at 390×844 and 1440×900 with no horizontal overflow or console errors. The
+Impeccable detector, typecheck, and production build pass. Brik is running locally on port 3001 because
+port 3000 is currently occupied by another local project. This change is not deployed.
+
+The landing masthead, navbar, and workspace now share one 1760px frame. At 1440px they align at
+x=36px; the desktop masthead is exactly 55% copy, 10% gap, and 35% telemetry. The headline starts at
+y=97px with 0.98 line-height, followed by measured 24px, 28px, and 48px intervals through copy,
+actions, and workspace. The workflow completes while its full 310px sequence remains visible, and
+desktop state labels no longer intersect the rail. `/new` reuses the landing halftone field without
+the spotlight. Start-building arrows were removed, buttons gained bounded hover/press feedback, the
+footer credit now links to `@brikbuilders`, and a dormant lowercase `$brik` nav tab appears at medium
+widths and above. Verified locally; not deployed.
 
 Deploying is `vercel deploy --prod` from the repo root, and it has to be the
 repo root. The Vercel project's Root Directory is `apps/web`, set on 2026-08-11,

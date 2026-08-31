@@ -46,15 +46,35 @@ blocks. Progress is four small marks (WRITE → TEST → BUILD → DEPLOY). Pane
 
 ## Surfaces
 
-- `/` landing — Persuade. Dark. Hero (pinned headline) + demo frame that plays once on view,
-  building-blocks grid with functional visualizations, workflow strip, template cards, tech proof,
-  ascii-field final CTA, minimal footer.
+- `/` landing — Persuade. Dark. The hero is a vertical, product-led stage: a compact promise and
+  actions share a shallow 55/35 masthead with measured run telemetry, then lead into the workspace
+  frame. Navbar, masthead, and workspace use the same 1760px landing frame and gutters. On desktop
+  the headline starts 96px from the page top, its copy groups at 24px and 28px, and the workspace
+  follows the actions by 48px.
+  At 1440px and 1920px the frame dominates the opening screen and continues below the fold; below
+  768px it becomes a readable stacked editor → agent → terminal story rather than a scaled-down
+  desktop. The next two bands retain a 1680px landing measure: environment proof is one autonomous
+  Localnet → Toolchain → Agent run, and the agent loop is a full-width rail. Measured templates, a
+  quiet final CTA, and the footer return to the standard reading measure.
+
+  The hero atmosphere extends the page halftone with one restrained radial source, two technical
+  axes, edge vignette, a faint live-state reflection, and small scroll parallax between field, glow,
+  and frame. The environment run is a time-based GSAP sequence rather than a scroll effect. It types
+  workspace creation, resolves the validator and toolchain, repairs a concise type error, and reaches
+  `READY · 7.9s`; hover pauses it, replay restarts it, and reduced motion renders the final state.
+
+  The workflow is controlled by scroll position rather than autoplay. Its four stages move through
+  queued, running, failed, retried, verified, and deployed states, while the evidence strip names the
+  command result that caused each transition. Reduced motion resolves to the verified end state. On
+  large screens a narrow five-stop run meter at the viewport edge shows page position without adding
+  another decorative animation.
 
   The demo frame is the one place on this page built to the machined layer below, because it is a
   picture of the workspace and has to be the same machine: the same chassis, wells, lamps, and
   segment meter, from the same components in `components/chassis.tsx`. Its seams are fixed rather
   than draggable, so they carry no knurl. Everything around it keeps the flat 1px border.
 - `/new` — Operate. "What do you want to build?" Describe (primary) · templates · import · blank.
+  It uses the landing page's continuous halftone field without the spotlight or light-ray layer.
 - `/workspace` — Operate. A real container: every file, line of output, address, and balance on this
   surface was read out of it. Center pane carries `Preview | Code`: Code while the run is in flight,
   auto-switching to Preview on a successful deploy unless the visitor has picked a tab themselves.

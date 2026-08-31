@@ -26,12 +26,14 @@ const STATUS_LINE: Record<Status, string> = {
     "There is no shareable preview URL yet. The program id and the deploy transaction are in the Solana panel.",
 };
 
+/** What the lamps mean, announced. One word per state and the same six words
+ *  the foot prints, so nothing is described twice in two vocabularies. */
 const STATUS_WORD: Record<Status, string> = {
-  sleeping: "Provisioning the workspace",
-  ready: "Workspace ready",
+  sleeping: "Sleeping",
+  ready: "Ready",
   building: "Building",
   testing: "Testing",
-  failed: "The run failed",
+  failed: "Failed",
   deployed: "Deployed",
 };
 
@@ -67,9 +69,17 @@ export function WorkspaceShell({ task, template }: { task: string; template: str
   const [isTerminalOpen, setIsTerminalOpen] = useState(true);
   const [mobileView, setMobileView] = useState<MobileView>("editor");
 
-  // A phone has no room for a terminal and a pane at once.
+  // A phone has no room for a terminal and a pane at once. Keep this in sync
+  // across rotation, split-screen, and browser zoom changes.
   useEffect(() => {
-    if (window.matchMedia("(max-width: 767px)").matches) setIsTerminalOpen(false);
+    const phone = window.matchMedia("(max-width: 767px)");
+    const closeTerminalOnPhone = () => {
+      if (phone.matches) setIsTerminalOpen(false);
+    };
+
+    closeTerminalOnPhone();
+    phone.addEventListener("change", closeTerminalOnPhone);
+    return () => phone.removeEventListener("change", closeTerminalOnPhone);
   }, []);
 
   // Land on the preview once there is something to look at.
@@ -92,6 +102,11 @@ export function WorkspaceShell({ task, template }: { task: string; template: str
     setRightTab("agent");
     sendMessage(text);
   }, [sendMessage]);
+
+  const showSolana = useCallback(() => {
+    setRightTab("solana");
+    setMobileView("right");
+  }, []);
 
   const modifier = useShortcuts({
     onFiles: () => {
@@ -131,7 +146,7 @@ export function WorkspaceShell({ task, template }: { task: string; template: str
           onDeploy={build}
         />
 
-        <div className="brik-chassis-bar-tabs flex shrink-0 md:hidden">
+        <div className="brik-chassis-bar-tabs flex shrink-0 lg:hidden">
           {MOBILE_TABS.map((tab) => {
             const isActive =
               mobileView === tab.view && (!tab.right || rightTab === tab.right);
@@ -166,7 +181,7 @@ export function WorkspaceShell({ task, template }: { task: string; template: str
           }
         >
           <aside
-            className={`min-h-0 overflow-hidden md:flex md:flex-col ${
+            className={`min-h-0 overflow-hidden lg:flex lg:flex-col ${
               mobileView === "files" ? "flex flex-1 flex-col" : "hidden"
             }`}
           >
@@ -191,7 +206,7 @@ export function WorkspaceShell({ task, template }: { task: string; template: str
           )}
 
           <section
-            className={`min-h-0 flex-col md:flex ${
+            className={`min-h-0 flex-col lg:flex ${
               mobileView === "editor" ? "flex flex-1" : "hidden"
             }`}
           >
@@ -242,6 +257,11 @@ export function WorkspaceShell({ task, template }: { task: string; template: str
                     <AppPreview
                       status={run.status}
                       detail={run.failure ?? STATUS_LINE[run.status]}
+                      action={
+                        run.program
+                          ? { label: "Open the Solana panel", onClick: showSolana }
+                          : undefined
+                      }
                     />
                   </div>
                 </div>
@@ -259,12 +279,12 @@ export function WorkspaceShell({ task, template }: { task: string; template: str
           />
 
           <aside
-            className={`min-h-0 flex-col md:flex ${
+            className={`min-h-0 flex-col lg:flex ${
               mobileView === "right" ? "flex flex-1" : "hidden"
             }`}
           >
             <div
-              className="brik-chassis-bar-tabs brik-stamp-in hidden h-[46px] shrink-0 items-center gap-6 px-5 md:flex"
+              className="brik-chassis-bar-tabs brik-stamp-in hidden h-[46px] shrink-0 items-center gap-6 px-5 lg:flex"
               data-on={boot.labels.agent}
             >
               {(["agent", "solana"] as RightTab[]).map((tab) => (
@@ -318,9 +338,12 @@ export function WorkspaceShell({ task, template }: { task: string; template: str
               onPointerDown={startDrag("terminal")}
               onKeyDown={nudge("terminal")}
             />
+            {/* The dragged height is a preference, not a promise. On a short
+                viewport, or a desktop at 200% zoom, an unclamped terminal
+                leaves the pane above it too small to work in. */}
             <div
               className="shrink-0 px-4 py-3.5"
-              style={{ height: sizes.terminal + 28 }}
+              style={{ height: `min(${sizes.terminal + 28}px, 34vh)` }}
             >
               <Terminal
                 lines={run.terminal}
@@ -339,7 +362,6 @@ export function WorkspaceShell({ task, template }: { task: string; template: str
           balance={run.balance}
           isTerminalOpen={isTerminalOpen}
           onToggleTerminal={() => setIsTerminalOpen((open) => !open)}
-          modifier={modifier}
         />
       </div>
     </div>

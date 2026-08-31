@@ -171,7 +171,7 @@ export function Composer({
             type="button"
             onClick={submit}
             disabled={disabled || !value.trim()}
-            className="brik-key grid h-[27px] w-8 place-items-center text-[13px]"
+            className="brik-key brik-touch grid h-[27px] w-8 place-items-center text-[13px]"
             style={{ borderRadius: 6 }}
             aria-label="Send to the agent"
           >

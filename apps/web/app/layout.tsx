@@ -1,20 +1,22 @@
 import type { Metadata, Viewport } from "next";
-import { JetBrains_Mono, Space_Grotesk } from "next/font/google";
-import localFont from "next/font/local";
+import { Inter_Tight, JetBrains_Mono, Space_Grotesk } from "next/font/google";
 import { SITE_URL } from "../lib/site";
 import "./globals.css";
 
-const fredoka = localFont({
-  src: "../fonts/fredoka.ttf",
-  variable: "--font-fredoka",
-  weight: "300 700",
+/** Display only. A grotesque with real character, set tight and at 500 rather
+ *  than bold, so headings read precise instead of loud. */
+const grotesk = Space_Grotesk({
+  subsets: ["latin"],
+  weight: ["500", "700"],
+  variable: "--font-grotesk",
   display: "swap",
 });
 
-const grotesk = Space_Grotesk({
+/** Every run of text a visitor actually reads. A text face, not a display one. */
+const interTight = Inter_Tight({
   subsets: ["latin"],
-  weight: ["400", "500", "700"],
-  variable: "--font-grotesk",
+  weight: ["400", "500", "600"],
+  variable: "--font-text",
   display: "swap",
 });
 
@@ -93,7 +95,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${fredoka.variable} ${grotesk.variable} ${jbMono.variable}`}
+      className={`${grotesk.variable} ${interTight.variable} ${jbMono.variable}`}
     >
       <body>
         <script

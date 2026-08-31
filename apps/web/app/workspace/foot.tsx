@@ -44,7 +44,6 @@ export function StatusFoot({
   balance,
   isTerminalOpen,
   onToggleTerminal,
-  modifier,
 }: {
   status: Status;
   /** Segments latched, out of fourteen. Derived from completed run steps. */
@@ -52,7 +51,6 @@ export function StatusFoot({
   balance?: number;
   isTerminalOpen: boolean;
   onToggleTerminal: () => void;
-  modifier: string;
 }) {
   return (
     <footer className="brik-chassis-bar-foot flex h-9 shrink-0 items-center justify-between gap-4 px-4 font-mono text-[10.5px] tracking-[0.14em] text-[var(--brik-etch-faint)] sm:px-5">
@@ -61,8 +59,8 @@ export function StatusFoot({
           type="button"
           onClick={onToggleTerminal}
           aria-expanded={isTerminalOpen}
-          aria-keyshortcuts={`${modifier === "⌘" ? "Meta" : "Control"}+J`}
-          className="brik-key shrink-0 px-3 py-[5px] tracking-[0.14em]"
+          aria-keyshortcuts="Meta+J Control+J"
+          className="brik-key brik-touch shrink-0 px-3 py-[5px] tracking-[0.14em]"
           style={{ borderRadius: 5, color: "var(--brik-key-fg)" }}
         >
           TERMINAL <span aria-hidden>{isTerminalOpen ? "▾" : "▴"}</span>

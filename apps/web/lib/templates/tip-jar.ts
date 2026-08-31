@@ -11,6 +11,7 @@ export const TIP_JAR: Template = {
   name: "Tip jar",
   tagline: "Accept SOL tips, with the running total and the tip count on chain.",
   stack: "ANCHOR · SYSTEM PROGRAM",
+  verified: { seconds: 11.7, tests: 4 },
   task: "Build a tip jar with a send_tip instruction",
 
   program: `use anchor_lang::prelude::*;

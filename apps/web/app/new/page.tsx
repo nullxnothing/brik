@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { DitherField } from "../../components/dither-field";
 import { SiteFooter } from "../../components/site-footer";
 import { SiteNav } from "../../components/site-nav";
 import { isWorkspaceOpen } from "../../lib/workspace/gate";
@@ -26,8 +27,9 @@ export default async function NewProject({
 
   return (
     <>
+      <DitherField className="brik-field-page" variant="page" seed={17} intensity={1.5} />
       <SiteNav />
-      <main className="shell py-20 md:py-24">
+      <main className="shell relative py-14 md:py-20">
         <div className="mx-auto max-w-[720px]">
           <h1 className="font-display text-display-md font-semibold">
             What do you want to build?
@@ -36,7 +38,7 @@ export default async function NewProject({
             Your workspace starts immediately. Sign up later, when you want to
             keep it.
           </p>
-          <div className="mt-12">
+          <div className="mt-10">
             <StartForm initialSource={source} />
           </div>
         </div>

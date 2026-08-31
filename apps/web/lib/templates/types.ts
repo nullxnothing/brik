@@ -23,6 +23,12 @@ export interface Template {
   tagline: string;
   /** Shown on the template card. Names what the program actually uses. */
   stack: string;
+  /**
+   * What `pnpm verify-templates` measured for this template: wall clock from
+   * an empty workspace to a deployed program with its suite green, and how
+   * many tests that suite runs. Recorded in STATE.md, not estimated.
+   */
+  verified: { seconds: number; tests: number };
   /** The objective the workspace opens with. */
   task: string;
   /** The Anchor program, written to programs/project/src/lib.rs. */
